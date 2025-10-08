@@ -3,12 +3,36 @@ import Product from "@/models/product.model";
 import { NextRequest, NextResponse } from "next/server";
 import { cloudinaryConnection } from "@/config/cloudinaryConnection";
 import cloudinary from "cloudinary";
+import { redis } from "@/lib/redis";
 
 export async function GET() {
   await databaseConnection();
   cloudinaryConnection();
   try {
+    const cachedProducts = await redis.get("products");
+
+    let productsFromCache = [];
+    if (cachedProducts) {
+      productsFromCache =
+        typeof cachedProducts === "string"
+          ? JSON.parse(cachedProducts)
+          : cachedProducts; // already object
+    }
+
+    if (productsFromCache.length > 0) {
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Products fetched successfully",
+          products: productsFromCache,
+        },
+        { status: 200 }
+      );
+    }
+
     const products = await Product.find().sort({ createdAt: -1 });
+
+    await redis.set("products", JSON.stringify(products), { ex: 3600 });
     return NextResponse.json(
       {
         success: true,
@@ -33,6 +57,7 @@ export async function POST(request: NextRequest) {
   await databaseConnection();
   cloudinaryConnection();
   try {
+    redis.del("products");
     const formData = await request.formData();
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
@@ -106,6 +131,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   await databaseConnection();
   try {
+    redis.del("products");
     const { id, isActive } = await request.json();
     if (!id) {
       return NextResponse.json(
