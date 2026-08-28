@@ -8,8 +8,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import DeleteConfirmationModal from "@/components/DeleteConfirmationModal"; // Add the import
-import EditCategoryModal from "@/components/EditCategoryModal"; // Add the import
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
+import EditCategoryModal from "@/components/EditCategoryModal";
+import DeletedCategoriesModal from "@/components/DeletedCategoriesModal";
 import PaginationControls from "@/components/PaginationControls";
 
 interface Category {
@@ -32,6 +33,7 @@ const Page = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
+  const [deletedModalOpen, setDeletedModalOpen] = useState(false);
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -62,9 +64,9 @@ const Page = () => {
       setDeleteModalOpen(false); // Close the modal after delete
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        console.error(error.response?.data);
+        alert(error.response?.data?.message || "Failed to delete category");
       } else {
-        console.error("An unknown error occurred:", error);
+        alert("Failed to delete category");
       }
     }
   };
@@ -128,6 +130,13 @@ const Page = () => {
               value={query}
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setDeletedModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 hover:text-pink-600 hover:border-pink-600 rounded-md text-sm font-medium transition cursor-pointer"
+          >
+            Trash / Deleted
+          </button>
           <Link href={"/addcategory"}>
             <Button className="cursor-pointer">
               <Plus /> Add Category
@@ -253,11 +262,18 @@ const Page = () => {
           if (categoryToDelete) deleteHandler(categoryToDelete);
         }}
       />
-      <EditCategoryModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        category={categoryToEdit!}
-        onUpdate={updateCategory}
+      {editModalOpen && categoryToEdit && (
+        <EditCategoryModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          category={categoryToEdit}
+          onUpdate={updateCategory}
+        />
+      )}
+      <DeletedCategoriesModal
+        isOpen={deletedModalOpen}
+        onClose={() => setDeletedModalOpen(false)}
+        onRestoreSuccess={() => fetchCategories(page)}
       />
     </div>
   );

@@ -113,6 +113,7 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    document.title = "My Profile | GirlyHub";
     fetchUser();
     fetchUserOrders();
     fetchUserCart();

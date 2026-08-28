@@ -1,10 +1,13 @@
 "use client";
-
+import { useEffect } from "react";
 import ShopByCategory from "@/components/ShopByCategory";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
   const router = useRouter();
+  useEffect(() => {
+    document.title = "Shop By Category | GirlyHub";
+  }, []);
   return (
     <div className="m-4 min-h-[70vh]">
       <div className="mb-4 text-sm text-gray-500">

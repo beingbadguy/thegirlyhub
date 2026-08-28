@@ -14,6 +14,23 @@ export default function Page() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchOrder = async () => {
+      try {
+        const response = await fetch(`/api/order/${id}`);
+        const data = await response.json();
+        if (data.success && data.order) {
+          setPaymentMethod(data.order.paymentMethod);
+        }
+      } catch (err) {
+        console.error("Error fetching order:", err);
+      }
+    };
+    fetchOrder();
+  }, [id]);
 
   // useEffect(() => {
   //   // if (!id || !user || id.length < 23) router.push("/");
@@ -100,6 +117,15 @@ export default function Page() {
           We will send latest information and updates about your order to{" "}
           {user?.email}
         </p>
+
+        {paymentMethod === "cod" && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50/70 border border-amber-100 text-amber-800 text-xs md:text-sm text-center">
+            <p className="leading-relaxed">
+              <span className="font-bold text-amber-700 mr-1.5">⚠️ Important:</span>
+              For Cash on Delivery (COD) orders, <strong>Girlyhub</strong> will call you for order verification.
+            </p>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row gap-4 justify-center">
           <Button
             onClick={() => router.push("/")}

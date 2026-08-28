@@ -6,10 +6,16 @@ const couponSchema = new mongoose.Schema(
     code: { type: String, required: true, unique: true },
     discount: { type: Number, required: true },
     isActive: { type: Boolean, default: true },
+    validTill: { type: Date, default: null },
+    usersAvailed: { type: [String], default: [] },
+    type: { type: String, enum: ["percentage", "flat"], default: "flat" },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
 
-const Coupon = mongoose.models.Coupon || mongoose.model("Coupon", couponSchema);
+if (mongoose.models.Coupon) {
+  delete mongoose.models.Coupon;
+}
+const Coupon = mongoose.model("Coupon", couponSchema);
 export default Coupon;

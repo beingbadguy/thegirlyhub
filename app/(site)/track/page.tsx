@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
 import { FaSearch } from "react-icons/fa";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
@@ -24,6 +24,10 @@ export default function TrackOrderPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    document.title = "Track Order | GirlyHub";
+  }, []);
 
   const handleTrackOrder = async () => {
     setOrder(null);

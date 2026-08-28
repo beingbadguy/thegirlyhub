@@ -18,9 +18,12 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "GirlyHub",
+  title: {
+    default: "GirlyHub | Trendy Accessories, Scrunchies & Dresses",
+    template: "%s | GirlyHub",
+  },
   description:
-    "GirlyHub is your go-to e-commerce destination for affordable, high-quality essentials. Discover fashion, electronics, home goods, and more delivered to your doorstep.",
+    "GirlyHub is your go-to destination for high-quality accessories, scrunchies, earrings, jewellery, flats, and dresses. Shop our curated collection and express your style.",
 };
 
 export default function RootLayout({

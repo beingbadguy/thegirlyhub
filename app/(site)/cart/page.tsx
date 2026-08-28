@@ -17,6 +17,7 @@ const CartPage = () => {
   const router = useRouter();
 
   useEffect(() => {
+    document.title = "Shopping Bag | GirlyHub";
     if (!user) {
       router.push("/login");
     } else {

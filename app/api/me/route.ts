@@ -28,27 +28,9 @@ export async function GET(request: NextRequest) {
     }
     // const user = await User.findById(decodedToken.userId)
     const user = await User.findById(decodedToken.userId)
-      .populate({
-        path: "wishlist",
-        populate: {
-          path: "products.productId",
-          model: "Product",
-        },
-      })
-      .populate({
-        path: "cart",
-        populate: {
-          path: "products.productId",
-          model: "Product",
-        },
-      })
-      .populate({
-        path: "order",
-        populate: {
-          path: "products.productId",
-          model: "Product",
-        },
-      });
+      .populate("wishlist")
+      .populate("cart")
+      .select("-password -pass -forgetToken -forgetTokenExpiry -lastResetRequest -resetRequestCount -verificationToken -verificationTokenExpiry -__v");
 
     if (!user) {
       return NextResponse.json(

@@ -5,7 +5,7 @@ import { useAuthStore } from "@/store/store";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { MdArrowRightAlt } from "react-icons/md";
@@ -13,6 +13,9 @@ import { MdArrowRightAlt } from "react-icons/md";
 export default function SignupPage() {
   const { setUser, fetchUserCart } = useAuthStore();
   const router = useRouter();
+  useEffect(() => {
+    document.title = "Sign Up | GirlyHub";
+  }, []);
   const [data, setData] = useState({
     name: "",
     email: "",

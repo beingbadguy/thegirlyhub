@@ -20,6 +20,10 @@ const Page = () => {
 
   const categoryName = decodeURIComponent(name as string);
 
+  useEffect(() => {
+    document.title = `${categoryName} Collection | GirlyHub`;
+  }, [categoryName]);
+
   const fetchProducts = async (pageNum: number) => {
     setLoading(true);
     try {

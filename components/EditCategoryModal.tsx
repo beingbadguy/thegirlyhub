@@ -22,7 +22,13 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
   category,
   onUpdate,
 }) => {
-  const [newName, setNewName] = useState(category?.name);
+  const [newName, setNewName] = useState(category?.name || "");
+
+  React.useEffect(() => {
+    if (category?.name) {
+      setNewName(category.name);
+    }
+  }, [category]);
 
   if (!isOpen) return null;
 

@@ -65,11 +65,17 @@ export default function CheckoutPage() {
   const [orderError, setOrderError] = useState("");
   const [promoCodeError, setPromoCodeError] = useState("");
   const [promoCodeLoading, setPromoCodeLoading] = useState(false);
-  const [finalAmount, setFinalAmount] = useState(0);
-  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponDetails, setCouponDetails] = useState<{
+    discount: number;
+    type: "percentage" | "flat";
+    code: string;
+  } | null>(null);
+
+  const couponApplied = !!couponDetails;
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
+    document.title = "Checkout | GirlyHub";
     fetchUser();
   }, []);
 
@@ -113,9 +119,15 @@ export default function CheckoutPage() {
     : (subtotal + DELIVERY_CHARGE) * FIRST_ORDER_DISCOUNT_RATE;
   const baseTotal = subtotal + DELIVERY_CHARGE - firstTimeDiscount;
 
-  useEffect(() => {
-    setFinalAmount(baseTotal);
-  }, [subtotal, user?.firstPurchase]);
+  let couponDiscount = 0;
+  if (couponDetails) {
+    if (couponDetails.type === "percentage") {
+      couponDiscount = Math.round(((baseTotal * couponDetails.discount) / 100) * 100) / 100;
+    } else {
+      couponDiscount = couponDetails.discount;
+    }
+  }
+  const finalAmount = Math.max(0, baseTotal - couponDiscount);
 
   const buildOrderPayload = () => ({
     totalAmount: finalAmount,
@@ -246,9 +258,12 @@ export default function CheckoutPage() {
         code: promoCode,
         totalAmount: baseTotal,
       });
-      setFinalAmount(response.data.finalAmount);
+      setCouponDetails({
+        code: response.data.code || promoCode,
+        discount: response.data.discountValue,
+        type: response.data.couponType,
+      });
       setPromoCodeError(response.data.message || "Coupon applied!");
-      setCouponApplied(true);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setPromoCodeError(error.response?.data.message);
@@ -449,6 +464,12 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-green-600">
                   <p>First order discount (15%)</p>
                   <p>-₹{firstTimeDiscount.toFixed(2)}</p>
+                </div>
+              )}
+              {couponApplied && (
+                <div className="flex justify-between text-green-600">
+                  <p>Coupon discount ({promoCode.toUpperCase()})</p>
+                  <p>-₹{Math.max(0, baseTotal - finalAmount).toFixed(2)}</p>
                 </div>
               )}
             </div>

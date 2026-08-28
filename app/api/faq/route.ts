@@ -6,13 +6,14 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   await databaseConnection();
   try {
-    // Admin sessions need the full list so disabled FAQs can be managed.
-    // Public visitors should only ever receive enabled FAQs.
-    const isAdmin = (await fetchTokenDetails(request))?.role === "admin";
+    const isAdminQuery = request.nextUrl.searchParams.get("admin") === "true";
+    const decoded = await fetchTokenDetails(request);
+    const isAdmin = decoded?.role === "admin" && isAdminQuery;
     const filter = isAdmin ? {} : { isActive: true };
     const faqs = await Faq.find(filter).sort({ createdAt: 1 });
     return NextResponse.json({ success: true, faqs });
-  } catch {
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch FAQs" },
       { status: 500 },
@@ -42,7 +43,8 @@ export async function POST(request: NextRequest) {
       answer: answer.trim(),
     });
     return NextResponse.json({ success: true, faq }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { success: false, message: "Failed to create FAQ" },
       { status: 500 },

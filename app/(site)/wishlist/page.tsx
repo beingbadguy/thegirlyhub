@@ -31,6 +31,7 @@ const WishlistPage = () => {
   const isWishlistEmpty = totalItems < 1;
 
   useEffect(() => {
+    document.title = "My Wishlist | GirlyHub";
     fetchUserWishlist();
   }, []);
 

@@ -9,6 +9,7 @@ const categorySchema = new mongoose.Schema(
       required: true,
     },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

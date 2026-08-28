@@ -11,17 +11,60 @@ import { getPagination, paginationResult } from "@/lib/pagination";
 export async function POST(request: NextRequest) {
   await databaseConnection();
   try {
-    const { name, email, message } = await request.json();
-    if (!name || !email || !message) {
+    const { name, email, phone, message } = await request.json();
+
+    if (!name || !message) {
       return NextResponse.json(
-        { message: "All fields are required", success: false },
+        { message: "Name and message are required", success: false },
         { status: 400 },
       );
     }
-    const newContact = new Contact({ name, email, message });
+
+    if (!email && !phone) {
+      return NextResponse.json(
+        { message: "Please provide either an email address or a phone number.", success: false },
+        { status: 400 },
+      );
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json(
+        { message: "Please enter a valid email address.", success: false },
+        { status: 400 },
+      );
+    }
+
+    if (phone && !/^\+?[0-9\s\-()]{8,16}$/.test(phone)) {
+      return NextResponse.json(
+        { message: "Please enter a valid phone number.", success: false },
+        { status: 400 },
+      );
+    }
+
+    const newContact = new Contact({
+      name,
+      email: email || null,
+      phone: phone || null,
+      message,
+    });
     await newContact.save();
-    await contactConfirmationMail(email, name, message);
-    await contactMailToAdmin(email, name, message);
+
+    if (email) {
+      try {
+        await contactConfirmationMail(email, name, message);
+      } catch (err) {
+        console.error("Error sending user confirmation email:", err);
+      }
+    }
+
+    try {
+      const emailForAdmin = email || "No email provided";
+      const messageForAdmin = `Phone: ${phone || "Not provided"}\n\nMessage: ${message}`;
+      await contactMailToAdmin(emailForAdmin, name, messageForAdmin);
+    } catch (err) {
+      console.error("Error sending admin notification email:", err);
+    }
+
     return NextResponse.json(
       { message: "Contact sent successfully", success: true },
       { status: 200 },
@@ -29,7 +72,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.log(error);
     return NextResponse.json(
-      { message: "Error fetching cart", success: false },
+      { message: "Error sending contact message", success: false },
       { status: 500 },
     );
   }

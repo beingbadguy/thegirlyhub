@@ -2,6 +2,12 @@ import React from "react";
 import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";
 import { HiOutlineSparkles } from "react-icons/hi";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description: "Learn more about GirlyHub, our vision, and our mission to provide the ultimate online marketplace for trendy accessories, dresses, and high-quality essentials.",
+};
 
 const AboutUs = () => {
   return (

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/store";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
@@ -13,6 +13,9 @@ import { MdArrowRightAlt } from "react-icons/md";
 export default function LoginPage() {
   const { setUser, fetchUserCart } = useAuthStore();
   const router = useRouter();
+  useEffect(() => {
+    document.title = "Login | GirlyHub";
+  }, []);
   const [data, setData] = useState({
     email: "",
     password: "",

@@ -70,7 +70,14 @@ export async function GET(request: NextRequest) {
   try {
     const { page, limit, skip } = getPagination(request, 12);
     const isAdmin = (await fetchTokenDetails(request))?.role === "admin";
-    const filter = isAdmin ? {} : { isActive: true };
+    const deleted = request.nextUrl.searchParams.get("deleted") === "true";
+
+    let filter: any = {};
+    if (isAdmin) {
+      filter = deleted ? { isDeleted: true } : { isDeleted: { $ne: true } };
+    } else {
+      filter = { isActive: true, isDeleted: { $ne: true } };
+    }
     const [categories, total] = await Promise.all([
       Category.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
       Category.countDocuments(filter),

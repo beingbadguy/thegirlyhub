@@ -43,7 +43,18 @@ export async function GET(request: NextRequest) {
 export async function POST(req: NextRequest) {
   await databaseConnection();
   try {
-    const { name, code, discount } = await req.json();
+    const decoded = await fetchTokenDetails(req);
+    if (!decoded || decoded.role !== "admin") {
+      return NextResponse.json(
+        {
+          message: "You must log in to create coupons and must be admin.",
+          success: false,
+        },
+        { status: 401 },
+      );
+    }
+
+    const { name, code, discount, validTill, isActive, type } = await req.json();
 
     if (!name || !code || !discount) {
       return NextResponse.json(
@@ -51,7 +62,16 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    const existingCoupon = await Coupon.findOne({ code });
+
+    if (type !== undefined && !["percentage", "flat"].includes(type)) {
+      return NextResponse.json(
+        { message: "Invalid coupon type. Must be 'flat' or 'percentage'.", success: false },
+        { status: 400 },
+      );
+    }
+
+    const uppercaseCode = code.toUpperCase();
+    const existingCoupon = await Coupon.findOne({ code: uppercaseCode });
     if (existingCoupon) {
       return NextResponse.json(
         { message: "Coupon already exists", success: false },
@@ -59,10 +79,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newCoupon = new Coupon({ name: name.toUpperCase(), code, discount });
+    const newCoupon = new Coupon({
+      name: name.toUpperCase(),
+      code: uppercaseCode,
+      discount,
+      validTill: validTill ? new Date(validTill) : null,
+      isActive: isActive !== undefined ? isActive : true,
+      type: type || "flat",
+    });
+
     await newCoupon.save();
     return NextResponse.json(
-      { newCoupon, success: true, message: "Coupon created successfully" },
+      { coupon: newCoupon, success: true, message: "Coupon created successfully" },
       { status: 200 },
     );
   } catch (error) {

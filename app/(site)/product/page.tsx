@@ -71,6 +71,7 @@ const ProductsPage = () => {
   };
 
   useEffect(() => {
+    document.title = "Explore Our Products | GirlyHub";
     fetchAllProducts(page);
     fetchCategories();
   }, [page, selectedCategory]);

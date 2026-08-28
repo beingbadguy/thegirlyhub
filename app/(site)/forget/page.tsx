@@ -3,13 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios, { AxiosError } from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 export default function ForgetPage() {
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = "Forgot Password | GirlyHub";
+  }, []);
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();

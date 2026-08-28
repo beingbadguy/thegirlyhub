@@ -1,4 +1,6 @@
 import sendMail from "./mailer";
+import { databaseConnection } from "@/config/databseConnection";
+import Product from "@/models/product.model";
 
 export const sendEmailVerificationMail = async (
   email: string,
@@ -93,29 +95,74 @@ export const passwordResetSuccessMail = async (email: string) => {
 };
 
 export const welcomeUserMail = async (email: string, userName: string) => {
+  let imageUrls: string[] = [];
+  try {
+    await databaseConnection();
+    const products = await Product.find({ isActive: true }).limit(5);
+    imageUrls = products.map((p) => p.image).filter(Boolean);
+  } catch (err) {
+    console.error("Error fetching products for welcome email:", err);
+  }
+
+  if (imageUrls.length === 0) {
+    imageUrls = [
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=150&q=80",
+      "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=150&q=80",
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=150&q=80",
+      "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=150&q=80",
+      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=150&q=80",
+    ];
+  }
+
   const html = `
-    <div style="background-color: #ffffff; padding: 24px; font-family: Arial, sans-serif; color: #000;">
-      <div style="max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px;">
-        <div style="background-color: #be185d; padding: 16px 24px;">
-          <h1 style="color: #ffffff; margin: 0;">Welcome to Basics ⚡</h1>
+    <div style="background-color: #eed2d7; padding: 40px 20px; font-family: 'DM Sans', Arial, sans-serif; color: #2d161a; text-align: center; margin: 0;">
+      <div style="max-width: 600px; margin: auto; background-color: #ebd0d3; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(45,22,26,0.08);">
+        <!-- Header -->
+        <div style="background-color: #edd1d4; padding: 24px; border-bottom: 1px solid rgba(45,22,26,0.05);">
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 600; letter-spacing: 4px; color: #2d161a; text-transform: uppercase;">
+            GIRLYHUB
+          </h2>
         </div>
-        <div style="padding: 24px;">
-          <p style="font-size: 16px;">Hey ${userName},</p>
-          <p>We're thrilled to have you at <strong>Basics</strong> – your new favorite place to shop online 🛒</p>
-          <p>Start exploring awesome deals, trending products, and smooth checkout right away.</p>
-          <a href="https://shopbasics.vercel.app" style="display: inline-block; padding: 12px 20px; background-color: #be185d; color: #ffffff; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-            Start Shopping
-          </a>
-          <p>Need any help? Our team is just a click away.</p>
+        
+        <!-- Body Content -->
+        <div style="padding: 48px 32px 32px 32px;">
+          <h1 style="margin: 0 0 24px 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; font-weight: 500; line-height: 1.25; color: #2d161a;">
+            You're in! Enjoy your<br />welcome gift!
+          </h1>
+          
+          <div style="margin: 32px 0;">
+            <a href="https://girlyhub.vercel.app" style="display: inline-block; padding: 12px 36px; background-color: #f5e4e6; color: #2d161a; text-decoration: none; border-radius: 50px; font-weight: bold; letter-spacing: 2px; font-size: 14px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(45,22,26,0.05);">
+              WELCOME
+            </a>
+          </div>
+          
+          <p style="margin: 24px auto 0 auto; max-width: 440px; font-size: 15px; line-height: 1.6; color: #432227;">
+            Get ready to shine, ${userName}! Our latest collection of trendy accessories, scrunchies, earrings, and beautiful dresses has arrived — featuring high-quality essentials designed for every mood.
+          </p>
+          
+          <!-- Product Row -->
+          <div style="text-align: center; margin-top: 48px; font-size: 0;">
+            ${imageUrls
+              .map(
+                (url) => `
+              <div style="display: inline-block; width: 85px; margin: 6px; vertical-align: bottom;">
+                <img src="${url}" alt="Product" style="width: 85px; height: 110px; border-radius: 12px; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.05);" />
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
         </div>
-        <div style="background-color: #f9f9f9; padding: 16px; text-align: center; font-size: 12px; color: #999;">
-          &copy; ${new Date().getFullYear()} Basics. All rights reserved.
+        
+        <!-- Footer -->
+        <div style="background-color: #edd1d4; padding: 20px; text-align: center; font-size: 12px; color: #5a383d; border-top: 1px solid rgba(45,22,26,0.05);">
+          &copy; ${new Date().getFullYear()} GirlyHub. All rights reserved.
         </div>
       </div>
     </div>
   `;
 
-  sendMail(email, "Welcome to Basics ⚡", "", html);
+  sendMail(email, "Welcome to GirlyHub! 💕", "", html);
 };
 
 export const newsletterSubscriptionMail = async (email: string) => {
@@ -237,7 +284,7 @@ export const contactMailToAdmin = async (
   `;
 
   sendMail(
-    "authorisedaman@gmail.com",
+    "officialgirlyhub@gmail.com",
     "📬 New Contact Form Message from " + name,
     "",
     html

@@ -16,6 +16,7 @@ const Page = () => {
   const itemsPerPage = 12;
 
   useEffect(() => {
+    document.title = "Search Products | GirlyHub";
     const fetchAllProducts = async () => {
       setLoading(true);
       try {

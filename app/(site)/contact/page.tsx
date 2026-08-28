@@ -1,4 +1,5 @@
 "use client";
+
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -7,16 +8,20 @@ import {
   FaPaperPlane,
   FaPhoneAlt,
   FaMapMarkerAlt,
+  FaInstagram,
 } from "react-icons/fa";
 import { VscLoading } from "react-icons/vsc";
 
 const ContactUs = () => {
   const router = useRouter();
+
   const [data, setData] = useState({
     name: "",
     email: "",
+    phone: "",
     message: "",
   });
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,27 +37,43 @@ const ContactUs = () => {
     setError("");
     setSuccess("");
 
-    if (!data.name || !data.email || !data.message) {
-      setError("Please fill all the fields.");
+    if (!data.name.trim() || !data.message.trim()) {
+      setError("Please enter your name and message.");
+      return;
+    }
+
+    if (!data.email.trim() && !data.phone.trim()) {
+      setError("Please provide either an email address or a phone number.");
+      return;
+    }
+
+    if (data.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (data.phone.trim() && !/^\+?[0-9\s\-()]{8,16}$/.test(data.phone.trim())) {
+      setError("Please enter a valid phone number.");
       return;
     }
 
     setLoading(true);
+
     try {
       await axios.post("/api/contact", data);
-      // console.log(response.data);
-      setSuccess("Your message has been sent!");
+
+      setSuccess("Message sent successfully 💌");
       setData({
         name: "",
         email: "",
+        phone: "",
         message: "",
       });
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        console.error(error.response?.data);
+        setError(error.response?.data?.message || "Failed to send message.");
       } else {
-        console.error(error);
-        setError("Something went wrong. Please try again later.");
+        setError("Something went wrong.");
       }
     } finally {
       setLoading(false);
@@ -60,93 +81,147 @@ const ContactUs = () => {
   };
 
   return (
-    <div className="bg-white p-4 min-h-[60vh]">
-      <div className="text-sm  text-gray-500 mb-4">
+    <div className="min-h-screen  px-4 py-10">
+      {/* Breadcrumb */}
+      <div className=" mx-auto text-sm text-gray-500 mb-6">
         <span
-          className="cursor-pointer hover:text-pink-600"
+          className="cursor-pointer hover:text-pink-600 transition"
           onClick={() => router.push("/")}
         >
           Home
         </span>{" "}
-        / <span className="cursor-pointer text-black">Contact Us</span>{" "}
+        / <span className="text-gray-800">Contact</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10  md:px-12 lg:px-24 ">
-        {/* Left: Contact Info */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+
+        {/* LEFT SIDE */}
         <div className="flex flex-col justify-center space-y-6">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-pink-700 mb-4">
-              Get In Touch
+            <h2 className="text-4xl font-semibold text-pink-600 mb-4 tracking-tight">
+              Let’s Connect 💌
             </h2>
-            <p className="text-gray-600 text-base md:text-lg">
-              Have questions, feedback, or need support? We’d love to hear from
-              you. Fill out the form or reach out directly.
+            <p className="text-gray-600 text-base leading-relaxed">
+              We’re here to help you with anything. Reach out and we’ll respond as soon as possible.
             </p>
           </div>
 
-          <div className="space-y-3 text-sm text-gray-700">
+          <div className="space-y-4 text-gray-700 text-sm">
+
+            {/* Email */}
             <div className="flex items-center gap-3">
-              <FaEnvelope className="text-black" />
-              <span>authorisedaman@gmail.com</span>
+              <FaEnvelope className="text-pink-500 text-base" />
+              <a
+                href="mailto:officialgirlyhub@gmail.com"
+                className="hover:text-pink-600 transition"
+              >
+                officialgirlyhub@gmail.com
+              </a>
             </div>
+
+            {/* Phone */}
             <div className="flex items-center gap-3">
-              <FaPhoneAlt className="text-black" />
-              <span>+91 96675 XXXX</span>
+              <FaPhoneAlt className="text-pink-500 text-base" />
+              <a
+                href="tel:+9196675549765"
+                className="hover:text-pink-600 transition"
+              >
+                +91 96675 549765
+              </a>
             </div>
+
+            {/* Location */}
             <div className="flex items-center gap-3">
-              <FaMapMarkerAlt className="text-black" />
-              <span>New Delhi, Delhi, India - 110001</span>
+              <FaMapMarkerAlt className="text-pink-500 text-base" />
+              <span className="text-gray-600">
+                Shahdara, Delhi, India-110032
+              </span>
             </div>
+
+            {/* Instagram */}
+            <div className="flex items-center gap-3">
+              <FaInstagram className="text-pink-500 text-base" />
+              <a
+                href="https://instagram.com/officialgirlyhub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-pink-600 transition"
+              >
+                @officialgirlyhub
+              </a>
+            </div>
+
           </div>
         </div>
 
-        {/* Right: Contact Form */}
-        <form className="space-y-5 w-full" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="name"
-            value={data.name}
-            onChange={handleChange}
-            placeholder="Your Name"
-            className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-          />
+        {/* RIGHT SIDE FORM */}
+        <div className="bg-white  rounded-3xl p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
 
-          <input
-            type="email"
-            name="email"
-            value={data.email}
-            onChange={handleChange}
-            placeholder="Your Email"
-            className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-          />
+            <input
+              type="text"
+              name="name"
+              value={data.name}
+              onChange={handleChange}
+              placeholder="Your Name"
+              className="w-full px-4 py-3 rounded-xl border border-pink-200 bg-pink-50 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+            />
 
-          <textarea
-            name="message"
-            rows={5}
-            value={data.message}
-            onChange={handleChange}
-            placeholder="Your Message"
-            className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-          />
+            <input
+              type="email"
+              name="email"
+              value={data.email}
+              onChange={handleChange}
+              placeholder="Email"
+              className="w-full px-4 py-3 rounded-xl border border-pink-200 bg-pink-50 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+            />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex items-center justify-center gap-2 bg-black hover:bg-black/80 text-white text-sm font-medium px-6 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
-          >
-            {loading ? (
-              <VscLoading className="animate-spin " />
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <FaPaperPlane className="w-4 h-4" />
-                Send Message
-              </div>
-            )}
-          </button>
+            <input
+              type="tel"
+              name="phone"
+              value={data.phone}
+              onChange={handleChange}
+              placeholder="Phone"
+              className="w-full px-4 py-3 rounded-xl border border-pink-200 bg-pink-50 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+            />
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
-        </form>
+            <textarea
+              name="message"
+              rows={5}
+              value={data.message}
+              onChange={handleChange}
+              placeholder="Write your message..."
+              className="w-full px-4 py-3 rounded-xl border border-pink-200 bg-pink-50 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+            />
+
+            {/* BUTTON */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-pink-600 text-white py-3 rounded-full font-medium transition-all duration-200 hover:opacity-90"
+            >
+              <span className="flex items-center gap-2">
+                {loading ? (
+                  <>
+                    <VscLoading className="animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <FaPaperPlane />
+                    Send Message
+                  </>
+                )}
+              </span>
+            </button>
+
+            {/* FIXED HEIGHT MESSAGE AREA (NO LAYOUT SHIFT) */}
+            <div className="h-5 text-center">
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+              {success && <p className="text-green-500 text-sm">{success}</p>}
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

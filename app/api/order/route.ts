@@ -139,13 +139,37 @@ export async function POST(request: NextRequest) {
       });
       if (!coupon) {
         return NextResponse.json(
-          { message: "Invalid or expired coupon code.", success: false },
+          { message: "Invalid coupon code.", success: false },
           { status: 400 },
         );
       }
+      if (!coupon.isActive) {
+        return NextResponse.json(
+          { message: "This coupon is currently inactive.", success: false },
+          { status: 400 },
+        );
+      }
+      if (coupon.validTill && new Date() > new Date(coupon.validTill)) {
+        return NextResponse.json(
+          { message: "This coupon has expired.", success: false },
+          { status: 400 },
+        );
+      }
+      if (coupon.usersAvailed && coupon.usersAvailed.includes(userId)) {
+        return NextResponse.json(
+          { message: "You have already availed this coupon.", success: false },
+          { status: 400 },
+        );
+      }
+      let discountAmount = 0;
+      if (coupon.type === "percentage") {
+        discountAmount = Math.round(((expectedTotal * coupon.discount) / 100) * 100) / 100;
+      } else {
+        discountAmount = coupon.discount;
+      }
       expectedTotal = Math.max(
         0,
-        Math.round((expectedTotal - coupon.discount) * 100) / 100,
+        Math.round((expectedTotal - discountAmount) * 100) / 100,
       );
     }
 
@@ -179,6 +203,13 @@ export async function POST(request: NextRequest) {
     });
 
     await newOrder.save();
+
+    if (couponCode) {
+      await Coupon.findOneAndUpdate(
+        { code: String(couponCode).toUpperCase() },
+        { $addToSet: { usersAvailed: userId } }
+      );
+    }
 
     user.order.push(newOrder._id);
     if (user.firstPurchase === false) user.firstPurchase = true;

@@ -3,6 +3,30 @@ import { buildProductSlug, extractIdFromSlug, slugify } from "@/lib/slug";
 import Product from "@/models/product.model";
 import mongoose from "mongoose";
 import ProductPageClient from "./ProductPageClient";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  await databaseConnection();
+  const { slug } = await params;
+  const product = await findProductBySlugOrId(slug);
+  if (!product) {
+    return {
+      title: "Product Not Found",
+    };
+  }
+  const cleanDescription = (product as any).description
+    ? (product as any).description.replace(/<[^>]*>/g, "").slice(0, 150) + "..."
+    : `Buy ${(product as any).title} online at GirlyHub.`;
+
+  return {
+    title: (product as any).title,
+    description: cleanDescription,
+  };
+}
 
 interface LeanProduct {
   _id: mongoose.Types.ObjectId | string;
