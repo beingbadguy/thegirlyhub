@@ -16,6 +16,7 @@ async function verifyJWT(token: string) {
 const allowedOrigins = new Set([
   "http://localhost:3000",
   "http://localhost:3001",
+  "https://girlyadmin.vercel.app",
 ]);
 
 function applyCorsHeaders(response: NextResponse, origin: string | null) {
