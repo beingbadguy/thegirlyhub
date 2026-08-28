@@ -4,6 +4,13 @@ import Product from "@/models/product.model";
 import mongoose from "mongoose";
 import ProductPageClient from "./ProductPageClient";
 
+interface LeanProduct {
+  _id: mongoose.Types.ObjectId | string;
+  title: string;
+  slug?: string;
+  category: string;
+}
+
 async function findProductBySlugOrId(identifier: string) {
   const decoded = decodeURIComponent(identifier);
 
@@ -22,7 +29,7 @@ async function findProductBySlugOrId(identifier: string) {
   }
 
   const baseSlug = decoded.replace(/-[a-f0-9]{6}$/i, "");
-  const products = await Product.find({}).lean();
+  const products = (await Product.find({}).lean()) as unknown as LeanProduct[];
   return (
     products.find(
       (p) =>

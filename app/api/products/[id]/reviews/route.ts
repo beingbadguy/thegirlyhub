@@ -101,7 +101,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 5. Retrieve user details
-    const user = await User.findById(decoded.userId).lean() as any;
+    const user = await User.findById(decoded.userId).lean() as { name?: string } | null;
     const username = user?.name || "Verified Customer";
 
     // 6. Append review
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     product.reviews.push(review);
     product.numReviews = product.reviews.length;
     
-    const totalRating = product.reviews.reduce((acc: number, item: any) => acc + item.rating, 0);
+    const totalRating = product.reviews.reduce((acc: number, item: { rating: number }) => acc + item.rating, 0);
     product.ratings = totalRating / product.reviews.length;
 
     await product.save();
@@ -130,10 +130,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error posting review:", error);
+    const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { success: false, message: error.message || "Internal server error" },
+      { success: false, message },
       { status: 500 }
     );
   }

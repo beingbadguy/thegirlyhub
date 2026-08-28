@@ -2,7 +2,7 @@
 
 import axios, { AxiosError } from "axios";
 import Image from "next/image";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/store";
 import { isProductInStock } from "@/lib/productStock";
@@ -109,7 +109,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
   const inStock = isProductInStock(product);
 
-  const checkEligibility = async (productId: string) => {
+  const checkEligibility = useCallback(async (productId: string) => {
     if (!user) return;
     try {
       const response = await axios.get(`/api/products/${productId}/review-eligibility`);
@@ -117,7 +117,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     } catch (error) {
       console.error("Error checking review eligibility:", error);
     }
-  };
+  }, [user]);
 
   const addToCart = async (goDirectlyToCart = false) => {
     if (!product?._id || !inStock) {
@@ -224,9 +224,13 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           console.error("Failed to refresh product specs:", err);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error submitting review:", error);
-      setReviewError(error.response?.data?.message || "Failed to submit review.");
+      if (error instanceof AxiosError) {
+        setReviewError(error.response?.data?.message || "Failed to submit review.");
+      } else {
+        setReviewError("Failed to submit review.");
+      }
     } finally {
       setSubmittingReview(false);
     }
@@ -253,15 +257,16 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];
 
   type WishlistItem = {
-    productId: any;
+    productId: string | { _id: string };
   };
 
   const alreadyInWishlist = (id: string) => {
-    return allProductsOfWishlist.some((item: WishlistItem) =>
-      Array.isArray(item.productId)
-        ? item.productId.some((p) => p._id === id)
-        : item.productId._id === id,
-    );
+    return allProductsOfWishlist.some((item: WishlistItem) => {
+      if (typeof item.productId === "string") {
+        return item.productId === id;
+      }
+      return item.productId?._id === id;
+    });
   };
 
   // Intersection observer for sticky CTA bar and mobile detection
@@ -297,7 +302,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       : initialProduct.image;
     setSelectedImage(primaryImage);
 
-    if (initialProduct.variants?.sizes?.length > 0) {
+    if (initialProduct.variants?.sizes && initialProduct.variants.sizes.length > 0) {
       setSize(initialProduct.variants.sizes[0]);
     } else {
       const cat = initialProduct.category;
@@ -310,7 +315,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       }
     }
 
-    if (initialProduct.variants?.colors?.length > 0) {
+    if (initialProduct.variants?.colors && initialProduct.variants.colors.length > 0) {
       setColor(initialProduct.variants.colors[0]);
     } else {
       setColor("");
@@ -319,7 +324,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     if (user && initialProduct) {
       checkEligibility(initialProduct._id);
     }
-  }, [initialProduct, initialRecommendations, slug, user]);
+  }, [initialProduct, initialRecommendations, slug, user, checkEligibility]);
 
   // Auto-change image in a loop every 5 seconds
   useEffect(() => {

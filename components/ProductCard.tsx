@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/store";
 import { isProductInStock } from "@/lib/productStock";
 import { productUrl } from "@/lib/slug";
 import { CiDiscount1 } from "react-icons/ci";
-import { Heart, X, ShoppingCart, Star, ShieldCheck, Truck, RotateCcw, Check } from "lucide-react";
+import { Heart, X, ShoppingCart, Star, Check } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { IoCloseOutline } from "react-icons/io5";
@@ -39,6 +39,32 @@ type WishlistItemFlexible = {
   productId: string | { _id: string };
 };
 
+interface FullProductDetails {
+  _id: string;
+  title: string;
+  category?: string;
+  ratings?: number;
+  rating?: number;
+  price: number;
+  discountPrice?: number;
+  discountedPrice?: number;
+  discountPercentage: number;
+  description?: string;
+  images?: string[];
+  image: string;
+  stock?: number;
+  countInStock?: number;
+  variants?: {
+    sizes?: string[];
+    colors?: string[];
+  };
+  reviews?: Record<string, unknown>[];
+  weight?: number;
+  length?: number;
+  breadth?: number;
+  height?: number;
+}
+
 export default function ProductCard({
   product,
   showActions = true,
@@ -52,7 +78,7 @@ export default function ProductCard({
 
   // Quick view modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [fullProduct, setFullProduct] = useState<any>(null);
+  const [fullProduct, setFullProduct] = useState<FullProductDetails | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [selectedImg, setSelectedImg] = useState("");
   const [modalSize, setModalSize] = useState("");
@@ -83,15 +109,17 @@ export default function ProductCard({
       fetchUserCart();
       setAddedText(true);
       setTimeout(() => setAddedText(false), 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to add to cart from card:", err);
-      const msg = err.response?.data?.message || "";
-      if (
-        err.response?.status === 401 ||
-        msg.toLowerCase().includes("log in") ||
-        msg.toLowerCase().includes("unauthorized")
-      ) {
-        router.push("/login");
+      if (err instanceof AxiosError) {
+        const msg = err.response?.data?.message || "";
+        if (
+          err.response?.status === 401 ||
+          msg.toLowerCase().includes("log in") ||
+          msg.toLowerCase().includes("unauthorized")
+        ) {
+          router.push("/login");
+        }
       }
     }
   };
@@ -479,7 +507,7 @@ export default function ProductCard({
                           <Star
                             key={i}
                             className={`w-3.5 h-3.5 ${
-                              i < Math.round(fullProduct.ratings ?? fullProduct.rating) 
+                              i < Math.round(fullProduct.ratings ?? fullProduct.rating ?? 0) 
                                 ? "fill-amber-400 text-amber-400" 
                                 : "text-neutral-200"
                             }`}
@@ -487,7 +515,7 @@ export default function ProductCard({
                         ))}
                       </div>
                       <span className="font-semibold bg-neutral-100 px-1.5 py-0.5 rounded text-neutral-600">
-                        {(fullProduct.ratings ?? fullProduct.rating).toFixed(1)}
+                        {(fullProduct.ratings ?? fullProduct.rating ?? 0).toFixed(1)}
                       </span>
                       <span className="text-neutral-300">|</span>
                       <span className="text-neutral-400">
@@ -498,9 +526,9 @@ export default function ProductCard({
                     {/* Pricing */}
                     <div className="flex items-baseline gap-3 py-2 border-y border-neutral-100">
                       <span className="text-xl font-bold text-neutral-900">
-                        ₹{(fullProduct.discountPrice ?? fullProduct.discountedPrice).toLocaleString()}
+                        ₹{(fullProduct.discountPrice ?? fullProduct.discountedPrice ?? 0).toLocaleString()}
                       </span>
-                      {fullProduct.price > (fullProduct.discountPrice ?? fullProduct.discountedPrice) && (
+                      {fullProduct.price > (fullProduct.discountPrice ?? fullProduct.discountedPrice ?? 0) && (
                         <>
                           <span className="text-sm text-neutral-400 line-through">
                             ₹{fullProduct.price.toLocaleString()}

@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       targetProduct = await findProductBySlugOrId(slug);
     }
 
-    let recommendedProducts: any[] = [];
+    let recommendedProducts: unknown[] = [];
 
     if (targetProduct) {
       // 1. Fetch active products in the same category, excluding the current one
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
       // 2. If we need more products to reach the limit, fetch active products from other categories
       if (recommendedProducts.length < limit) {
-        const excludedIds = [targetProduct._id, ...recommendedProducts.map((p) => p._id)];
+        const excludedIds = [targetProduct._id, ...((recommendedProducts as { _id: unknown }[]).map((p) => p._id))];
         const additionalProducts = await Product.find({
           isActive: true,
           _id: { $nin: excludedIds },

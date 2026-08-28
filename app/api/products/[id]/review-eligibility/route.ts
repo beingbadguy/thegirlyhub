@@ -48,10 +48,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error checking review eligibility:", error);
+    const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { success: false, message: error.message || "Internal server error" },
+      { success: false, message },
       { status: 500 }
     );
   }
