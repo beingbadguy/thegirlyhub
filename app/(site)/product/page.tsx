@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { VscLoading } from "react-icons/vsc";
 import { IoCloseOutline, IoFilterSharp } from "react-icons/io5";
 import { useRouter } from "next/navigation";
+import FilterSidebar from "@/components/FilterSidebar";
 import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
 
@@ -21,7 +22,6 @@ interface Category {
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [fullProducts, setFullProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -55,9 +55,10 @@ const ProductsPage = () => {
         limit: 12,
       };
       if (selectedCategory) params.category = selectedCategory;
+      if (maxValue < 100000) params.maxPrice = maxValue;
+      if (sortBy !== "default") params.sort = sortBy;
 
       const response = await axios.get("/api/product", { params });
-      setFullProducts(response.data.products);
       setProducts(response.data.products);
       setTotalPages(response.data.pagination?.totalPages ?? 1);
       setServerTotal(response.data.pagination?.total ?? 0);
@@ -74,23 +75,7 @@ const ProductsPage = () => {
     document.title = "Explore Our Products | GirlyHub";
     fetchAllProducts(page);
     fetchCategories();
-  }, [page, selectedCategory]);
-
-  useEffect(() => {
-    let filtered = [...fullProducts];
-    if (maxValue < 100000) {
-      filtered = filtered.filter((p) => p.discountedPrice <= maxValue);
-    }
-    const sorted = filtered;
-    if (sortBy === "priceLowToHigh") {
-      sorted.sort((a, b) => a.discountedPrice - b.discountedPrice);
-    } else if (sortBy === "priceHighToLow") {
-      sorted.sort((a, b) => b.discountedPrice - a.discountedPrice);
-    } else if (sortBy === "ratingHighToLow") {
-      sorted.sort((a, b) => b.rating - a.rating);
-    }
-    setProducts(sorted);
-  }, [sortBy, maxValue, fullProducts]);
+  }, [page, selectedCategory, maxValue, sortBy]);
 
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "auto";
@@ -129,74 +114,44 @@ const ProductsPage = () => {
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={() => setShowFilter(true)}
-          className="flex cursor-pointer items-center gap-2 rounded-md bg-gray-100 px-4 py-2 hover:bg-gray-200"
+          className="flex cursor-pointer items-center gap-2 rounded-md bg-gray-100 px-4 py-2 hover:bg-gray-200 transition"
         >
           <IoFilterSharp className="text-xl" />
-          <span>Filter</span>
+          <span>Filter & Sort</span>
         </button>
+
+        {/* External Quick Sort Dropdown */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="cursor-pointer rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+        >
+          <option value="default">Sort by: Default</option>
+          <option value="priceLowToHigh">Price: Low to High</option>
+          <option value="priceHighToLow">Price: High to Low</option>
+        </select>
       </div>
 
-      <div
-        className={`absolute left-0 top-[88px] z-[999] flex h-full transition-all duration-300 ${
-          showFilter ? "translate-x-0" : "-translate-x-[200%]"
-        }`}
-      >
-        <IoCloseOutline
-          className="absolute right-4 top-4 size-6 cursor-pointer"
-          onClick={() => setShowFilter(false)}
-        />
-        <aside className="w-[250px] border bg-gray-50 p-4">
-          <h3 className="mb-4 text-lg font-semibold">Filters</h3>
-          <p className="my-2 text-sm text-black">Category</p>
-          <select
-            value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              setPage(1);
-            }}
-            className="w-full cursor-pointer rounded-md border px-2 py-1"
-          >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category._id} value={category.name}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <p className="my-2 text-sm text-black">Max Price</p>
-          <input
-            type="range"
-            min={0}
-            max={100000}
-            step={1000}
-            value={maxValue}
-            onChange={(e) => setMaxValue(Number(e.target.value))}
-            className="w-full"
-          />
-          <p className="my-2 text-center text-xs text-gray-500">₹{maxValue}</p>
-          <p className="my-2 text-sm text-black">Sort By</p>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="w-full cursor-pointer rounded-md border px-2 py-1"
-          >
-            <option value="default">Default</option>
-            <option value="priceLowToHigh">Price: Low to High</option>
-            <option value="priceHighToLow">Price: High to Low</option>
-          </select>
-          <button
-            className="my-4 cursor-pointer text-sm font-semibold text-red-600 hover:underline"
-            onClick={() => {
-              setSelectedCategory("");
-              setMaxValue(100000);
-              setSortBy("default");
-              setShowFilter(false);
-            }}
-          >
-            Clear Filters
-          </button>
-        </aside>
-      </div>
+      <FilterSidebar
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={(val) => {
+          setSelectedCategory(val);
+          setPage(1);
+        }}
+        maxValue={maxValue}
+        setMaxValue={setMaxValue}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        showFilter={showFilter}
+        setShowFilter={setShowFilter}
+        onClear={() => {
+          setSelectedCategory("");
+          setMaxValue(100000);
+          setSortBy("default");
+          setPage(1);
+        }}
+      />
 
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {products.map((product) => (

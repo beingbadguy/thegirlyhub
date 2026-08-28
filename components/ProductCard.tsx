@@ -546,27 +546,26 @@ export default function ProductCard({
                     </p>
 
                     {/* Sizes Selection */}
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Select Size</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(fullProduct.variants?.sizes && fullProduct.variants.sizes.length > 0 
-                          ? fullProduct.variants.sizes 
-                          : ["XS", "S", "M", "L", "XL"]
-                        ).map((s: string) => (
-                          <button
-                            key={s}
-                            onClick={() => setModalSize(s)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${
-                              s === modalSize
-                                ? "bg-neutral-900 text-white border-transparent"
-                                : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-400"
-                            }`}
-                          >
-                            {s}
-                          </button>
-                        ))}
+                    {fullProduct.variants?.sizes && fullProduct.variants.sizes.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Select Size</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {fullProduct.variants.sizes.map((s: string) => (
+                            <button
+                              key={s}
+                              onClick={() => setModalSize(s)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${
+                                s === modalSize
+                                  ? "bg-neutral-900 text-white border-transparent"
+                                  : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-400"
+                              }`}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Colors Selection (Conditional) */}
                     {fullProduct.variants?.colors && fullProduct.variants.colors.length > 0 && (

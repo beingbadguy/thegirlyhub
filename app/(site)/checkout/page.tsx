@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import axios, { AxiosError } from "axios";
 import { VscLoading } from "react-icons/vsc";
-import { loadStripe } from "@stripe/stripe-js";
 import { MdOutlinePayment } from "react-icons/md";
 import { IoCashOutline } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
@@ -19,9 +18,29 @@ import {
 } from "@/lib/orderValidation";
 import { isProductInStock } from "@/lib/productStock";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-);
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => {
+      resolve(true);
+    };
+    script.onerror = () => {
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+};
 
 function RequiredLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -218,22 +237,75 @@ export default function CheckoutPage() {
 
     setPlacingOrder(true);
     try {
-      const stripe = await stripePromise;
-      const response = await axios.post("/api/create-payment-intent", {
-        amount: finalAmount * 100,
-        _id: user?._id,
-        phone,
-        productName: "ShopBasics - Thankyou for shopping with us!",
-        totalAmount: finalAmount,
-        paymentMethod: "online",
-        address,
-        zip,
+      const res = await loadRazorpayScript();
+      if (!res) {
+        setOrderError("Razorpay SDK failed to load. Are you online?");
+        setPlacingOrder(false);
+        return;
+      }
+
+      // Create order via our backend
+      const orderRes = await axios.post("/api/razorpay/create-order", {
+        amount: finalAmount,
       });
-      const { id } = response.data;
-      await stripe?.redirectToCheckout({ sessionId: id });
-    } catch {
-      setOrderError("Something went wrong. Please try again.");
-    } finally {
+
+      const { order } = orderRes.data;
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Frontend public key
+        amount: order.amount,
+        currency: order.currency,
+        name: "GirlyHub",
+        description: "Thank you for shopping with us!",
+        order_id: order.id,
+        handler: async function (response: any) {
+          try {
+            setPlacingOrder(true); // Keep loading state true during verification
+            const verifyRes = await axios.post("/api/razorpay/verify", {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              orderData: {
+                ...buildOrderPayload(),
+                userId: user?._id,
+                paymentMethod: "online"
+              }
+            });
+
+            if (verifyRes.data.success) {
+              // Clear local cart
+              useAuthStore.setState({ userCart: null });
+              router.push(`/success/${verifyRes.data.orderId}`);
+            } else {
+              setOrderError("Payment verification failed.");
+            }
+          } catch (error) {
+            console.error("Verification error", error);
+            setOrderError("Payment verification failed. Please contact support.");
+          } finally {
+            setPlacingOrder(false);
+          }
+        },
+        prefill: {
+          name: recipientName,
+          email: email,
+          contact: phone,
+        },
+        theme: {
+          color: "#e11d48", // rose-600
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on("payment.failed", function (response: any) {
+        setOrderError("Payment failed: " + response.error.description);
+        setPlacingOrder(false);
+      });
+      paymentObject.open();
+
+    } catch (error) {
+      console.error(error);
+      setOrderError("Something went wrong initializing payment. Please try again.");
       setPlacingOrder(false);
     }
   };

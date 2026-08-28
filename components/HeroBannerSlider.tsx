@@ -50,10 +50,10 @@ export default function HeroBannerSlider() {
         {!banner ? (
           <div
             aria-label="Loading featured offers"
-            className="aspect-[16/7] min-h-[220px] w-full animate-pulse bg-gray-200 sm:min-h-[300px]"
+            className="aspect-[4/3] md:aspect-[16/7] w-full animate-pulse bg-gray-200"
           />
         ) : (
-          <div className="relative aspect-[16/7] min-h-[220px] w-full sm:min-h-[300px]">
+          <div className="relative aspect-[4/3] md:aspect-[16/7] w-full">
             <Image
               key={banner._id}
               src={banner.image}

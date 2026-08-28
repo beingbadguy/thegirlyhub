@@ -4,6 +4,8 @@ import { buildProductSlug, extractIdFromSlug, slugify } from "@/lib/slug";
 import Product from "@/models/product.model";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+import { cloudinaryConnection } from "@/config/cloudinaryConnection";
+import cloudinary from "cloudinary";
 
 async function findProductBySlugOrId(identifier: string) {
   const decoded = decodeURIComponent(identifier);
@@ -122,15 +124,24 @@ export async function PUT(
   context: { params: Promise<{ id: string }> },
 ) {
   await databaseConnection();
+  cloudinaryConnection();
   try {
+    const decoded = await fetchTokenDetails(request);
+    if (!decoded || decoded.role !== "admin") {
+      return NextResponse.json(
+        { message: "Unauthorised Access, you must be admin", success: false },
+        { status: 401 },
+      );
+    }
+
     const { id } = await context.params;
-    const { title, discountedPrice, countInStock } = await request.json();
     if (!id) {
       return NextResponse.json(
         { message: "Product id is required", success: false },
         { status: 400 },
       );
     }
+
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json(
@@ -138,9 +149,119 @@ export async function PUT(
         { status: 404 },
       );
     }
+
+    const contentType = request.headers.get("content-type") || "";
+    let title = product.title;
+    let description = product.description;
+    let price = product.price;
+    let category = product.category;
+    let countInStock = product.countInStock;
+    let discountedPrice = product.discountedPrice;
+    let info = product.info;
+    let weight = product.weight;
+    let imagesToSave = product.images;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      title = (formData.get("title") as string) || title;
+      description = (formData.get("description") as string) || description;
+      price = formData.get("price") ? Number(formData.get("price")) : price;
+      category = (formData.get("category") as string) || category;
+      countInStock = formData.get("countInStock") ? Number(formData.get("countInStock")) : countInStock;
+      discountedPrice = formData.get("discountedPrice") ? Number(formData.get("discountedPrice")) : discountedPrice;
+      info = (formData.get("info") as string) || info;
+      weight = formData.get("weight") ? Number(formData.get("weight")) : weight;
+
+      // Extract new image files and existing image URLs
+      const imagesField = formData.getAll("images");
+      const imageFiles: File[] = [];
+      const existingUrls: string[] = [];
+
+      imagesField.forEach((item) => {
+        if (item instanceof File) {
+          if (item.size > 0) {
+            imageFiles.push(item);
+          }
+        } else if (typeof item === "string" && item.trim() !== "") {
+          existingUrls.push(item);
+        }
+      });
+
+      const imageSingleField = formData.getAll("image");
+      imageSingleField.forEach((item) => {
+        if (item instanceof File) {
+          if (item.size > 0) {
+            imageFiles.push(item);
+          }
+        } else if (typeof item === "string" && item.trim() !== "") {
+          existingUrls.push(item);
+        }
+      });
+
+      const existingImagesField = formData.getAll("existingImages");
+      existingImagesField.forEach((item) => {
+        if (typeof item === "string" && item.trim() !== "") {
+          existingUrls.push(item);
+        }
+      });
+
+      // Upload new files
+      const uploadPromises = imageFiles.map(async (file) => {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64String = Buffer.from(arrayBuffer).toString("base64");
+        const dataURI = `data:${file.type};base64,${base64String}`;
+        const uploadResponse = await cloudinary.v2.uploader.upload(dataURI, {
+          folder: "basicsproduct",
+        });
+        return uploadResponse.secure_url;
+      });
+
+      const newUploadedUrls = await Promise.all(uploadPromises);
+
+      // Merge existing and new URLs
+      const finalImages = [...existingUrls, ...newUploadedUrls];
+      
+      const hasImageFields =
+        formData.has("images") || formData.has("image") || formData.has("existingImages");
+      
+      if (hasImageFields) {
+        imagesToSave = finalImages;
+      }
+    } else {
+      const body = await request.json();
+      title = body.title !== undefined ? body.title : title;
+      description = body.description !== undefined ? body.description : description;
+      price = body.price !== undefined ? Number(body.price) : price;
+      category = body.category !== undefined ? body.category : category;
+      countInStock = body.countInStock !== undefined ? Number(body.countInStock) : countInStock;
+      discountedPrice = body.discountedPrice !== undefined ? Number(body.discountedPrice) : discountedPrice;
+      info = body.info !== undefined ? body.info : info;
+      weight = body.weight !== undefined ? Number(body.weight) : weight;
+
+      if (Array.isArray(body.images)) {
+        imagesToSave = body.images;
+      } else if (body.image !== undefined) {
+        imagesToSave = [body.image];
+      }
+    }
+
+    const discountPercentage =
+      ((Number(price) - Number(discountedPrice)) / Number(price)) * 100;
+
+    // Apply values to product model (updating both legacy and new properties to sync correctly)
     product.title = title;
-    product.discountedPrice = discountedPrice;
+    product.description = description;
+    product.price = price;
+    product.category = category;
     product.countInStock = countInStock;
+    product.stock = countInStock;
+    product.discountedPrice = discountedPrice;
+    product.discountPrice = discountedPrice;
+    product.discountPercentage = discountPercentage;
+    product.info = info;
+    product.weight = weight;
+    product.images = imagesToSave;
+
     product.slug = buildProductSlug(title, product._id.toString());
 
     await product.save();
@@ -151,7 +272,7 @@ export async function PUT(
   } catch (error) {
     console.log(error);
     return NextResponse.json(
-      { message: "Error fetching product", success: false },
+      { message: "Error updating product", success: false },
       { status: 500 },
     );
   }

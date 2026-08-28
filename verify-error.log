@@ -1,0 +1,5 @@
+ValidationError: Order validation failed: state: Path `state` is required., city: Path `city` is required., recipientName: Path `recipientName` is required.
+    at Document.invalidate (C:\Users\autho\OneDrive\Desktop\basics-ecommerce\node_modules\mongoose\lib\document.js:3329:32)
+    at C:\Users\autho\OneDrive\Desktop\basics-ecommerce\node_modules\mongoose\lib\document.js:3090:17
+    at C:\Users\autho\OneDrive\Desktop\basics-ecommerce\node_modules\mongoose\lib\schemaType.js:1407:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)

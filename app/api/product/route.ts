@@ -11,10 +11,29 @@ export async function GET(request: NextRequest) {
   try {
     const { page, limit, skip } = getPagination(request, 12);
     const category = request.nextUrl.searchParams.get("category");
-    const filter = category ? { category } : {};
+    const minPrice = request.nextUrl.searchParams.get("minPrice");
+    const maxPrice = request.nextUrl.searchParams.get("maxPrice");
+    const sortParam = request.nextUrl.searchParams.get("sort");
+
+    const filter: any = {};
+    if (category) filter.category = category;
+    if (minPrice || maxPrice) {
+      filter.discountedPrice = {};
+      if (minPrice) filter.discountedPrice.$gte = Number(minPrice);
+      if (maxPrice) filter.discountedPrice.$lte = Number(maxPrice);
+    }
+
+    let sortOption: any = { createdAt: -1 };
+    if (sortParam === "priceLowToHigh") {
+      sortOption = { discountedPrice: 1 };
+    } else if (sortParam === "priceHighToLow") {
+      sortOption = { discountedPrice: -1 };
+    } else if (sortParam === "ratingHighToLow") {
+      sortOption = { ratings: -1 };
+    }
 
     const [products, total] = await Promise.all([
-      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.find(filter).sort(sortOption).skip(skip).limit(limit),
       Product.countDocuments(filter),
     ]);
 
@@ -47,24 +66,38 @@ export async function POST(request: NextRequest) {
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const price = formData.get("price") as string;
-    const image = formData.get("image") as File;
     const category = formData.get("category") as string;
     const countInStock = formData.get("countInStock") as string;
     const discountedPrice = formData.get("discountedPrice") as string;
     const info = formData.get("info") as string;
 
+    const weight = formData.get("weight") ? Number(formData.get("weight")) : undefined;
+    const length = formData.get("length") ? Number(formData.get("length")) : undefined;
+    const breadth = formData.get("breadth") ? Number(formData.get("breadth")) : undefined;
+    const height = formData.get("height") ? Number(formData.get("height")) : undefined;
+
+    // Retrieve files from 'images' or 'image' field(s)
+    let imageFiles = formData.getAll("images") as File[];
+    if (imageFiles.length === 0 || (imageFiles.length === 1 && (imageFiles[0] as any).size === 0)) {
+      imageFiles = formData.getAll("image") as File[];
+    }
+    // Filter out any invalid/empty file entries
+    imageFiles = imageFiles.filter(
+      (file) => file && typeof file !== "string" && file.size > 0
+    );
+
     if (
       !title?.trim() ||
       !description ||
       !price ||
-      !image ||
+      imageFiles.length === 0 ||
       !category ||
       !countInStock ||
       !discountedPrice ||
       !info?.trim()
     ) {
       return NextResponse.json(
-        { message: "All fields are required", sucess: false },
+        { message: "All fields are required", sucess: false, success: false },
         { status: 200 },
       );
     }
@@ -72,26 +105,35 @@ export async function POST(request: NextRequest) {
     const discountPercentage =
       ((Number(price) - Number(discountedPrice)) / Number(price)) * 100;
 
-    // needed to upload file
-    const arrayBuffer = await image.arrayBuffer();
-    const base64String = Buffer.from(arrayBuffer).toString("base64");
-    const dataURI = `data:${image.type};base64,${base64String}`;
-
-    const productImageResponse = await cloudinary.v2.uploader.upload(dataURI, {
-      folder: "basicsproduct",
+    // Upload all files to Cloudinary
+    const uploadPromises = imageFiles.map(async (file) => {
+      const arrayBuffer = await file.arrayBuffer();
+      const base64String = Buffer.from(arrayBuffer).toString("base64");
+      const dataURI = `data:${file.type};base64,${base64String}`;
+      const uploadResponse = await cloudinary.v2.uploader.upload(dataURI, {
+        folder: "basicsproduct",
+      });
+      return uploadResponse.secure_url;
     });
+
+    const uploadedUrls = await Promise.all(uploadPromises);
 
     const product = new Product({
       title,
       description,
       price,
-      image: productImageResponse.secure_url,
+      image: uploadedUrls[0] || "",
+      images: uploadedUrls,
       category,
       countInStock,
       discountedPrice,
       discountPercentage,
       isActive: true,
       info,
+      weight,
+      length,
+      breadth,
+      height,
     });
 
     await product.save();

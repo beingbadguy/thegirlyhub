@@ -183,7 +183,7 @@ const CartPage = () => {
                       <Trash2 size={20} />
                     </button>
                   </div>
-                  {item.size && (
+                  {item.size && item.size.toLowerCase() !== "one size" && (
                     <div className=" text-gray-500 text-sm font-semibold italic mt-2 md:mt-0">
                       size:{item.size}
                     </div>

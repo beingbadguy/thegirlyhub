@@ -512,13 +512,13 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             </p>
 
             {/* Sizes variants */}
-            <div className="space-y-2 py-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-                Select Size
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {product.variants?.sizes && product.variants.sizes.length > 0 ? (
-                  product.variants.sizes.map((s) => (
+            {product.variants?.sizes && product.variants.sizes.length > 0 && (
+              <div className="space-y-2 py-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+                  Select Size
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {product.variants.sizes.map((s) => (
                     <button
                       key={s}
                       onClick={() => setSize(s)}
@@ -529,23 +529,10 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                     >
                       {s}
                     </button>
-                  ))
-                ) : (
-                  ["XS", "S", "M", "L", "XL"].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSize(s)}
-                      className={`min-w-[45px] h-[40px] px-3 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${s === size
-                        ? "bg-neutral-900 text-white border-transparent shadow-sm"
-                        : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-400"
-                        }`}
-                    >
-                      {s}
-                    </button>
-                  ))
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Colors variant swatches */}
             {showColorSelector && (

@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { VscLoading } from "react-icons/vsc";
 import { Heart, Sparkles } from "lucide-react";
+import FilterSidebar from "@/components/FilterSidebar";
+import { IoFilterSharp } from "react-icons/io5";
 
 type Product = React.ComponentProps<typeof ProductCard>["product"];
 
@@ -16,6 +18,9 @@ const Page = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showFilter, setShowFilter] = useState(false);
+  const [maxValue, setMaxValue] = useState(100000);
+  const [sortBy, setSortBy] = useState("default");
   const router = useRouter();
 
   const categoryName = decodeURIComponent(name as string);
@@ -27,9 +32,11 @@ const Page = () => {
   const fetchProducts = async (pageNum: number) => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/product", {
-        params: { page: pageNum, limit: 12, category: categoryName },
-      });
+      const params: Record<string, string | number> = { page: pageNum, limit: 12, category: categoryName };
+      if (maxValue < 100000) params.maxPrice = maxValue;
+      if (sortBy !== "default") params.sort = sortBy;
+
+      const response = await axios.get("/api/product", { params });
       setProducts(response.data.products);
       setTotalPages(response.data.pagination?.totalPages ?? 1);
       setTotal(response.data.pagination?.total ?? 0);
@@ -51,7 +58,7 @@ const Page = () => {
   useEffect(() => {
     fetchProducts(page);
     window.scrollTo(0, 0);
-  }, [name, page]);
+  }, [name, page, maxValue, sortBy]);
 
   if (loading) {
     return (
@@ -79,6 +86,45 @@ const Page = () => {
         </span>{" "}
         / <span className="text-black">{categoryName}</span>
       </div>
+
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          onClick={() => setShowFilter(true)}
+          className="flex cursor-pointer items-center gap-2 rounded-md bg-gray-100 px-4 py-2 hover:bg-gray-200 transition"
+        >
+          <IoFilterSharp className="text-xl" />
+          <span>Filter & Sort</span>
+        </button>
+
+        {/* External Quick Sort Dropdown */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="cursor-pointer rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+        >
+          <option value="default">Sort by: Default</option>
+          <option value="priceLowToHigh">Price: Low to High</option>
+          <option value="priceHighToLow">Price: High to Low</option>
+        </select>
+      </div>
+
+      <FilterSidebar
+        categories={[]} // Categories are hidden here
+        selectedCategory={categoryName}
+        setSelectedCategory={() => {}}
+        maxValue={maxValue}
+        setMaxValue={setMaxValue}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        showFilter={showFilter}
+        setShowFilter={setShowFilter}
+        onClear={() => {
+          setMaxValue(100000);
+          setSortBy("default");
+          setPage(1);
+        }}
+        hideCategory={true}
+      />
 
       {products.length === 0 ? (
         <div className="relative mx-auto mt-8 flex min-h-[430px] max-w-3xl items-center justify-center overflow-hidden rounded-3xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-amber-50 px-6 py-12 text-center shadow-[0_20px_60px_-35px_rgba(190,24,93,0.45)]">

@@ -149,7 +149,7 @@ export default function OrderDetailsCard({
                     <p className="font-medium">{item.productId.title}</p>
                     <p>₹{item.productId.price}</p>
                     <p>Qty: {item.quantity}</p>
-                    {item?.size && <p>Size: {item.size}</p>}
+                    {item?.size && item.size.toLowerCase() !== "one size" && <p>Size: {item.size}</p>}
                   </div>
                 </li>
               ))}
