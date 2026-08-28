@@ -1,254 +1,159 @@
 "use client";
-import { useAuthStore } from "@/store/store";
+import PaginationControls from "@/components/PaginationControls";
+import ProductCard from "@/components/ProductCard";
 import axios, { AxiosError } from "axios";
 import { Search, X } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { CiHeart } from "react-icons/ci";
-import { IoMdHeart } from "react-icons/io";
 
-type Products = {
-  _id: string;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice: number;
-  countInStock: number;
-  rating: number;
-  numReviews: number;
-  image: string;
-  discountPercentage: number;
-};
+type Products = React.ComponentProps<typeof ProductCard>["product"];
 
 const Page = () => {
-  const { user, addToWishlist } = useAuthStore();
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<Products[]>([]);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const fetchAllProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/product");
-      // console.log(response.data);
-
-      setProducts(response.data.products);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];
-
-  type WishlistItemFlexible = {
-    productId: string | { _id: string };
-  };
-  const alreadyInWishlist = (id: string) => {
-    return allProductsOfWishlist.some((item: WishlistItemFlexible) => {
-      if (typeof item.productId === "string") {
-        return item.productId === id;
-      } else {
-        return item.productId._id === id;
-      }
-    });
-  };
-
-  const searchedProducts = products.filter((product) => {
-    return product.title.toLowerCase().includes(query.toLowerCase());
-  });
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 12;
 
   useEffect(() => {
+    const fetchAllProducts = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get("/api/product", {
+          params: { page: 1, limit: 100 },
+        });
+        setProducts(response.data.products);
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          console.error(error.response?.data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchAllProducts();
   }, []);
+
+  const searchedProducts = products.filter((product) =>
+    product.title.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  const activeList = query.trim().length > 0 ? searchedProducts : products;
+  const totalItems = activeList.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  const paginatedList = activeList.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
+  );
+
+  const grid = (items: Products[]) => (
+    <div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {items.map((product) => (
+        <ProductCard key={product._id} product={product} />
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen w-full">
       <div
-        className={` flex items-center justify-center flex-col transition-all duration-300 ${
+        className={`flex flex-col items-center justify-center transition-all duration-300 ${
           query.length > 0 ? "" : "h-[50vh]"
-        } `}
+        }`}
       >
         <h1
           className={`${
             query.length > 0 ? "hidden" : "block"
-          }  my-2 text-3xl text-center w-full mx-4 md:text-4xl`}
+          } mx-4 my-2 w-full text-center text-3xl md:text-4xl font-serif text-rose-950`}
         >
           What do you want today?
         </h1>
-        <div className="flex items-center gap-2 border border-black my-6 w-[90%] md:w-[50%] rounded">
+        <div className="my-6 flex w-[90%] items-center gap-2 rounded-full border border-rose-200 bg-white px-4 py-1.5 shadow-sm md:w-[50%] focus-within:border-rose-400">
+          <Search className="size-5 text-rose-400" />
           <input
             type="text"
-            className="w-full  py-2 border-none outline-none ml-2"
-            placeholder="search anything..."
+            className="w-full border-none bg-transparent py-2 outline-none text-rose-950 placeholder:text-rose-300"
+            placeholder="Search dresses, tops, jewellery..."
             onChange={(e) => setQuery(e.target.value)}
             value={query}
           />
-
-          {query.length > 0 ? (
-            <X className="mr-2 cursor-pointer" onClick={() => setQuery("")} />
-          ) : (
-            <Search className="mr-2 cursor-pointer" />
+          {query.length > 0 && (
+            <X
+              className="size-5 cursor-pointer text-rose-400 hover:text-rose-600"
+              onClick={() => setQuery("")}
+            />
           )}
         </div>
       </div>
-      {/* //all the products */}
 
-      <div>
-        {query.length > 0 ? (
-          <div className="p-4  w-full">
-            <h1 className="font-bold md:text-2xl">
-              Searched Products for &quot;{query}&quot;
-            </h1>
-            <ul className="my-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 w-full">
-              {loading && (
-                <p className="flex w-full items-center justify-center h-20">
-                  <AiOutlineLoading3Quarters className="animate-spin text-purple-700" />
-                </p>
-              )}
-              {searchedProducts.length > 0 ? (
-                searchedProducts &&
-                searchedProducts.map((product) => (
-                  <div
-                    key={product._id}
-                    className="bg-white border border-purple-100 rounded-xl shadow-sm p-4 cursor-pointer flex flex-col relative"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs bg-purple-700 text-white px-2 py-1 rounded">
-                        {Math.floor(product.discountPercentage)}% Off
-                      </span>
-                      <div
-                        className="bg-gray-100 p-1 rounded-full"
-                        onClick={() => {
-                          if (!user) {
-                            return router.push("/login");
-                          } else {
-                            addToWishlist(product._id);
-                          }
-                        }}
-                      >
-                        {user && alreadyInWishlist(product._id) ? (
-                          <IoMdHeart className="text-red-500 text-2xl" />
-                        ) : (
-                          <CiHeart className="text-black text-2xl hover:text-red-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="overflow-hidden rounded-md">
-                      <Image
-                        src={product.image || "/placeholder.png"}
-                        alt={product.title}
-                        width={300}
-                        height={300}
-                        className="w-full h-40 object-cover rounded mb-2  transform transition-transform duration-300 hover:scale-110"
-                        onClick={() => router.push(`/product/${product._id}`)}
-                      />
-                    </div>
-
-                    <h3
-                      className="font-semibold text-sm md:text-base mt-2"
-                      onClick={() => router.push(`/product/${product._id}`)}
-                    >
-                      {product.title}
-                    </h3>
-
-                    <div
-                      className="flex items-center justify-between mt-2"
-                      onClick={() => router.push(`/product/${product._id}`)}
-                    >
-                      <p className="text-purple-700 font-semibold text-sm">
-                        ₹{product.discountedPrice}
-                      </p>
-                      <p className="text-xs line-through text-red-500">
-                        ₹{product.price}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div>No products found.</div>
-              )}
-            </ul>
+      <div className="mx-auto max-w-7xl p-4">
+        {loading ? (
+          <div className="flex h-32 items-center justify-center">
+            <AiOutlineLoading3Quarters className="animate-spin text-2xl text-rose-600" />
           </div>
+        ) : query.trim().length > 0 ? (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-xl font-semibold text-rose-950 md:text-2xl">
+                Searched Products for &quot;{query}&quot;
+              </h2>
+              <span className="text-sm text-rose-900/60">
+                {totalItems} result{totalItems !== 1 ? "s" : ""}
+              </span>
+            </div>
+            {totalItems > 0 ? (
+              <>
+                {grid(paginatedList)}
+                <PaginationControls
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={(p) => {
+                    setPage(p);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                />
+                {totalItems > itemsPerPage && (
+                  <p className="mt-3 text-center text-sm text-rose-900/50">
+                    Showing page {page} of {totalPages} ({totalItems} products)
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="my-8 text-center text-rose-900/60">
+                No products found matching &quot;{query}&quot;. Try another search term!
+              </p>
+            )}
+          </>
         ) : (
-          <div className="p-4 w-full">
-            <h1 className="font-bold md:text-2xl">All Products</h1>
-            <ul className="my-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 w-full">
-              {loading && (
-                <p className="flex w-full items-center justify-center h-20">
-                  <AiOutlineLoading3Quarters className="animate-spin text-purple-700" />
-                </p>
-              )}
-              {products &&
-                products.map((product) => (
-                  <div
-                    key={product._id}
-                    className="bg-white border border-purple-100 rounded-xl shadow-sm p-4 cursor-pointer  flex flex-col relative"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs bg-purple-700 text-white px-2 py-1 rounded">
-                        {Math.floor(product.discountPercentage)}% Off
-                      </span>
-                      <div
-                        className="bg-gray-100 p-1 rounded-full"
-                        onClick={() => {
-                          if (!user) {
-                            return router.push("/login");
-                          } else {
-                            addToWishlist(product._id);
-                          }
-                        }}
-                      >
-                        {user && alreadyInWishlist(product._id) ? (
-                          <IoMdHeart className="text-red-500 text-2xl" />
-                        ) : (
-                          <CiHeart className="text-black text-2xl hover:text-red-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="overflow-hidden rounded-md">
-                      <Image
-                        src={product.image || "/placeholder.png"}
-                        alt={product.title}
-                        width={300}
-                        height={300}
-                        className="w-full h-40 object-cover rounded mb-2  transform transition-transform duration-300 hover:scale-110"
-                        onClick={() => router.push(`/product/${product._id}`)}
-                      />
-                    </div>
-
-                    <h3
-                      className="font-semibold text-sm md:text-base mt-2"
-                      onClick={() => router.push(`/product/${product._id}`)}
-                    >
-                      {product.title}
-                    </h3>
-
-                    <div
-                      className="flex items-center justify-between mt-2"
-                      onClick={() => router.push(`/product/${product._id}`)}
-                    >
-                      <p className="text-purple-700 font-semibold text-sm">
-                        ₹{product.discountedPrice}
-                      </p>
-                      <p className="text-xs line-through text-red-500">
-                        ₹{product.price}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-            </ul>
-          </div>
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-xl font-semibold text-rose-950 md:text-2xl">
+                All Products
+              </h2>
+              <span className="text-sm text-rose-900/60">
+                {totalItems} products
+              </span>
+            </div>
+            {grid(paginatedList)}
+            <PaginationControls
+              page={page}
+              totalPages={totalPages}
+              onPageChange={(p) => {
+                setPage(p);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+            {totalItems > itemsPerPage && (
+              <p className="mt-3 text-center text-sm text-rose-900/50">
+                Showing page {page} of {totalPages} ({totalItems} products)
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

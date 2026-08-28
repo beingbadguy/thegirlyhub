@@ -1,74 +1,62 @@
 "use client";
+import PaginationControls from "@/components/PaginationControls";
+import ProductCard from "@/components/ProductCard";
 import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import axios, { AxiosError } from "axios";
-import { IoCloseOutline } from "react-icons/io5";
 import { VscCoffee } from "react-icons/vsc";
-import { useEffect } from "react";
-
-// interface Product {
-//   _id: string;
-//   title: string;
-//   description: string;
-//   price: number;
-//   discountedPrice: number;
-//   countInStock: number;
-//   rating: number;
-//   numReviews: number;
-//   image: string;
-//   discountPercentage: number;
-//   isActive: boolean;
-//   category: string;
-// }
-
-// type WishlistItem = {
-//   productId: Product;
-//   _id: string;
-// };
-
-// type WishlistGroup = {
-//   _id: string;
-//   products: WishlistItem[];
-// };
+import { useEffect, useState } from "react";
 
 const WishlistPage = () => {
   const router = useRouter();
   const { fetchUser, fetchUserWishlist, userWishlist } = useAuthStore();
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 12;
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
       await axios.delete(`/api/wishlist/${productId}`);
-      // console.log(res.data);
       fetchUser();
+      fetchUserWishlist();
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
-      } else {
-        console.error("Failed to remove from wishlist", error);
       }
     }
   };
-  // console.log(userWishlist?.products.length);
 
-  const isWishlistEmpty =
-    !userWishlist || !userWishlist.products || userWishlist.products.length < 1;
+  const allProducts = userWishlist?.products || [];
+  const totalItems = allProducts.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const isWishlistEmpty = totalItems < 1;
+
   useEffect(() => {
     fetchUserWishlist();
   }, []);
 
+  useEffect(() => {
+    if (page > totalPages && totalPages > 0) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
+
+  const paginatedProducts = allProducts.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
+  );
+
   return (
-    <div className="p-4 min-h-[70vh]">
-      <div className="text-sm text-gray-500 mb-4">
+    <div className="min-h-[70vh] p-4">
+      <div className="mb-4 text-sm text-gray-500">
         <span
-          className="cursor-pointer hover:text-purple-600"
+          className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/")}
         >
           Home
         </span>{" "}
         /{" "}
         <span
-          className="cursor-pointer hover:text-purple-600"
+          className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/product")}
         >
           Products
@@ -76,59 +64,56 @@ const WishlistPage = () => {
         / <span className="text-black">Wishlist</span>
       </div>
 
-      <h1 className="text-2xl font-bold mb-4 text-purple-700">Your Wishlist</h1>
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold text-pink-700">Your Wishlist</h1>
+        {totalItems > 0 && (
+          <span className="text-sm text-gray-500">
+            {totalItems} saved item{totalItems !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
 
       {isWishlistEmpty && (
-        <div className="text-gray-600 flex items-center gap-1 flex-wrap break-normal my-2 text-sm">
+        <div className="my-2 flex flex-wrap items-center gap-1 text-sm text-gray-600">
           <VscCoffee className="animate-pulse" />
           Your wishlist is empty. Add some items to your wishlist!
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {userWishlist?.products.map((product) => (
-          <div
-            key={product.productId._id}
-            className="relative border rounded-2xl shadow p-4  transition-all bg-white"
-          >
-            <IoCloseOutline
-              className="absolute z-[99] top-2 right-2 text-black hover:text-red-500 cursor-pointer bg-gray-100 rounded-full size-6"
-              onClick={() => handleRemoveFromWishlist(product.productId._id)}
-            />
-
-            <div
-              className="cursor-pointer"
-              onClick={() => router.push(`/product/${product.productId._id}`)}
-            >
-              <div className="overflow-hidden rounded-md">
-                <Image
-                  src={product.productId.image}
-                  alt={product.productId.title}
-                  width={300}
-                  height={200}
-                  className="w-full h-48 hover:scale-110 duration-300 transition-all rounded-xl object-cover bg-white shadow-sm"
-                />
-              </div>
-
-              <h2 className="font-semibold text-base md:text-lg mt-3">
-                {product.productId.title}
-              </h2>
-              <p className="text-gray-600 text-sm mb-1">
-                {product.productId.category}
-              </p>
-
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="md:text-lg font-bold text-purple-600">
-                  ₹{product.productId.discountedPrice}
-                </span>
-                <span className="line-through text-sm text-gray-400">
-                  ₹{product.productId.price}
-                </span>
-              </div>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {paginatedProducts.map((item) => (
+          <ProductCard
+            key={item.productId._id}
+            product={{
+              _id: item.productId._id,
+              title: item.productId.title,
+              price: item.productId.price,
+              discountedPrice: item.productId.discountedPrice,
+              discountPercentage: item.productId.discountPercentage,
+              image: item.productId.image,
+              countInStock: item.productId.countInStock,
+              isActive: item.productId.isActive,
+              category: item.productId.category,
+            }}
+            onRemove={() => handleRemoveFromWishlist(item.productId._id)}
+          />
         ))}
       </div>
+
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
+
+      {totalItems > 0 && (
+        <p className="mt-4 text-center text-sm text-rose-900/50">
+          Showing page {page} of {totalPages} ({totalItems} item{totalItems !== 1 ? "s" : ""} in wishlist)
+        </p>
+      )}
     </div>
   );
 };

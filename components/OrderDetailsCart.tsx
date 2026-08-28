@@ -76,7 +76,7 @@ export default function OrderDetailsCard({
   return (
     <div className="border rounded my-4  p-4 mb-4 w-full ">
       <div className="flex items-center gap-2">
-        <p className="text-sm font-semibold text-purple-700">
+        <p className="text-sm font-semibold text-pink-700">
           ID: #{order._id}
         </p>
         <Copy

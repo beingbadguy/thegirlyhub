@@ -39,7 +39,7 @@
 //           <XAxis dataKey="date" />
 //           <YAxis allowDecimals={false} />
 //           <Tooltip />
-//           <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+//           <Bar dataKey="count" fill="#ec4899" radius={[4, 4, 0, 0]} />
 //         </BarChart>
 //       </ResponsiveContainer>
 //     </div>
@@ -87,7 +87,7 @@ const UserBarChart = ({ users }: { users: UserData[] }) => {
           <Line
             type="monotone"
             dataKey="count"
-            stroke="#8b5cf6"
+            stroke="#ec4899"
             strokeWidth={3}
             dot={{ r: 4 }}
             activeDot={{ r: 6 }}

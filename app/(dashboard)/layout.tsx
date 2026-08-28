@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { DM_Sans, Playfair_Display } from "next/font/google";
+import "../globals.css";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import DashboardNavbar from "@/components/DashboardNavbar";
+import ScrollToTop from "@/components/ScrollToTop";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-display-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const playfair = Playfair_Display({
+  variable: "--font-display-serif",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "BASICS",
-  description:
-    "BASICS is your go-to e-commerce destination for affordable, high-quality essentials. Discover a wide range of products including fashion, electronics, home goods, and more — all delivered to your doorstep.",
+  title: "GirlyHub Admin",
+  description: "GirlyHub store administration",
 };
 
 export default function RootLayout({
@@ -27,16 +27,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className="flex items-start">
+      <body className={`${dmSans.variable} ${playfair.variable} antialiased`}>
+        <ScrollToTop />
+        <div className="flex min-h-screen items-start overflow-hidden">
           <div className="">
             <DashboardSidebar />
           </div>
-          <div className="w-full">
+          <div className="flex min-h-screen max-h-screen min-w-0 flex-1 flex-col overflow-y-scroll">
             <DashboardNavbar />
-            <div className="mx-2">{children}</div>
+            <div className="min-h-0 flex-1">{children}</div>
           </div>
         </div>
       </body>

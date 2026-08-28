@@ -27,7 +27,9 @@ const CouponsPage = () => {
   // Fetch existing coupons
   const fetchCoupons = async () => {
     try {
-      const res = await axios.get("/api/coupon");
+      const res = await axios.get("/api/coupon", {
+        params: { page: 1, limit: 100 },
+      });
       setCoupons(res.data.coupons);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -69,7 +71,7 @@ const CouponsPage = () => {
       if (error instanceof AxiosError) {
         setErrorMsg(
           error.response?.data?.message ||
-            "Something went wrong while adding the coupon."
+            "Something went wrong while adding the coupon.",
         );
       } else {
         console.error(error);
@@ -87,9 +89,7 @@ const CouponsPage = () => {
 
   return (
     <div className="mt-2 overflow-y-scroll max-h-[90vh] pt-20 pb-20 md:pt-0 md:mb-0 md:px-4">
-      <h2 className="text-2xl font-bold mb-4 text-purple-700">
-        Add New Coupon
-      </h2>
+      <h2 className="text-2xl font-bold mb-4 text-pink-700">Add New Coupon</h2>
 
       <form onSubmit={handleAddCoupon} className="space-y-4">
         <input
@@ -119,7 +119,7 @@ const CouponsPage = () => {
         <button
           type="submit"
           disabled={loading}
-          className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded disabled:opacity-50"
+          className="bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {loading ? "Adding..." : "Add Coupon"}
         </button>
@@ -138,8 +138,7 @@ const CouponsPage = () => {
           {coupons.map((coupon) => (
             <li key={coupon._id} className="border p-3 rounded shadow-sm">
               <strong>{coupon.name}</strong> —{" "}
-              <span className="text-purple-600 font-mono">{coupon.code}</span>{" "}
-              (₹
+              <span className="text-pink-600 font-mono">{coupon.code}</span> (₹
               {coupon.discount} off)
             </li>
           ))}

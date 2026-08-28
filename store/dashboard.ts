@@ -1,6 +1,6 @@
 // store/dashboardStore.ts
 import { create } from "zustand";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 interface User {
   _id: string;
@@ -22,6 +22,8 @@ interface Product {
   _id: string;
   title: string;
   price: number;
+  countInStock: number;
+  sold: number;
   createdAt: string;
 }
 
@@ -84,7 +86,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   fetchUsers: async () => {
     set({ usersLoading: true });
     try {
-      const res = await axios.get("/api/users");
+      const res = await axios.get("/api/users", {
+        params: { page: 1, limit: 100 },
+      });
       if (res.data.success) {
         set({ users: res.data.users });
       }
@@ -98,7 +102,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   fetchOrders: async () => {
     set({ ordersLoading: true });
     try {
-      const res = await axios.get("/api/orders");
+      const res = await axios.get("/api/orders", {
+        params: { page: 1, limit: 100 },
+      });
 
       set({ orders: res.data.orders });
     } catch (err) {
@@ -111,7 +117,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   fetchProducts: async () => {
     set({ productsLoading: true });
     try {
-      const res = await axios.get("/api/product");
+      const res = await axios.get("/api/product", {
+        params: { page: 1, limit: 12 },
+      });
       if (res.data.success) {
         set({ products: res.data.products });
       }
@@ -125,7 +133,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   fetchCategories: async () => {
     set({ categoriesLoading: true });
     try {
-      const res = await axios.get("/api/category");
+      const res = await axios.get("/api/category", {
+        params: { page: 1, limit: 12 },
+      });
       if (res.data.success) {
         set({ categories: res.data.categories });
       }
@@ -139,7 +149,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   fetchQueries: async () => {
     set({ queriesLoading: true });
     try {
-      const res = await axios.get("/api/contact");
+      const res = await axios.get("/api/contact", {
+        params: { page: 1, limit: 100 },
+      });
       if (res.data.success) {
         set({ queries: res.data.contacts });
       }
@@ -153,7 +165,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   fetchNewsletters: async () => {
     set({ newslettersLoading: true });
     try {
-      const res = await axios.get("/api/newsletter");
+      const res = await axios.get("/api/newsletter", {
+        params: { page: 1, limit: 100 },
+      });
       set({ newsletters: res.data.newsletters });
     } catch (err) {
       console.error("Fetch newsletters error:", err);

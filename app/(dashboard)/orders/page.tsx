@@ -1,4 +1,5 @@
 "use client";
+import PaginationControls from "@/components/PaginationControls";
 import { useAuthStore } from "@/store/store";
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
@@ -34,6 +35,10 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+
   const statuses = [
     "processing",
     "reviewing",
@@ -44,10 +49,14 @@ export default function AdminOrdersPage() {
     "cancelled",
   ];
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (requestedPage = page) => {
     try {
-      const res = await axios.get("/api/orders");
-      setOrders(res.data.orders);
+      const res = await axios.get("/api/orders", {
+        params: { page: requestedPage, limit: 12 },
+      });
+      setOrders(res.data.orders || []);
+      setTotalPages(res.data.pagination?.totalPages || 1);
+      setTotalOrders(res.data.pagination?.total || 0);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
@@ -90,13 +99,13 @@ export default function AdminOrdersPage() {
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <AiOutlineLoading3Quarters className="animate-spin text-3xl text-purple-600" />
+        <AiOutlineLoading3Quarters className="animate-spin text-3xl text-pink-600" />
       </div>
     );
 
   return (
     <div className="mt-2 overflow-y-scroll max-h-[90vh] pt-20 pb-20 md:pt-0 md:mb-0 md:px-4">
-      <h1 className="text-xl ml-2 md:text-2xl font-semibold mb-4 text-purple-700">
+      <h1 className="text-xl ml-2 md:text-2xl font-semibold mb-4 text-pink-700">
         All Orders ({orders?.length})
       </h1>
       <div className="space-y-6">
@@ -107,7 +116,7 @@ export default function AdminOrdersPage() {
           >
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
               <div>
-                <h2 className="text-sm my-2 md:text-lg font-medium text-purple-700">
+                <h2 className="text-sm my-2 md:text-lg font-medium text-pink-700">
                   Order ID: {order._id}
                 </h2>
                 <p className="text-sm text-gray-600">
@@ -168,6 +177,21 @@ export default function AdminOrdersPage() {
           </div>
         ))}
       </div>
+
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          fetchOrders(nextPage);
+        }}
+      />
+
+      {totalOrders > 0 && (
+        <p className="mt-3 text-center text-sm text-gray-500">
+          Showing page {page} of {totalPages} ({totalOrders} orders)
+        </p>
+      )}
     </div>
   );
 }

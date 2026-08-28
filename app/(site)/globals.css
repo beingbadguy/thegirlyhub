@@ -2,20 +2,26 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-/* Apply Geist Sans as the default font */
-
 * {
   user-select: none;
 }
 @layer base {
   body {
-    font-family: var(--font-geist-mono), sans-serif;
+    font-family: var(--font-display-sans), sans-serif;
+    background: #fffafc;
+    color: #33272d;
   }
 
-  /* Use Geist Mono where needed (like code blocks) */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display-serif), serif;
+  }
+
   code,
   pre {
-    font-family: var(--font-geist-mono), monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 }
 
@@ -42,15 +48,15 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #6b21a8; /* Tailwind purple-800 */
+  background-color: #be185d; /* Tailwind pink-800 */
   border-radius: 9999px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-display-sans);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

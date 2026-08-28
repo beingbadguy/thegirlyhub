@@ -75,7 +75,9 @@ const AnalysisPage = () => {
   const fetchQueries = async () => {
     setQueriesLoading(true);
     try {
-      const response = await axios.get("/api/contact");
+      const response = await axios.get("/api/contact", {
+        params: { page: 1, limit: 100 },
+      });
       setQueries(response.data.contacts || []);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -91,7 +93,9 @@ const AnalysisPage = () => {
   const fetchNewsletter = async () => {
     setNewslettersLoading(true);
     try {
-      const response = await axios.get("/api/newsletter");
+      const response = await axios.get("/api/newsletter", {
+        params: { page: 1, limit: 100 },
+      });
       setNewsletters(response.data.newsletters || []);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -114,7 +118,7 @@ const AnalysisPage = () => {
 
   return (
     <div className="mt-2 overflow-y-scroll max-h-[90vh] pt-20 pb-20 md:pt-0 md:mb-0 md:px-4">
-      <h1 className="text-2xl font-bold text-purple-700 mb-4">
+      <h1 className="text-2xl font-bold text-pink-700 mb-4">
         Analysis Dashboard
       </h1>
 
@@ -125,7 +129,7 @@ const AnalysisPage = () => {
         </h2>
         {newslettersLoading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="animate-spin w-6 h-6 text-purple-500" />
+            <Loader2 className="animate-spin w-6 h-6 text-pink-500" />
           </div>
         ) : newsletters.length === 0 ? (
           <p className="text-gray-500">No newsletter subscriptions yet.</p>
@@ -160,7 +164,7 @@ const AnalysisPage = () => {
         </h2>
         {queriesLoading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="animate-spin w-6 h-6 text-purple-500" />
+            <Loader2 className="animate-spin w-6 h-6 text-pink-500" />
           </div>
         ) : queries.length === 0 ? (
           <p className="text-gray-500">No contact queries yet.</p>
@@ -221,7 +225,7 @@ const AnalysisPage = () => {
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-purple-700">Contact Query</h2>
+            <h2 className="text-xl font-bold text-pink-700">Contact Query</h2>
             <button
               className="text-gray-600 p-1 hover:text-black bg-gray-200 cursor-pointer rounded-full hover:scale-90 hover:rotate-90 transition-transform duration-300"
               onClick={() => closeSidebar()}
@@ -233,19 +237,19 @@ const AnalysisPage = () => {
           {/* Query Details */}
           <div className="space-y-4 text-sm text-gray-700">
             <div className="flex items-start gap-3">
-              <User className="text-purple-600" size={20} />
+              <User className="text-pink-600" size={20} />
               <span className="font-medium">Name:</span>
               <span>{queries[query!]?.name}</span>
             </div>
 
             <div className="flex items-start gap-3">
-              <Mail className="text-purple-600" size={20} />
+              <Mail className="text-pink-600" size={20} />
               <span className="font-medium">Email:</span>
               <span>{queries[query!]?.email}</span>
             </div>
 
             <div className="flex items-start gap-3">
-              <CalendarDays className="text-purple-600" size={20} />
+              <CalendarDays className="text-pink-600" size={20} />
               <span className="font-medium">Date:</span>
               <span>
                 {new Date(queries[query!]?.createdAt).toLocaleString()}
@@ -254,7 +258,7 @@ const AnalysisPage = () => {
 
             <div className="">
               <div className="flex items-center gap-2">
-                <MessageSquareText className="text-purple-600" size={20} />
+                <MessageSquareText className="text-pink-600" size={20} />
                 <span className="font-medium">Message:</span>
               </div>
               <p className="mt-2">{queries[query!]?.message}</p>
@@ -263,7 +267,7 @@ const AnalysisPage = () => {
             <div>
               <h1 className="my-2 font-bold flex items-center gap-2">
                 {" "}
-                <LucideMailPlus className="size-5 text-purple-700" />
+                <LucideMailPlus className="size-5 text-pink-700" />
                 Your Reply
               </h1>
               <Textarea
@@ -272,7 +276,7 @@ const AnalysisPage = () => {
                 onChange={(e) => setResponse(e.target.value)}
               />
               <Button
-                className="mt-2 cursor-pointer bg-purple-600 text-white hover:bg-purple-700/60"
+                className="mt-2 cursor-pointer bg-pink-600 text-white hover:bg-pink-700/60"
                 onClick={handleReply}
                 disabled={loading}
               >

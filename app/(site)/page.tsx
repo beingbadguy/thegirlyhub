@@ -1,76 +1,23 @@
-import Banner from "@/components/Banner";
 import Faqs from "@/components/Faqs";
+import HomeAdSlots from "@/components/HomeAdSlots";
 import NewArrivals from "@/components/NewArrivals";
 import Newsletter from "@/components/Newsletter";
-import OverlapCards from "@/components/OverlapCards";
 import ShopByCategory from "@/components/ShopByCategory";
-import TextEffect from "@/components/TextEffect";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { MdArrowRightAlt } from "react-icons/md";
-import { VscWand } from "react-icons/vsc";
 import CountVisitor from "@/components/CountVisitor";
+import HeroBannerSlider from "@/components/HeroBannerSlider";
 
 export default function Home() {
   return (
-    <div className="px-4">
-      <div className="min-h-[80vh] flex items-center justify-center  text-center px-4 flex-col gap-4 ">
-        {/* <h1 className="text-3xl">A Place where you can buy anything.</h1> */}
-        <TextEffect />
-        <OverlapCards />
-        <p>Welcome to the world of e-commerce!</p>
-        <div className="flex items-center justify-center gap-4 ">
-          <Link
-            href={"/product"}
-            className="flex items-center justify-center gap-2"
-          >
-            <Button className="px-3 sm:px-4 py-2 text-white bg-purple-700 rounded-md hover:bg-purple-600 cursor-pointer">
-              Start Shopping
-              <VscWand />
-            </Button>
-          </Link>
-          <Link
-            href={"/about"}
-            className="flex items-center justify-center gap-2"
-          >
-            <Button className="px-4 py-2 text-white bg-black rounded-md hover:bg-gray-700 cursor-pointer">
-              Learn More
-              <MdArrowRightAlt />
-            </Button>
-          </Link>
-        </div>
-      </div>
-      <div className="">
-        <ShopByCategory />
-        <div className="cursor-pointer my-10 ">
-          <Link href="/product">
-            <img src="/day.png" alt="" className="rounded-xl md:hidden" />
-            <img
-              src="/day2.png"
-              alt=""
-              className="rounded-xl hidden md:block"
-            />
-          </Link>
-        </div>
-        <NewArrivals />
-
-        {/* <BannerWall /> */}
-
-        <div className="aspect-video w-full mx-auto my-12 ">
-          <video
-            src="/ad.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full rounded-lg"
-          />
-        </div>
+    <main className="mx-auto px-4 md:px-6">
+      <div>
+        <HeroBannerSlider />
+        <ShopByCategory limit={12} showSeeMore />
+        <HomeAdSlots />
+        <NewArrivals limit={12} showSeeMore />
         <Newsletter />
         <Faqs />
-        <Banner />
         <CountVisitor />
       </div>
-    </div>
+    </main>
   );
 }

@@ -3,6 +3,9 @@ import { databaseConnection } from "@/config/databseConnection";
 import Category from "@/models/category.model";
 import { NextRequest, NextResponse } from "next/server";
 import cloudinary from "cloudinary";
+import { getPagination, paginationResult } from "@/lib/pagination";
+import Product from "@/models/product.model";
+import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 
 export async function POST(request: NextRequest) {
   await databaseConnection();
@@ -12,17 +15,17 @@ export async function POST(request: NextRequest) {
     const name = formData.get("name") as string;
     const categoryImage = formData.get("image") as File;
 
-    if (!name || !categoryImage) {
+    if (!name?.trim() || !categoryImage) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const categoryAlreadyExists = await Category.findOne({ name: name });
     if (categoryAlreadyExists) {
       return NextResponse.json(
         { success: false, message: "Category already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     // needed to upload file
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 200,
-      }
+      },
     );
   } catch (error) {
     console.log(error);
@@ -57,24 +60,44 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   await databaseConnection();
   try {
-    const categories = await Category.find();
+    const { page, limit, skip } = getPagination(request, 12);
+    const isAdmin = (await fetchTokenDetails(request))?.role === "admin";
+    const filter = isAdmin ? {} : { isActive: true };
+    const [categories, total] = await Promise.all([
+      Category.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Category.countDocuments(filter),
+    ]);
+    const categoryNames = categories.map((category) => category.name);
+    const productCounts = await Product.aggregate([
+      { $match: { category: { $in: categoryNames } } },
+      { $group: { _id: "$category", productCount: { $sum: 1 } } },
+    ]);
+    const counts = new Map(
+      productCounts.map((item) => [item._id, item.productCount]),
+    );
+    const categoriesWithCounts = categories.map((category) => ({
+      ...category.toObject(),
+      productCount: counts.get(category.name) || 0,
+    }));
+
     return NextResponse.json(
       {
         success: true,
         message: "Categories fetched successfully",
-        categories: categories,
+        categories: categoriesWithCounts,
+        pagination: paginationResult(page, limit, total),
       },
       {
         status: 200,
-      }
+      },
     );
   } catch (error) {
     console.log(error);
@@ -85,7 +108,7 @@ export async function GET() {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

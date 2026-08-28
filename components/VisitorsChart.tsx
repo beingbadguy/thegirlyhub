@@ -18,8 +18,9 @@ export default function VisitorsChart() {
 
   useEffect(() => {
     async function fetchVisitors() {
-      const res = await fetch("/api/visitor");
-      const visitors = await res.json();
+      const res = await fetch("/api/visitor?page=1&limit=100");
+      const result = await res.json();
+      const visitors: VisitorData[] = result.visitors || [];
       //   console.log(visitors); // Check the format of the returned data
 
       // Map the API response to the format expected by the chart
@@ -27,7 +28,7 @@ export default function VisitorsChart() {
         visitors.map((v: VisitorData) => ({
           date: v._id,
           count: v.count,
-        }))
+        })),
       );
     }
     fetchVisitors();
@@ -43,8 +44,8 @@ export default function VisitorsChart() {
         >
           <defs>
             <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+              <stop offset="5%" stopColor="#f472b6" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#f472b6" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis dataKey="date" tick={{ fontSize: 12 }} tickMargin={10} />
@@ -58,7 +59,7 @@ export default function VisitorsChart() {
           <Area
             type="monotone"
             dataKey="count"
-            stroke="#8884d8"
+            stroke="#f472b6"
             fillOpacity={1}
             fill="url(#colorVisitors)"
           />

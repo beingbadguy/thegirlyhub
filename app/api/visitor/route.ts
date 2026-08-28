@@ -1,6 +1,7 @@
 import { databaseConnection } from "@/config/databseConnection";
 import Visitor from "@/models/visitor.model";
 import { NextRequest, NextResponse } from "next/server";
+import { getPagination, paginationResult } from "@/lib/pagination";
 
 export async function POST(req: NextRequest) {
   await databaseConnection();
@@ -24,10 +25,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   await databaseConnection();
 
   try {
+    const { page, limit, skip } = getPagination(request);
     const visitors = await Visitor.aggregate([
       {
         $group: {
@@ -36,9 +38,26 @@ export async function GET() {
         },
       },
       { $sort: { _id: 1 } },
+      { $skip: skip },
+      { $limit: limit },
     ]);
 
-    return NextResponse.json(visitors, { status: 200 });
+    const total = await Visitor.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$visitedAt" } },
+        },
+      },
+      { $count: "total" },
+    ]);
+
+    return NextResponse.json(
+      {
+        visitors,
+        pagination: paginationResult(page, limit, total[0]?.total || 0),
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: "Server Error" }, { status: 500 });

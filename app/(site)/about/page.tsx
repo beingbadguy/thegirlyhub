@@ -77,7 +77,7 @@ const AboutUs = () => {
 
         {/* Quote Section */}
         <section className="bg-gray-100 rounded-md py-8 px-6 md:py-12 md:px-10 mb-8 md:mb-12 flex flex-col md:flex-row items-center gap-6">
-          <FaQuoteLeft className="text-purple-700 text-4xl md:text-5xl" />
+          <FaQuoteLeft className="text-pink-700 text-4xl md:text-5xl" />
           <blockquote className="text-gray-700 italic text-center md:text-left">
             <p className="mb-4">
               &quot;We&apos;re very much of the &apos;buy anything but buy
@@ -91,7 +91,7 @@ const AboutUs = () => {
         {/* Our Vision Section */}
         <section className="py-6 md:py-10">
           <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-4 flex items-center justify-center md:justify-start">
-            <HiOutlineSparkles className="text-purple-700 mr-2" /> Our Vision
+            <HiOutlineSparkles className="text-pink-700 mr-2" /> Our Vision
           </h3>
           <p className="text-gray-600 leading-relaxed">
             At Basics, our vision is to create the most comprehensive and
@@ -112,7 +112,7 @@ const AboutUs = () => {
         {/* Optional Blog/Update Snippet (Similar to the example) */}
         {/* <section className="bg-gray-100 rounded-md py-6 px-6 md:py-8 md:px-8 mt-8 md:mt-12 flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center mb-4 md:mb-0">
-            <span className="text-purple-700 text-3xl font-bold mr-4">01</span>
+            <span className="text-pink-700 text-3xl font-bold mr-4">01</span>
             <div>
               <p className="text-gray-500 text-sm">April 9, 2025 - Blog</p>
               <h4 className="text-gray-900 font-semibold">

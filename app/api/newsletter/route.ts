@@ -3,6 +3,7 @@ import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import Newsletter from "@/models/newsletter.model";
 import { newsletterSubscriptionMail } from "@/services/sendMail";
 import { NextRequest, NextResponse } from "next/server";
+import { getPagination, paginationResult } from "@/lib/pagination";
 
 export async function POST(request: NextRequest) {
   await databaseConnection();
@@ -12,14 +13,14 @@ export async function POST(request: NextRequest) {
     if (!email) {
       return NextResponse.json(
         { message: "Email is required", success: false },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const newsletter = await Newsletter.findOne({ email });
     if (newsletter) {
       return NextResponse.json(
         { message: "Email already subscribed", success: false },
-        { status: 404 }
+        { status: 404 },
       );
     }
     const newNewsletter = new Newsletter({ email });
@@ -31,18 +32,18 @@ export async function POST(request: NextRequest) {
         message: "Subscribed successfully",
         success: true,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.log(error);
     return NextResponse.json(
       { message: "Error subscribing to newsletter", success: false },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-export async function GET(  request: NextRequest) {
+export async function GET(request: NextRequest) {
   await databaseConnection();
   try {
     const decoded = await fetchTokenDetails(request);
@@ -52,17 +53,22 @@ export async function GET(  request: NextRequest) {
           message: "You must log in to view your contacts and must be admin.",
           success: false,
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
-    const newsletters = await Newsletter.find().sort({ createdAt: -1 });
+    const { page, limit, skip } = getPagination(request);
+    const [newsletters, total] = await Promise.all([
+      Newsletter.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Newsletter.countDocuments(),
+    ]);
     return NextResponse.json(
       {
         success: true,
         message: "Newsletters fetched successfully",
         newsletters,
+        pagination: paginationResult(page, limit, total),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching newsletters:", error);
@@ -71,7 +77,7 @@ export async function GET(  request: NextRequest) {
         success: false,
         message: "Failed to get newsletters",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

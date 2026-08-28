@@ -18,6 +18,7 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
+import PaginationControls from "@/components/PaginationControls";
 
 type Products = {
   _id: string;
@@ -26,6 +27,7 @@ type Products = {
   price: number;
   discountedPrice: number;
   countInStock: number;
+  sold: number;
   rating: number;
   numReviews: number;
   image: string;
@@ -50,12 +52,17 @@ const Page = () => {
 
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchAllProducts = async () => {
+  const fetchAllProducts = async (requestedPage = page) => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/product");
+      const response = await axios.get("/api/product", {
+        params: { page: requestedPage, limit: 12 },
+      });
       setProducts(response.data.products);
+      setTotalPages(response.data.pagination?.totalPages || 1);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
@@ -74,7 +81,7 @@ const Page = () => {
         isActive: newStatus,
       });
       setProducts((prev) =>
-        prev.map((p) => (p._id === id ? { ...p, isActive: newStatus } : p))
+        prev.map((p) => (p._id === id ? { ...p, isActive: newStatus } : p)),
       );
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -156,12 +163,12 @@ const Page = () => {
   return (
     <div className="mt-2 pt-20 pb-20 md:pt-0 md:mb-0 px-2 md:px-6 overflow-y-scroll max-h-[90vh]">
       <div className="flex items-start justify-start flex-col md:items-center md:justify-between md:flex-row gap-2">
-        <h1 className="font-bold text-2xl text-purple-700">
+        <h1 className="font-bold text-2xl text-pink-700">
           Products ({products?.length})
         </h1>
         <div className="flex items-center justify-between md:justify-center w-full md:w-auto gap-2 my-2 md:my-0">
-          <div className="flex items-center gap-2 px-3 py-[6px] rounded border border-purple-700">
-            <Search className="text-purple-700" />
+          <div className="flex items-center gap-2 px-3 py-[6px] rounded border border-pink-700">
+            <Search className="text-pink-700" />
             <input
               type="text"
               placeholder="Shoes"
@@ -180,7 +187,7 @@ const Page = () => {
 
       {loading ? (
         <div className="h-screen flex items-center justify-center w-full">
-          <VscLoading className="animate-spin text-3xl text-purple-700" />
+          <VscLoading className="animate-spin text-3xl text-pink-700" />
         </div>
       ) : (
         <div className="mt-6 w-full overflow-x-auto">
@@ -191,6 +198,7 @@ const Page = () => {
                 <TableHead>Title</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Stock</TableHead>
+                <TableHead>Sold</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -198,7 +206,7 @@ const Page = () => {
             <TableBody>
               {products
                 .filter((product) =>
-                  product.title.toLowerCase().includes(query.toLowerCase())
+                  product.title.toLowerCase().includes(query.toLowerCase()),
                 )
                 .map((product) => (
                   <TableRow key={product._id}>
@@ -221,6 +229,7 @@ const Page = () => {
                       </span>
                     </TableCell>
                     <TableCell>{product.countInStock}</TableCell>
+                    <TableCell>{product.sold || 0}</TableCell>
                     <TableCell>
                       <Switch
                         className="cursor-pointer"
@@ -254,6 +263,14 @@ const Page = () => {
           </Table>
         </div>
       )}
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          fetchAllProducts(nextPage);
+        }}
+      />
 
       {/* Update Modal */}
       {updateModal && selectedProduct && (

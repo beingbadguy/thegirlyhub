@@ -11,6 +11,9 @@ interface AuthState {
     role: string;
     createdAt: string;
     address: string;
+    city?: string;
+    state?: string;
+    landmark?: string;
     phone: number;
     image: string;
     firstPurchase: boolean;

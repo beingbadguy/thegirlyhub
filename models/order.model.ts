@@ -5,14 +5,14 @@ const orderSchema = new mongoose.Schema({
   products: [
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-      quantity: { type: Number, default: 1 },
+      quantity: { type: Number, default: 1, min: 1 },
       title: String,
       price: Number,
       image: String,
       size: String,
     },
   ],
-  totalAmount: { type: Number, required: true },
+  totalAmount: { type: Number, required: true, min: 0 },
   paymentMethod: {
     type: String,
     required: true,
@@ -22,7 +22,7 @@ const orderSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    default: "pending",
+    default: "processing",
     enum: [
       "processing",
       "reviewing",
@@ -39,22 +39,17 @@ const orderSchema = new mongoose.Schema({
     default: "normal",
     enum: ["normal", "fast"],
   },
+  recipientName: { type: String, required: true },
+  email: { type: String, default: null },
   address: { type: String, required: true },
-  zip: {
-    type: Number,
-    // required: true,
-    default: null,
-  },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  landmark: { type: String, default: null },
+  orderNotes: { type: String, default: null, maxlength: 500 },
+  zip: { type: Number, required: true },
   phone: { type: Number, required: true },
-  size: {
-    type: String,
-  },
-  paymentId: {
-    type: String,
-    default: null,
-  
-  },
-
+  couponCode: { type: String, default: null },
+  paymentId: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

@@ -22,7 +22,7 @@ const Page = () => {
   const addCategoryHandle = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!name || !categoryImage) {
+    if (!name.trim() || !categoryImage) {
       setError("All fields are required");
       return;
     }
@@ -73,7 +73,7 @@ const Page = () => {
           {" "}
           <ChevronLeft />
         </Link>
-        <h1 className="font-bold text-2xl text-purple-700">Add Category</h1>
+        <h1 className="font-bold text-2xl text-pink-700">Add Category</h1>
       </div>
       <div className="mt-4">
         <form onSubmit={addCategoryHandle}>

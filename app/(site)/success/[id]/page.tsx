@@ -71,9 +71,9 @@ export default function Page() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[90vh] bg-white text-center px-4">
-      <div className="bg-purple-50 p-10 rounded-2xl  w-full max-w-xl">
+      <div className="bg-pink-50 p-10 rounded-2xl  w-full max-w-xl">
         <div className="flex justify-center mb-6">
-          <VscPass className="text-purple-600 text-6xl" />
+          <VscPass className="text-pink-600 text-6xl" />
         </div>
         <div className="flex items-center justify-center gap-2 w-full mx-2 flex-col md:flex-row">
           <p className="text-sm md:text-base my-2 mx-2 break-all">
@@ -103,7 +103,7 @@ export default function Page() {
         <div className="flex flex-col md:flex-row gap-4 justify-center">
           <Button
             onClick={() => router.push("/")}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full text-sm cursor-pointer"
+            className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-full text-sm cursor-pointer"
           >
             Back to Home
           </Button>

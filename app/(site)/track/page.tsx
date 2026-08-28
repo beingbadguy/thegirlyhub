@@ -117,7 +117,7 @@ export default function TrackOrderPage() {
               </p>
               <p>
                 <span className="font-semibold">Status:</span>{" "}
-                <span className="capitalize text-purple-600">
+                <span className="capitalize text-pink-600">
                   {order.status}
                 </span>
               </p>

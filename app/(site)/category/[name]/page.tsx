@@ -1,43 +1,34 @@
 "use client";
-import { useAuthStore } from "@/store/store";
+import PaginationControls from "@/components/PaginationControls";
+import ProductCard from "@/components/ProductCard";
 import axios, { AxiosError } from "axios";
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
-import { CiHeart } from "react-icons/ci";
-import { IoMdHeart } from "react-icons/io";
+import { useEffect, useState } from "react";
 import { VscLoading } from "react-icons/vsc";
+import { Heart, Sparkles } from "lucide-react";
 
-type Product = {
-  _id: string;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice: number;
-  countInStock: number;
-  rating: number;
-  numReviews: number;
-  image: string;
-  discountPercentage: number;
-  category: string;
-};
-type WishlistItemFlexible = {
-  productId: string | { _id: string };
-};
+type Product = React.ComponentProps<typeof ProductCard>["product"];
 
 const Page = () => {
-  const { addToWishlist, user } = useAuthStore();
-
   const { name } = useParams();
-  const [loading, setLoading] = React.useState(false);
-  const [fullProducts, setFullProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const router = useRouter();
 
-  const fetchAllProducts = async () => {
+  const categoryName = decodeURIComponent(name as string);
+
+  const fetchProducts = async (pageNum: number) => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/product");
-      setFullProducts(response.data.products);
+      const response = await axios.get("/api/product", {
+        params: { page: pageNum, limit: 12, category: categoryName },
+      });
+      setProducts(response.data.products);
+      setTotalPages(response.data.pagination?.totalPages ?? 1);
+      setTotal(response.data.pagination?.total ?? 0);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
@@ -49,125 +40,102 @@ const Page = () => {
     }
   };
 
-  const filteredProducts = fullProducts.filter(
-    (product) => product.category === name
-  );
-
-  const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];
-
-  const alreadyInWishlist = (id: string) => {
-    return allProductsOfWishlist.some((item: WishlistItemFlexible) => {
-      if (typeof item.productId === "string") {
-        return item.productId === id;
-      } else {
-        return item.productId._id === id;
-      }
-    });
-  };
+  useEffect(() => {
+    setPage(1);
+  }, [name]);
 
   useEffect(() => {
-    fetchAllProducts();
+    fetchProducts(page);
     window.scrollTo(0, 0);
-  }, [name]);
+  }, [name, page]);
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] w-full flex items-center justify-center">
-        <VscLoading className="animate-spin text-purple-700 text-2xl" />
+      <div className="flex min-h-[70vh] w-full items-center justify-center">
+        <VscLoading className="animate-spin text-2xl text-pink-700" />
       </div>
     );
   }
 
   return (
-    <div className=" p-4 min-h-[75vh]">
-      <div className="text-sm text-gray-500 mb-4">
+    <div className="min-h-[75vh] p-4">
+      <div className="mb-4 text-sm text-gray-500">
         <span
-          className="cursor-pointer hover:text-purple-600"
+          className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/")}
         >
           Home
         </span>{" "}
         /{" "}
         <span
-          className="cursor-pointer hover:text-purple-600"
+          className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/category")}
         >
           Categories
         </span>{" "}
-        <span>/</span>
-        <span className="text-black">
-          {" "}
-          {decodeURIComponent(name as string)}
-        </span>
+        / <span className="text-black">{categoryName}</span>
       </div>
-      <div className="text-sm"> {filteredProducts?.length} Products found.</div>
-      <div className="my-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-        {filteredProducts &&
-          filteredProducts.map((product) => (
-            <div key={product._id}>
-              <div className="p-4 border rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col gap-4 items-center justify-between w-full cursor-pointer">
-                {/* Top: Discount & Wishlist */}
-                <div className="flex items-center justify-between w-full">
-                  <div className="text-xs bg-purple-700 px-2 py-1 text-white rounded-md">
-                    {Math.floor(product.discountPercentage)}% Off
-                  </div>
-                  <div
-                    className="bg-gray-100 p-1 rounded-full cursor-pointer"
-                    onClick={() => {
-                      if (!user) {
-                        return router.push("/login");
-                      } else {
-                        addToWishlist(product._id);
-                      }
-                    }}
-                  >
-                    {user && alreadyInWishlist(product._id) ? (
-                      <IoMdHeart className="text-red-500 text-2xl" />
-                    ) : (
-                      <CiHeart className="text-black text-2xl hover:text-red-500" />
-                    )}
-                  </div>
-                </div>
 
-                {/* Image */}
-                <div
-                  onClick={() => router.push(`/product/${product._id}`)}
-                  className="w-full flex items-center justify-center h-40 rounded-md overflow-hidden"
-                >
-                  <Image
-                    src={product.image || "/placeholder.png"}
-                    alt={product.title}
-                    width={160}
-                    height={160}
-                    className="object-cover h-full w-full rounded-md hover:scale-110 duration-300 transition-all ease-in-out"
-                  />
-                </div>
+      {products.length === 0 ? (
+        <div className="relative mx-auto mt-8 flex min-h-[430px] max-w-3xl items-center justify-center overflow-hidden rounded-3xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-amber-50 px-6 py-12 text-center shadow-[0_20px_60px_-35px_rgba(190,24,93,0.45)]">
+          <div className="absolute -left-8 -top-8 size-32 rounded-full bg-rose-200/45 blur-2xl" />
+          <div className="absolute -bottom-10 -right-6 size-40 rounded-full bg-amber-200/50 blur-2xl" />
+          <Sparkles className="absolute left-[12%] top-14 size-5 text-rose-300" />
+          <Sparkles className="absolute bottom-16 right-[13%] size-4 text-amber-400" />
 
-                {/* Title & Price */}
-                <div
-                  className="w-full text-center"
-                  onClick={() => router.push(`/product/${product._id}`)}
-                >
-                  <h2 className="text-md font-semibold truncate">
-                    {product.title}
-                  </h2>
-
-                  <div className="mt-1">
-                    <p className="text-purple-700 font-bold text-md">
-                      ₹{product.discountedPrice}
-                      <span className="text-sm text-gray-500 line-through ml-2">
-                        ₹{product.price}
-                      </span>
-                    </p>
-                    <p className="text-xs text-green-600">
-                      {product.countInStock > 0 ? "In Stock" : "Out of Stock"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div className="relative flex max-w-md flex-col items-center">
+            <div className="relative mb-6 grid size-24 place-items-center rounded-full border-4 border-white bg-rose-100 shadow-lg shadow-rose-200/60">
+              <Heart className="size-10 fill-rose-500 text-rose-500" />
             </div>
-          ))}
-      </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-rose-400">
+              A little sparkle is on its way
+            </p>
+            <h1 className="mt-3 font-serif text-3xl font-semibold text-rose-950 sm:text-4xl">
+              Nothing here yet
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-rose-900/65 sm:text-base">
+              We have not added any pieces to {categoryName} just yet. Explore
+              our other lovely finds instead.
+            </p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => router.push("/product")}
+                className="rounded-full bg-rose-700 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:bg-rose-800"
+              >
+                Continue shopping
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/category")}
+                className="rounded-full border border-rose-200 bg-white/80 px-6 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+              >
+                Browse categories
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="text-sm">
+            {total} product{total !== 1 ? "s" : ""} in {categoryName}
+          </div>
+          <div className="my-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            onPageChange={(p) => {
+              setPage(p);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </>
+      )}
     </div>
   );
 };

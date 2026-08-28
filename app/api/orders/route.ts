@@ -12,6 +12,7 @@ import "@/models/newsletter.model";
 import "@/models/user.model";
 import "@/models/promo.model";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
+import { getPagination, paginationResult } from "@/lib/pagination";
 
 export async function GET(request: NextRequest) {
   await databaseConnection();
@@ -23,23 +24,34 @@ export async function GET(request: NextRequest) {
           message: "You must log in to view your contacts and must be admin.",
           success: false,
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
-    const orders = await Order.find()
-      .sort({ createdAt: -1 })
-      .populate("userId", "-password")
-      .populate("products.productId");
+    const { page, limit, skip } = getPagination(request);
+    const [orders, total] = await Promise.all([
+      Order.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("userId", "-password")
+        .populate("products.productId"),
+      Order.countDocuments(),
+    ]);
 
     return NextResponse.json(
-      { orders, success: true, message: "Orders fetched successfully" },
-      { status: 200 }
+      {
+        orders,
+        success: true,
+        message: "Orders fetched successfully",
+        pagination: paginationResult(page, limit, total),
+      },
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(
       { success: false, message: "Error fetching orders" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -5,7 +5,6 @@ import {
   AlignJustify,
   GalleryVerticalEnd,
   Heart,
-  LayoutDashboard,
   LucideCableCar,
   PackagePlus,
   Search,
@@ -20,11 +19,18 @@ import { BiHomeAlt2 } from "react-icons/bi";
 import { MdOutlineCategory } from "react-icons/md";
 import { IoPhonePortraitOutline } from "react-icons/io5";
 import { Separator } from "@radix-ui/react-select";
+import { AnimatePresence, motion } from "framer-motion";
 
 const HeaderSection = () => {
   const { user, fetchUser, userCart } = useAuthStore();
 
   const [totalNumberOfProducts, setTotalNumberOfProducts] = useState(0);
+  const announcements = [
+    "Special offer: 15% off on the first order ✨",
+    "Pan India delivery available 🚚",
+    "100+ happy customers 💖",
+  ];
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
 
   const [menu, setMenu] = useState<boolean>(false);
   const router = useRouter();
@@ -50,6 +56,16 @@ const HeaderSection = () => {
   }, [userCart]);
 
   useEffect(() => {
+    const announcementTimer = window.setInterval(() => {
+      setAnnouncementIndex(
+        (currentIndex) => (currentIndex + 1) % announcements.length,
+      );
+    }, 4000);
+
+    return () => window.clearInterval(announcementTimer);
+  }, [announcements.length]);
+
+  useEffect(() => {
     fetchUser();
     if (!user) {
       fetchUser();
@@ -58,17 +74,30 @@ const HeaderSection = () => {
 
   return (
     <div className="">
-      <div className="text-[10px] bg-black text-white w-full text-center sm:text-[12px] py-2 ">
-        Special offer: 15% off on the first purchase
+      <div className="text-[10px] bg-pink-800 text-white w-full text-center sm:text-[12px] py-2 ">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={announcementIndex}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="inline-block"
+          >
+            {announcements[announcementIndex]}
+          </motion.span>
+        </AnimatePresence>
       </div>
-      <nav className="flex items-center justify-between p-4 border-b border-gray-300 ">
-        <div className="font-bold">
+      <nav className="flex items-center justify-between p-4 border-b border-gray-100 ">
+        <div className="font-bold ">
           <Link href={"/"}>
-            <img
-              src="/basiclogo.png"
-              alt="logo"
-              className=" h-[27px] w-full -ml-3 object-contain"
-            />
+            <span className="relative block h-12 w-36 overflow-hidden">
+              <img
+                src="/girly3.png"
+                alt="GirlyHub"
+                className="h-[55px] ml-[-36px]  w-full object-cover"
+              />
+            </span>
           </Link>
         </div>
         <div
@@ -85,15 +114,17 @@ const HeaderSection = () => {
             <X className="w-6 h-6" />
           </p>
           <div className="flex items-center justify-start  lg:hidden ">
-            <img
-              src="/basiclogo.png"
-              alt="logo"
-              className=" h-[27px]   object-contain"
-            />
+            <span className="relative block h-12 w-36 overflow-hidden">
+              <img
+                src="/girly3.png"
+                alt="GirlyHub"
+                className="h-[55px] ml-[-36px] w-full object-cover"
+              />
+            </span>
           </div>
           <Separator className="bg-gray-100 h-0.5 w-full lg:hidden" />
           <p
-            className="cursor-pointer hover:text-purple-700 flex items-center gap-2"
+            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
             onClick={() => {
               setMenu(false);
             }}
@@ -102,7 +133,7 @@ const HeaderSection = () => {
             <Link href={"/"}>Home</Link>
           </p>
           <p
-            className="cursor-pointer hover:text-purple-700 flex items-center gap-2"
+            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
             onClick={() => {
               setMenu(false);
             }}
@@ -111,7 +142,7 @@ const HeaderSection = () => {
             <Link href={"/category"}>Categories</Link>
           </p>
           <p
-            className="cursor-pointer hover:text-purple-700 flex items-center gap-2"
+            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
             onClick={() => {
               setMenu(false);
             }}
@@ -120,7 +151,7 @@ const HeaderSection = () => {
             <Link href={"/newarrivals"}>New Arrivals</Link>
           </p>
           <p
-            className="cursor-pointer hover:text-purple-700 flex items-center gap-2"
+            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
             onClick={() => {
               setMenu(false);
             }}
@@ -129,7 +160,7 @@ const HeaderSection = () => {
             <Link href={"/product"}>Products</Link>
           </p>
           <p
-            className="cursor-pointer hover:text-purple-700 flex items-center gap-2"
+            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
             onClick={() => {
               setMenu(false);
             }}
@@ -138,7 +169,7 @@ const HeaderSection = () => {
             <Link href={"track"}>Track Order</Link>
           </p>
           <p
-            className="cursor-pointer hover:text-purple-700 flex items-center gap-2"
+            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
             onClick={() => {
               setMenu(false);
             }}
@@ -214,26 +245,6 @@ const HeaderSection = () => {
               }
             }}
           />
-          {user && user.role === "admin" ? (
-            <LayoutDashboard
-              className={`${
-                user?.role === "admin" ? "" : "hidden"
-              } cursor-pointer ${user ? "" : "hidden"}`}
-              onClick={() => {
-                if (!user) {
-                  router.push("/login");
-                  console.log("not logged in");
-                } else {
-                  if (user.role === "admin") {
-                    router.push("/dashboard");
-                    console.log("admin");
-                  }
-                }
-              }}
-            />
-          ) : (
-            ""
-          )}
           <div
             className="block lg:hidden cursor-pointer"
             onClick={() => {

@@ -63,7 +63,7 @@ const ContactUs = () => {
     <div className="bg-white p-4 min-h-[60vh]">
       <div className="text-sm  text-gray-500 mb-4">
         <span
-          className="cursor-pointer hover:text-purple-600"
+          className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/")}
         >
           Home
@@ -75,7 +75,7 @@ const ContactUs = () => {
         {/* Left: Contact Info */}
         <div className="flex flex-col justify-center space-y-6">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-purple-700 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-pink-700 mb-4">
               Get In Touch
             </h2>
             <p className="text-gray-600 text-base md:text-lg">

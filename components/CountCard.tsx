@@ -4,14 +4,14 @@ interface CountCardProps {
   icon: React.ReactNode;
   label: string;
   count: number | string;
-  color?: string; // Accept Tailwind class e.g., "bg-purple-100" or "text-pink-500"
+  color?: string; // Accept Tailwind class e.g., "bg-pink-100" or "text-pink-500"
 }
 
 export default function CountCard({
   icon,
   label,
   count,
-  color = "bg-purple-100", // default if not passed
+  color = "bg-pink-100", // default if not passed
 }: CountCardProps) {
   return (
     <div className="bg-white shadow-sm rounded-lg p-5 border border-gray-200 hover:shadow-md transition-all duration-300">

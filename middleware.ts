@@ -13,8 +13,42 @@ async function verifyJWT(token: string) {
   }
 }
 
+const allowedOrigins = new Set([
+  "http://localhost:3000",
+  "http://localhost:3001",
+]);
+
+function applyCorsHeaders(response: NextResponse, origin: string | null) {
+  if (origin && allowedOrigins.has(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Vary", "Origin");
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+    response.headers.set(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    );
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
+  }
+
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  if (path.startsWith("/api/")) {
+    const origin = request.headers.get("origin");
+
+    if (request.method === "OPTIONS") {
+      return applyCorsHeaders(new NextResponse(null, { status: 204 }), origin);
+    }
+
+    return applyCorsHeaders(NextResponse.next(), origin);
+  }
+
   const token = request.cookies.get("basics")?.value || "";
 
   // Public routes (user shouldn't be redirected if logged in)
@@ -42,6 +76,7 @@ export async function middleware(request: NextRequest) {
     "/customers",
     "/settings",
     "/support",
+    "/faqs",
     "/products",
     "/categories",
     "/addproduct",
@@ -50,10 +85,25 @@ export async function middleware(request: NextRequest) {
     "/editcategory",
     "/others",
   ];
+  const isAdminRoute =
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    onlyForAdmins.some(
+      (route) => path === route || path.startsWith(`${route}/`),
+    );
+  const isAdminLogin = path === "/admin/admin";
 
   if (!token) {
     // If no token, restrict access to protected routes
-    if (protectedRoutes.includes(path)) {
+    if (protectedRoutes.includes(path) || (isAdminRoute && !isAdminLogin)) {
+      return NextResponse.redirect(
+        new URL(isAdminRoute ? "/admin/admin" : "/login", request.url),
+      );
+    }
+    if (isAdminLogin) {
+      return NextResponse.next();
+    }
+    if (protectedRoutes.some((route) => path.startsWith(`${route}/`))) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     return NextResponse.next();
@@ -75,8 +125,12 @@ export async function middleware(request: NextRequest) {
   }
   const isAdmin = decoded.role === "admin";
 
-  if (onlyForAdmins.some((route) => path.startsWith(route)) && !isAdmin) {
+  if (isAdminRoute && !isAdminLogin && !isAdmin) {
     return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (isAdminLogin && isAdmin) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
@@ -85,6 +139,7 @@ export async function middleware(request: NextRequest) {
 // ✅ Works on Vercel Edge Runtime!
 export const config = {
   matcher: [
+    "/api/:path*",
     "/",
     "/about",
     "/login",
@@ -109,8 +164,10 @@ export const config = {
     "/addcategory",
     "/editproduct/:id",
     "/editcategory/:id",
-    "/product/:id",
+    "/product/:slug",
     "/category/:id",
     "/support",
+    "/admin",
+    "/admin/admin",
   ],
 };

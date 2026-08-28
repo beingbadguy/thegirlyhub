@@ -1,25 +1,22 @@
 "use client";
-import ShopByCategory from "@/components/ShopByCategory";
 
+import ShopByCategory from "@/components/ShopByCategory";
 import { useRouter } from "next/navigation";
-import React from "react";
 
 const Page = () => {
   const router = useRouter();
   return (
     <div className="m-4 min-h-[70vh]">
-      <div className="text-sm text-gray-500 mb-4">
+      <div className="mb-4 text-sm text-gray-500">
         <span
-          className="cursor-pointer hover:text-purple-600"
+          className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/")}
         >
           Home
         </span>{" "}
-        / <span className="cursor-pointer text-black">Categories</span>{" "}
+        / <span className="cursor-pointer text-black">Categories</span>
       </div>
-      <div>
-        <ShopByCategory />
-      </div>
+      <ShopByCategory limit={12} paginated />
     </div>
   );
 };

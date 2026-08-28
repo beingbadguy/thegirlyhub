@@ -1,177 +1,129 @@
 "use client";
-import { useAuthStore } from "@/store/store";
+
 import axios, { AxiosError } from "axios";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { Heart } from "lucide-react";
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { CiDiscount1, CiHeart } from "react-icons/ci";
-import { IoMdHeart } from "react-icons/io";
+import PaginationControls from "./PaginationControls";
 import { Skeleton } from "./ui/skeleton";
+import ProductCard from "./ProductCard";
 
-type Products = {
-  _id: string;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice: number;
-  countInStock: number;
-  rating: number;
-  numReviews: number;
-  image: string;
-  discountPercentage: number;
-};
+interface NewArrivalsProps {
+  limit?: number;
+  paginated?: boolean;
+  showSeeMore?: boolean;
+}
 
-type WishlistItemFlexible = {
-  productId: string | { _id: string };
-};
-
-const NewArrivals = () => {
-  const { addToWishlist, user } = useAuthStore();
-  const [products, setProducts] = useState<Products[]>([]);
+const NewArrivals = ({
+  limit = 12,
+  paginated = false,
+  showSeeMore = false,
+}: NewArrivalsProps) => {
+  const [products, setProducts] = useState<
+    React.ComponentProps<typeof ProductCard>["product"][]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  const fetchAllProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/product");
-      setProducts(response.data.products);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];
-
-  const alreadyInWishlist = (id: string) => {
-    return allProductsOfWishlist.some((item: WishlistItemFlexible) => {
-      if (typeof item.productId === "string") {
-        return item.productId === id;
-      } else {
-        return item.productId._id === id;
-      }
-    });
-  };
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
 
   useEffect(() => {
+    const fetchAllProducts = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get("/api/product", {
+          params: { page: paginated ? page : 1, limit },
+        });
+        setProducts(response.data.products);
+        setTotalPages(response.data.pagination?.totalPages ?? 1);
+        setTotalProducts(response.data.pagination?.total ?? 0);
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          console.error(error.response?.data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchAllProducts();
-  }, []);
+  }, [limit, paginated, page]);
 
   if (loading) {
     return (
-      <div>
-        <h2 className="text-2xl  mb-4">New Arrivals</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {[...Array(10)].fill(1, 10).map((_, index) => (
-            <div
-              key={index}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 flex flex-col justify-between"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex w-10 h-4 items-center gap-1 bg-purple-600 text-white text-xs px-2 py-1 rounded"></div>
-              </div>
-
-              {/* Product Image */}
-              <Skeleton className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden mb-3 cursor-pointer" />
-
-              {/* Product Title */}
-              <Skeleton className="font-semibold text-sm md:text-base line-clamp-2 cursor-pointer mb-1" />
-
-              {/* Pricing */}
-              <div className=" text-sm w-full">
-                <Skeleton className="text-red-500 line-through w-[80%] h-4 rounded" />
-                <Skeleton className="text-red-500 line-through w-16 h-4 mt-4 rounded" />
-              </div>
+      <section className="mx-auto max-w-7xl py-10 md:py-14">
+        <div className="mb-10 text-center">
+          <Skeleton className="mx-auto h-4 w-28 rounded-full" />
+          <Skeleton className="mx-auto mt-4 h-10 w-56" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {[...Array(8)].map((_, index) => (
+            <div key={index} className="rounded-2xl bg-white p-3">
+              <Skeleton className="mb-4 aspect-[4/3] w-full rounded-xl" />
+              <Skeleton className="mb-2 h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
             </div>
           ))}
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="my-6">
-      <h2 className="text-2xl  mb-4">New Arrivals</h2>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <AiOutlineLoading3Quarters className="animate-spin text-3xl text-purple-600" />
+    <section className="mx-auto max-w-7xl py-10 md:py-14">
+      <div className="mb-12 text-center">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1.5 text-[11px] font-medium tracking-widest text-rose-500 ring-1 ring-rose-100">
+          <Heart className="size-3 fill-rose-400 text-rose-400" />
+          NEW IN
         </div>
-      ) : products.length === 0 ? (
-        <p className="text-center text-gray-500">No new arrivals found.</p>
+        <h2 className="font-serif text-3xl font-medium tracking-tight text-rose-950 sm:text-4xl">
+          New Arrivals
+        </h2>
+        <p className="mx-auto mt-3 max-w-md text-[15px] text-rose-900/60">
+          Fresh drops you’ll fall in love with.
+        </p>
+      </div>
+
+      {products.length === 0 ? (
+        <p className="text-center text-rose-900/50">No new arrivals found.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {products.map((product) => (
-            <div
-              key={product._id}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 flex flex-col justify-between"
-            >
-              {/* Badge & Wishlist */}
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-1 bg-purple-600 text-white text-xs px-2 py-1 rounded">
-                  <CiDiscount1 className="text-base" />
-                  {Math.floor(product.discountPercentage)}% Off
-                </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} showActions />
+            ))}
+          </div>
 
-                <div
-                  className="cursor-pointer p-1 rounded-full bg-white shadow"
-                  onClick={() =>
-                    user ? addToWishlist(product._id) : router.push("/login")
-                  }
-                >
-                  {user && alreadyInWishlist(product._id) ? (
-                    <IoMdHeart className="text-red-500 text-xl" />
-                  ) : (
-                    <CiHeart className="text-black text-xl hover:text-red-500" />
-                  )}
-                </div>
-              </div>
-
-              {/* Product Image */}
-              <div
-                className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden mb-3 cursor-pointer"
-                onClick={() => router.push(`/product/${product._id}`)}
+          {showSeeMore && !paginated && (
+            <div className="mt-12 text-center">
+              <Link
+                href="/newarrivals"
+                className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-8 py-3 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50"
               >
-                <Image
-                  src={product.image}
-                  alt={product.title}
-                  fill
-                  className="object-cover transition-transform hover:scale-110"
-                />
-              </div>
-
-              {/* Product Title */}
-              <h3
-                className="font-semibold text-sm md:text-base line-clamp-2 cursor-pointer mb-1"
-                onClick={() => router.push(`/product/${product._id}`)}
-              >
-                {product.title}
-              </h3>
-
-              {/* Pricing */}
-              <div
-                className="flex items-center gap-2 text-sm"
-                onClick={() => router.push(`/product/${product._id}`)}
-              >
-                <span className="text-red-500 line-through">
-                  ₹{product.price}
-                </span>
-                <span className="text-purple-700 font-semibold">
-                  ₹{product.discountedPrice}
-                </span>
-              </div>
+                See all new arrivals →
+              </Link>
             </div>
-          ))}
-        </div>
+          )}
+
+          {paginated && (
+            <>
+              <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                onPageChange={(p) => {
+                  setPage(p);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
+              {totalProducts > 0 && (
+                <p className="mt-3 text-center text-sm text-rose-900/50">
+                  Showing page {page} of {totalPages} ({totalProducts} products)
+                </p>
+              )}
+            </>
+          )}
+        </>
       )}
-    </div>
+    </section>
   );
 };
 

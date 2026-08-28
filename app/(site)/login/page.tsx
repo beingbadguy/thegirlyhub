@@ -53,7 +53,7 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center gap-4 min-h-[70vh] flex-col bg-white text-black w-full">
       {/* <Image
-        src="/basiclogo.png"
+        src="/girly3.png"
         alt="logo"
         width={100}
         height={100}

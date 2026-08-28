@@ -1,4 +1,5 @@
 "use client";
+import PaginationControls from "@/components/PaginationControls";
 import axios, { AxiosError } from "axios";
 import React, { useEffect, useState } from "react";
 import { VscLoading } from "react-icons/vsc";
@@ -31,13 +32,20 @@ const Page = () => {
   const { user } = useAuthStore();
   const [customers, setCustomers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
   const router = useRouter();
 
-  const fetchAllUsers = async () => {
+  const fetchAllUsers = async (requestedPage = page) => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/users");
-      setCustomers(response.data.users);
+      const response = await axios.get("/api/users", {
+        params: { page: requestedPage, limit: 12 },
+      });
+      setCustomers(response.data.users || []);
+      setTotalPages(response.data.pagination?.totalPages || 1);
+      setTotalUsers(response.data.pagination?.total || 0);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
@@ -59,15 +67,15 @@ const Page = () => {
   if (loading) {
     return (
       <div className="min-h-[30vh] flex items-center justify-center">
-        <VscLoading className="animate-spin text-purple-700 text-3xl" />
+        <VscLoading className="animate-spin text-pink-700 text-3xl" />
       </div>
     );
   }
 
   return (
     <div className="mt-2 overflow-y-scroll max-h-[90vh] pt-20 pb-20 md:pt-0 md:mb-0 px-4">
-      <h2 className="text-xl font-semibold mb-4 my-2 text-purple-700">
-        All User Details ({customers?.length})
+      <h2 className="text-xl font-semibold mb-4 my-2 text-pink-700">
+        All User Details ({totalUsers || customers?.length})
       </h2>
       <Table>
         <TableHeader>
@@ -87,12 +95,27 @@ const Page = () => {
               <TableCell>{user.email}</TableCell>
               <TableCell className="capitalize">{user?.pass}</TableCell>
               <TableCell>{user.firstPurchase ? "Yes" : "No"}</TableCell>
-              <TableCell>{user.order.length}</TableCell>
+              <TableCell>{user.order?.length || 0}</TableCell>
               <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          fetchAllUsers(nextPage);
+        }}
+      />
+
+      {totalUsers > 0 && (
+        <p className="mt-3 text-center text-sm text-gray-500">
+          Showing page {page} of {totalPages} ({totalUsers} users)
+        </p>
+      )}
     </div>
   );
 };

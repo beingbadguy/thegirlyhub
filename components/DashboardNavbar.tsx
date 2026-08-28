@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/store";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect } from "react";
-import { TbWorldShare } from "react-icons/tb";
+import { Bell, ExternalLink } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 
 const DashboardNavbar = () => {
@@ -43,16 +43,16 @@ const DashboardNavbar = () => {
         <div>
           <Skeleton className="size-14 rounded-full" />
         </div>
-        {/* <VscLoading className="animate-spin text-purple-700 text-xl" /> */}
+        {/* <VscLoading className="animate-spin text-pink-700 text-xl" /> */}
       </div>
     );
   }
 
   return (
-    <div className="fixed top-0 left-0 md:static w-full  py-2 px-4 border-b-1 border-gray-300 bg-white z-[99999]">
+    <header className="fixed left-0 top-0 z-[40] w-full border-b border-black/10 bg-white/95 px-4 py-3 backdrop-blur md:static md:px-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center justify-center gap-2">
-          <div className="size-14 rounded-full border border-gray-500 flex items-center justify-center text-purple-700 overflow-hidden">
+          <div className="size-14 rounded-full border border-gray-500 flex items-center justify-center text-pink-700 overflow-hidden">
             <Image
               src={user?.image || ""}
               alt="user"
@@ -62,19 +62,23 @@ const DashboardNavbar = () => {
             />
           </div>
           <div>
-            <p className="text-black text-sm md:text-md">{user?.name}</p>
-            <p className="text-black italic text-sm md:text-md">
-              {user?.email}
-            </p>
+            <p className="text-sm font-medium text-black">{user?.name}</p>
+            <p className="text-xs text-black/45">{user?.email}</p>
           </div>
         </div>
-        <div>
-          <Link href="/">
-            <TbWorldShare className="text-3xl cursor-pointer" />
+        <div className="flex items-center gap-4">
+          <Bell className="size-5 text-black/55" />
+          <Link
+            href="/"
+            aria-label="Open storefront"
+            className="flex items-center gap-2 text-sm font-medium"
+          >
+            <ExternalLink className="size-4" />{" "}
+            <span className="hidden sm:inline">Storefront</span>
           </Link>
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

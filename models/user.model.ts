@@ -10,12 +10,22 @@ const userSchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    // required: true,
+    default: null,
+  },
+  city: {
+    type: String,
+    default: null,
+  },
+  state: {
+    type: String,
+    default: null,
+  },
+  landmark: {
+    type: String,
     default: null,
   },
   zip: {
     type: Number,
-    // required: true,
     default: null,
   },
   phone: {

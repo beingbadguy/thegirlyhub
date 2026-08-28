@@ -49,7 +49,7 @@ const Page = () => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
@@ -57,7 +57,9 @@ const Page = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("/api/category");
+      const response = await axios.get("/api/category", {
+        params: { page: 1, limit: 12 },
+      });
       // console.log(response.data);
       setCategories(response.data.categories);
     } catch (error: unknown) {
@@ -77,12 +79,12 @@ const Page = () => {
       return;
     }
     if (
-      !data.title ||
-      !data.description ||
-      !data.price ||
-      !data.discountedPrice ||
-      !data.countInStock ||
-      !data.info
+      !data.title.trim() ||
+      !data.description.trim() ||
+      !data.price.trim() ||
+      !data.discountedPrice.trim() ||
+      !data.countInStock.trim() ||
+      !data.info.trim()
     ) {
       setError("Please fill all the fields");
       return;
@@ -91,7 +93,21 @@ const Page = () => {
       setError("Please upload an image");
       return;
     }
-    if (data.price < data.discountedPrice) {
+    const price = Number(data.price);
+    const discountedPrice = Number(data.discountedPrice);
+    const countInStock = Number(data.countInStock);
+    if (
+      !Number.isFinite(price) ||
+      price <= 0 ||
+      !Number.isFinite(discountedPrice) ||
+      discountedPrice < 0 ||
+      !Number.isFinite(countInStock) ||
+      countInStock < 0
+    ) {
+      setError("Enter valid price and stock values");
+      return;
+    }
+    if (price < discountedPrice) {
       setError("Discounted price cannot be greater than price");
       return;
     }
@@ -100,9 +116,9 @@ const Page = () => {
       const formData = new FormData();
       formData.append("title", data.title);
       formData.append("description", data.description);
-      formData.append("price", data.price);
-      formData.append("discountedPrice", data.discountedPrice);
-      formData.append("countInStock", data.countInStock);
+      formData.append("price", String(price));
+      formData.append("discountedPrice", String(discountedPrice));
+      formData.append("countInStock", String(countInStock));
       formData.append("category", selectedCategory);
       formData.append("info", data.info);
       formData.append("image", imageLink!);
@@ -153,7 +169,7 @@ const Page = () => {
           {" "}
           <ChevronLeft />
         </Link>
-        <h1 className="font-bold text-2xl text-purple-700">Add Product</h1>
+        <h1 className="font-bold text-2xl text-pink-700">Add Product</h1>
       </div>
       <div className="mt-4">
         <form

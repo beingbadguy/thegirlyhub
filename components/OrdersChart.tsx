@@ -20,7 +20,7 @@ import {
 import { useDashboardStore } from "@/store/dashboard";
 import dayjs from "dayjs";
 
-const COLORS = ["#7e5bef", "#f472b6", "#facc15", "#34d399", "#60a5fa"];
+const COLORS = ["#ec4899", "#f472b6", "#facc15", "#34d399", "#60a5fa"];
 
 export default function DashboardCharts() {
   const { orders, users, products, newsletters, queries } = useDashboardStore();
@@ -50,7 +50,7 @@ export default function DashboardCharts() {
             <XAxis dataKey="date" />
             <YAxis allowDecimals={false} />
             <Tooltip />
-            <Bar dataKey="count" fill="#7e5bef" />
+            <Bar dataKey="count" fill="#ec4899" />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -129,7 +129,7 @@ export default function DashboardCharts() {
               cx="50%"
               cy="50%"
               outerRadius={80}
-              fill="#8884d8"
+              fill="#f472b6"
               label
             >
               {COLORS.map((color, index) => (

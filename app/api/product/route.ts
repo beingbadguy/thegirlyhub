@@ -3,43 +3,29 @@ import Product from "@/models/product.model";
 import { NextRequest, NextResponse } from "next/server";
 import { cloudinaryConnection } from "@/config/cloudinaryConnection";
 import cloudinary from "cloudinary";
-import { redis } from "@/lib/redis";
+import { getPagination, paginationResult } from "@/lib/pagination";
+import { buildProductSlug } from "@/lib/slug";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   await databaseConnection();
-  cloudinaryConnection();
   try {
-    const cachedProducts = await redis.get("products");
+    const { page, limit, skip } = getPagination(request, 12);
+    const category = request.nextUrl.searchParams.get("category");
+    const filter = category ? { category } : {};
 
-    let productsFromCache = [];
-    if (cachedProducts) {
-      productsFromCache =
-        typeof cachedProducts === "string"
-          ? JSON.parse(cachedProducts)
-          : cachedProducts; // already object
-    }
+    const [products, total] = await Promise.all([
+      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.countDocuments(filter),
+    ]);
 
-    if (productsFromCache.length > 0) {
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Products fetched successfully",
-          products: productsFromCache,
-        },
-        { status: 200 }
-      );
-    }
-
-    const products = await Product.find().sort({ createdAt: -1 });
-
-    await redis.set("products", JSON.stringify(products), { ex: 3600 });
     return NextResponse.json(
       {
         success: true,
         message: "Products fetched successfully",
         products,
+        pagination: paginationResult(page, limit, total),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.log(error);
@@ -48,7 +34,7 @@ export async function GET() {
         message: "Error fetching products",
         success: false,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -57,7 +43,6 @@ export async function POST(request: NextRequest) {
   await databaseConnection();
   cloudinaryConnection();
   try {
-    redis.del("products");
     const formData = await request.formData();
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
@@ -69,18 +54,18 @@ export async function POST(request: NextRequest) {
     const info = formData.get("info") as string;
 
     if (
-      !title ||
+      !title?.trim() ||
       !description ||
       !price ||
       !image ||
       !category ||
       !countInStock ||
       !discountedPrice ||
-      !info
+      !info?.trim()
     ) {
       return NextResponse.json(
         { message: "All fields are required", sucess: false },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -111,19 +96,22 @@ export async function POST(request: NextRequest) {
 
     await product.save();
 
+    product.slug = buildProductSlug(title, product._id.toString());
+    await product.save();
+
     return NextResponse.json(
       {
         message: "Product created successfully",
         success: true,
         product: product,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.log(error);
     return NextResponse.json(
       { message: "Error creating product", success: false },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -131,19 +119,18 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   await databaseConnection();
   try {
-    redis.del("products");
     const { id, isActive } = await request.json();
     if (!id) {
       return NextResponse.json(
         { message: "Product id is required", success: false },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json(
         { message: "Product not found", success: false },
-        { status: 404 }
+        { status: 404 },
       );
     }
     product.isActive = isActive;
@@ -151,13 +138,13 @@ export async function PUT(request: NextRequest) {
     await product.save();
     return NextResponse.json(
       { product, success: true, message: "Product updated successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.log(error);
     return NextResponse.json(
       { message: "Error fetching product", success: false },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
