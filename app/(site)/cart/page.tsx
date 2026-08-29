@@ -2,15 +2,12 @@
 
 import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, Sparkles, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import axios, { AxiosError } from "axios";
-import {
-  DELIVERY_CHARGE,
-  FIRST_ORDER_DISCOUNT_RATE,
-} from "@/lib/orderValidation";
+import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 
 const CartPage = () => {
@@ -77,10 +74,30 @@ const CartPage = () => {
     0,
   );
 
+  // Dynamic shipping calculation
+  const shippingResult = calculateShipping(subtotal, "online");
+  const shippingCharge = shippingResult.shippingCharge;
+  const remainingForFreeShipping = shippingResult.remainingForFreeShipping;
+  const isFreeShipping = shippingResult.isFreeShipping;
+  const freeShippingProgress = shippingResult.freeShippingProgress;
+
   const firstTimeDiscount = user?.firstPurchase
     ? 0
-    : (subtotal + DELIVERY_CHARGE) * FIRST_ORDER_DISCOUNT_RATE;
-  const totalAfterDiscount = subtotal + DELIVERY_CHARGE - firstTimeDiscount;
+    : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
+  const totalAfterDiscount = subtotal + shippingCharge - firstTimeDiscount;
+
+  // State for Toast Notification
+  const [showToast, setShowToast] = useState(false);
+  const prevSubtotalRef = useRef(subtotal);
+
+  useEffect(() => {
+    if (subtotal > 0 && prevSubtotalRef.current < 499 && subtotal >= 499) {
+      setShowToast(true);
+      const timer = setTimeout(() => setShowToast(false), 4000);
+      return () => clearTimeout(timer);
+    }
+    prevSubtotalRef.current = subtotal;
+  }, [subtotal]);
 
   return (
     <div className="p-4 min-h-[90vh]">
@@ -233,36 +250,67 @@ const CartPage = () => {
             )}
           </div>
 
-          <div className="border p-4 rounded-sm space-y-4 h-fit text-sm">
-            <h1 className="text-xl font-bold ">Product Summary</h1>
-            <hr className="w-full border border-gray-200 " />
-            <div className="flex justify-between">
-              <p>Total products</p>
-              <p>{availableItems.length} Products</p>
-            </div>
-            <div className="flex justify-between">
-              <p>Subtotal</p>
-              <p>₹{subtotal.toFixed(2)}</p>
+          <div className="border border-pink-100 bg-white p-5 rounded-2xl shadow-sm space-y-4 h-fit text-sm">
+            {/* Free Shipping Progress Indicator */}
+            <div className="space-y-2 p-3 bg-pink-50/55 rounded-xl border border-pink-100/50">
+              <div className="flex justify-between text-xs font-semibold">
+                <span className={isFreeShipping ? "text-green-600 flex items-center gap-1" : "text-gray-600"}>
+                  {isFreeShipping ? (
+                    <>🚀 Free shipping unlocked!</>
+                  ) : (
+                    <>Add <span className="font-bold text-pink-600">₹{remainingForFreeShipping}</span> more to get FREE shipping 🚚</>
+                  )}
+                </span>
+                <span className="text-gray-500 font-bold">₹{subtotal} / ₹499</span>
+              </div>
+              <div className="w-full bg-gray-200/80 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-pink-600 h-full rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${freeShippingProgress}%` }}
+                />
+              </div>
+              {isFreeShipping && (
+                <div className="text-[11px] text-green-700 font-medium flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-green-600 animate-pulse" /> You saved ₹49 on shipping 🎉
+                </div>
+              )}
             </div>
 
-            <div className="flex justify-between">
+            <h2 className="text-lg font-bold text-gray-900">Product Summary</h2>
+            <hr className="w-full border-gray-100" />
+            <div className="flex justify-between text-gray-600">
+              <p>Total products</p>
+              <p className="font-semibold text-gray-800">{availableItems.length} Products</p>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <p>Subtotal</p>
+              <p className="font-semibold text-gray-800">₹{subtotal.toFixed(2)}</p>
+            </div>
+
+            <div className="flex justify-between text-gray-600">
               <p>Delivery charge</p>
-              <p>₹{DELIVERY_CHARGE.toFixed(2)}</p>
+              {isFreeShipping ? (
+                <p className="text-green-600 font-bold flex items-center gap-1">
+                  <span className="line-through text-xs text-gray-400 font-normal">₹49.00</span> FREE
+                </p>
+              ) : (
+                <p className="font-semibold text-gray-800">₹{shippingCharge.toFixed(2)}</p>
+              )}
             </div>
             {!user?.firstPurchase && (
-              <div className="flex justify-between">
-                <p>First time discount</p>
-                <p>₹{firstTimeDiscount.toFixed(2)}</p>
+              <div className="flex justify-between text-green-600">
+                <p>First time discount (15%)</p>
+                <p>-₹{firstTimeDiscount.toFixed(2)}</p>
               </div>
             )}
 
-            <div className="flex justify-between font-bold text-lg">
+            <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-3 text-gray-950">
               <p>Total payment</p>
-              <p>₹{totalAfterDiscount.toFixed(2)}</p>
+              <p className="text-pink-600 text-lg">₹{totalAfterDiscount.toFixed(2)}</p>
             </div>
 
             <button
-              className="w-full bg-black hover:bg-black/80 active:scale-90 transition-transform duration-200 cursor-pointer text-white py-3 font-semibold rounded disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full bg-black hover:bg-black/80 active:scale-95 transition-all duration-200 cursor-pointer text-white py-3 font-semibold rounded-xl disabled:cursor-not-allowed disabled:opacity-50"
               disabled={availableItems.length === 0}
               onClick={() => {
                 router.push("/checkout");
@@ -280,6 +328,14 @@ const CartPage = () => {
         <p className="text-gray-600 my-2 text-sm">
           You do not have any items in your cart.
         </p>
+      )}
+
+      {/* Floating Free Shipping Toast */}
+      {showToast && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-green-500 animate-bounce transition-all duration-300">
+          <Sparkles className="w-5 h-5 text-white" />
+          <span className="font-bold text-sm">Congrats! You unlocked FREE shipping 🚀</span>
+        </div>
       )}
     </div>
   );

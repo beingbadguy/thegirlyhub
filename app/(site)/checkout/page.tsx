@@ -11,12 +11,12 @@ import { TbTruckDelivery } from "react-icons/tb";
 import { Check } from "lucide-react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import {
-  DELIVERY_CHARGE,
   FIRST_ORDER_DISCOUNT_RATE,
   INDIAN_STATES,
   OrderFieldErrors,
   validateOrderInput,
 } from "@/lib/orderValidation";
+import { calculateShipping } from "@/lib/shipping";
 import { isProductInStock } from "@/lib/productStock";
 
 declare global {
@@ -134,10 +134,16 @@ export default function CheckoutPage() {
     0,
   );
 
+  // Dynamic shipping calculation
+  const shippingResult = calculateShipping(subtotal, paymentMode);
+  const shippingCharge = shippingResult.shippingCharge;
+  const codFee = shippingResult.codFee;
+  const isFreeShipping = shippingResult.isFreeShipping;
+
   const firstTimeDiscount = user?.firstPurchase
     ? 0
-    : (subtotal + DELIVERY_CHARGE) * FIRST_ORDER_DISCOUNT_RATE;
-  const baseTotal = subtotal + DELIVERY_CHARGE - firstTimeDiscount;
+    : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
+  const baseTotal = subtotal + shippingCharge - firstTimeDiscount;
 
   let couponDiscount = 0;
   if (couponDetails) {
@@ -147,7 +153,7 @@ export default function CheckoutPage() {
       couponDiscount = couponDetails.discount;
     }
   }
-  const finalAmount = Math.max(0, baseTotal - couponDiscount);
+  const finalAmount = Math.max(0, baseTotal - couponDiscount) + codFee;
 
   const buildOrderPayload = () => ({
     totalAmount: finalAmount,
@@ -206,7 +212,6 @@ export default function CheckoutPage() {
     try {
       const response = await axios.post("/api/order", {
         ...buildOrderPayload(),
-        paymentMethod: "cod",
       });
 
       useAuthStore.setState({ userCart: null });
@@ -526,8 +531,19 @@ export default function CheckoutPage() {
                   <TbTruckDelivery className="size-4" />
                   Delivery charge
                 </p>
-                <p>₹{DELIVERY_CHARGE.toFixed(2)}</p>
+                {isFreeShipping ? (
+                  <p className="text-green-600 font-bold flex items-center gap-1">
+                    <span className="line-through text-xs text-gray-400 font-normal">₹49.00</span> FREE
+                  </p>
+                ) : (
+                  <p>₹{shippingCharge.toFixed(2)}</p>
+                )}
               </div>
+              {isFreeShipping && (
+                <div className="text-[11px] text-green-700 font-medium">
+                  You saved ₹49 on shipping 🎉
+                </div>
+              )}
               {!user?.firstPurchase && (
                 <div className="flex justify-between text-green-600">
                   <p>First order discount (15%)</p>
@@ -537,7 +553,16 @@ export default function CheckoutPage() {
               {couponApplied && (
                 <div className="flex justify-between text-green-600">
                   <p>Coupon discount ({promoCode.toUpperCase()})</p>
-                  <p>-₹{Math.max(0, baseTotal - finalAmount).toFixed(2)}</p>
+                  <p>-₹{couponDiscount.toFixed(2)}</p>
+                </div>
+              )}
+              {paymentMode === "cod" && (
+                <div className="flex justify-between text-gray-600">
+                  <p className="flex items-center gap-1.5">
+                    <IoCashOutline className="size-4" />
+                    COD fee
+                  </p>
+                  <p>₹{codFee.toFixed(2)}</p>
                 </div>
               )}
             </div>

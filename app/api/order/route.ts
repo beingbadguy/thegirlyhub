@@ -1,7 +1,8 @@
 import { databaseConnection } from "@/config/databseConnection";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import { getPagination, paginationResult } from "@/lib/pagination";
-import { validateOrderInput, DELIVERY_CHARGE, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/orderValidation";
+import { validateOrderInput } from "@/lib/orderValidation";
+import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import Cart from "@/models/cart.model";
 import Coupon from "@/models/coupon.model";
 import Order from "@/models/order.model";
@@ -124,13 +125,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const tax = DELIVERY_CHARGE;
+    const shipping = calculateShipping(subtotal, paymentMethod);
+    const shippingCharge = shipping.shippingCharge;
+    const codFee = shipping.codFee;
     const firstTimeDiscount = user.firstPurchase
       ? 0
-      : (subtotal + tax) * FIRST_ORDER_DISCOUNT_RATE;
+      : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
     let expectedTotal = Math.max(
       0,
-      Math.round((subtotal + tax - firstTimeDiscount) * 100) / 100,
+      Math.round((subtotal + shippingCharge + codFee - firstTimeDiscount) * 100) / 100,
     );
 
     // Track coupon discount separately so it can be stored on the order
@@ -189,7 +192,8 @@ export async function POST(request: NextRequest) {
       userId: decoded.userId,
       totalAmount: expectedTotal,
       subtotal,
-      shippingCharge: DELIVERY_CHARGE,
+      shippingCharge,
+      codFee,
       firstOrderDiscount: Math.round(firstTimeDiscount * 100) / 100,
       couponDiscount: appliedCouponDiscount,
       paymentMethod,

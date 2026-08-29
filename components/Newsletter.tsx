@@ -52,7 +52,7 @@ const Newsletter = () => {
 
   return (
     <section className="mx-auto max-w-3xl py-10 md:py-14">
-      <div className="relative overflow-hidden rounded-3xl border border-rose-100/70 bg-[#FFF9FA] px-6 py-12 text-center shadow-[0_20px_50px_-20px_rgba(190,24,93,0.12)] sm:px-12 md:py-16">
+      <div className="relative overflow-hidden rounded-3xl border border-rose-100/70 bg-[#FFF9FA] px-6 py-12 text-center  sm:px-12 md:py-16">
         {/* Soft decorative hearts (optional) */}
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-rose-100/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-pink-100/40 blur-3xl" />

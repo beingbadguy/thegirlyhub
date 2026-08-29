@@ -74,7 +74,7 @@ const HeaderSection = () => {
 
   return (
     <div className="">
-      <div className="text-[10px] bg-pink-800 text-white w-full text-center sm:text-[12px] py-2 ">
+      {/* <div className="text-[10px] bg-pink-800 text-white w-full text-center sm:text-[12px] py-2 ">
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
             key={announcementIndex}
@@ -87,7 +87,7 @@ const HeaderSection = () => {
             {announcements[announcementIndex]}
           </motion.span>
         </AnimatePresence>
-      </div>
+      </div> */}
       <nav className="flex items-center justify-between p-4 border-b border-gray-100 ">
         <div className="font-bold ">
           <Link href={"/"}>

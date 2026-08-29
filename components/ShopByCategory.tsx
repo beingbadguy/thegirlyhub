@@ -98,26 +98,32 @@ const ShopByCategory = ({
         </p>
       </div>
 
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <ul className="grid grid-cols-2 border border-gray-200 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {categories.map((category) => (
           <li
             key={category._id}
-            onClick={() => router.push(`/category/${encodeURIComponent(category.name)}`)}
-            className="group flex cursor-pointer flex-col items-center"
+            onClick={() =>
+              router.push(`/category/${encodeURIComponent(category.name)}`)
+            }
+            className="group cursor-pointer border border-gray-200 bg-white transition-all duration-300 hover:bg-rose-50"
           >
-            <div className="relative size-28 overflow-hidden rounded-full bg-rose-50 ring-1 ring-rose-100 transition-all duration-300 group-hover:ring-rose-200 group-hover:shadow-[0_12px_30px_-8px_rgba(190,24,93,0.2)] sm:size-32 md:size-36">
-              <Image
-                src={category.categoryImage}
-                alt={category.name}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-rose-900/0 transition-colors duration-300 group-hover:bg-rose-900/10" />
-            </div>
+            <div className="flex flex-col items-center justify-center p-6 text-center transition-all duration-300 group-hover:scale-[1.03]">
 
-            <span className="mt-4 text-sm font-medium text-rose-950 transition-colors group-hover:text-rose-600">
-              {category.name}
-            </span>
+              {/* IMAGE */}
+              <div className="relative mb-4 h-20 w-20 sm:h-24 sm:w-24">
+                <Image
+                  src={category.categoryImage}
+                  alt={category.name}
+                  fill
+                  className="object-contain"
+                />
+              </div>
+
+              {/* TITLE */}
+              <h3 className="text-sm font-semibold text-gray-800 transition-colors duration-300 group-hover:text-rose-600">
+                {category.name}
+              </h3>
+            </div>
           </li>
         ))}
       </ul>

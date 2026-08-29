@@ -6,6 +6,7 @@ import {
   FaTwitter,
   FaLinkedinIn,
 } from "react-icons/fa";
+import { Mail, MapPin, Phone } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -28,7 +29,7 @@ const Footer = () => {
         />
       </div>
 
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-10 border-b border-pink-300/25 pb-10 md:grid-cols-4">
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-10 border-b border-pink-300/25 pb-10 sm:grid-cols-2 lg:grid-cols-4">
         {/* About */}
         <div>
           <h2 className="mb-4 text-lg font-semibold">GirlyHub</h2>
@@ -36,51 +37,102 @@ const Footer = () => {
             Your go-to store for minimal, high-quality essentials. We bring
             style & simplicity together.
           </p>
+
+          <div className="mt-5 space-y-2.5 text-sm text-pink-100/70">
+            <p className="flex items-start gap-2">
+              <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+              Shahdara, Delhi – 110032
+            </p>
+            <p className="flex items-center gap-2">
+              <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+              +91 96675549765
+            </p>
+            <p className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+              officialgirlyhub@gmail.com
+            </p>
+          </div>
         </div>
 
-        {/* Links */}
+        {/* Quick Links */}
         <div>
-          <h3 className="mb-4 text-base font-medium">Company</h3>
+          <h3 className="mb-4 text-base font-medium">Quick Links</h3>
           <ul className="space-y-2 text-sm text-pink-100/75">
             <li>
-              <Link href="/about">About Us</Link>
+              <Link href="/" className="transition-colors hover:text-pink-200">Home</Link>
             </li>
             <li>
-              <Link href="/careers">Careers</Link>
+              <Link href="/product" className="transition-colors hover:text-pink-200">Shop</Link>
+            </li>
+            <li>
+              <Link href="/about" className="transition-colors hover:text-pink-200">About Us</Link>
+            </li>
+            <li>
+              <Link href="/contact" className="transition-colors hover:text-pink-200">Contact</Link>
+            </li>
+            <li>
+              <Link href="/track" className="transition-colors hover:text-pink-200">Track Order</Link>
             </li>
           </ul>
         </div>
 
-        {/* Support */}
+        {/* Policies */}
         <div>
-          <h3 className="mb-4 text-base font-medium">Support</h3>
+          <h3 className="mb-4 text-base font-medium">Policies</h3>
           <ul className="space-y-2 text-sm text-pink-100/75">
             <li>
-              <Link href="/contact">Help Center</Link>
+              <Link href="/policies/terms-of-service" className="transition-colors hover:text-pink-200">
+                Terms of Service
+              </Link>
             </li>
             <li>
-              <Link href="/contact">Returns</Link>
+              <Link href="/policies/privacy-policy" className="transition-colors hover:text-pink-200">
+                Privacy Policy
+              </Link>
             </li>
             <li>
-              <Link href="/track">Track Order</Link>
+              <Link href="/policies/refund-policy" className="transition-colors hover:text-pink-200">
+                Return & Refund Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/policies/shipping-policy" className="transition-colors hover:text-pink-200">
+                Shipping Policy
+              </Link>
             </li>
           </ul>
         </div>
 
-        {/* Newsletter + Social */}
+        {/* Social */}
         <div>
-          <h3 className="mb-4 text-base font-medium">Stay in the loop</h3>
-          <div className="mt-6 flex gap-4 text-white">
-            <FaFacebookF className="cursor-pointer hover:text-pink-200" />
-            <FaInstagram className="cursor-pointer hover:text-pink-200" />
-            <FaTwitter className="cursor-pointer hover:text-pink-200" />
-            <FaLinkedinIn className="cursor-pointer hover:text-pink-200" />
+          <h3 className="mb-4 text-base font-medium">Stay Connected</h3>
+          <p className="text-sm leading-6 text-pink-100/70">
+            Follow us on social media for latest drops, offers & behind the scenes.
+          </p>
+          <div className="mt-5 flex gap-3">
+            {[
+              { icon: FaInstagram, href: "#", label: "Instagram" },
+              { icon: FaFacebookF, href: "#", label: "Facebook" },
+              { icon: FaTwitter, href: "#", label: "Twitter" },
+              { icon: FaLinkedinIn, href: "#", label: "LinkedIn" },
+            ].map(({ icon: Icon, href, label }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-900/50 text-pink-100 transition-all hover:bg-pink-200 hover:text-pink-950 hover:scale-110"
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </a>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="relative pt-6 text-center text-sm text-pink-100/80">
-        © {new Date().getFullYear()} GirlyHub. All rights reserved.
+      <div className="relative flex flex-col items-center gap-2 pt-6 text-center text-xs text-pink-100/60">
+        <p>© {new Date().getFullYear()} GirlyHub. All rights reserved.</p>
       </div>
     </footer>
   );

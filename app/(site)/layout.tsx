@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
-import { DM_Sans, Playfair_Display } from "next/font/google";
+import { Poppins } from "next/font/google";
 // import "../globals.css";
 import "./globals.css";
 import HeaderSection from "@/components/HeaderSection";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
 import ScrollToTop from "@/components/ScrollToTop";
+import AnnouncementBand from "@/components/AnnouncementBand";
 
-const dmSans = DM_Sans({
-  variable: "--font-display-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-display-serif",
-  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -34,8 +32,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${dmSans.variable} ${playfair.variable} antialiased custom-scrollbar `}
+        className={`${poppins.variable} antialiased custom-scrollbar `}
       >
+        <AnnouncementBand />
         <ScrollToTop />
         {/* <Header /> */}
         <HeaderSection />

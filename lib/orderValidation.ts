@@ -179,5 +179,5 @@ export function validateOrderInput(data: Partial<OrderInput>): ValidationResult 
 
 export { INDIAN_STATES };
 
-export const DELIVERY_CHARGE = 80;
-export const FIRST_ORDER_DISCOUNT_RATE = 0.15;
+// Re-export from the single source of truth
+export { SHIPPING_CHARGE as DELIVERY_CHARGE, FIRST_ORDER_DISCOUNT_RATE } from "./shipping";

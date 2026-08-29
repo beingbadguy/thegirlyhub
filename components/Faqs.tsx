@@ -28,7 +28,7 @@ const Faqs = () => {
 
   return (
     <section className="mx-auto py-10 md:py-14">
-      <div className="relative overflow-hidden rounded-3xl border border-rose-100/60 bg-[#FFF9FA] px-6 py-12 shadow-[0_25px_50px_-12px_rgba(190,24,93,0.08)] sm:px-10 md:grid md:grid-cols-2 md:gap-16 md:px-16 md:py-16">
+      <div className="relative overflow-hidden rounded-3xl border border-rose-100/60 bg-[#FFF9FA] px-6 py-12  sm:px-10 md:grid md:grid-cols-2 md:gap-16 md:px-16 md:py-16">
         {/* Very subtle background hearts */}
         <img
           src="/hearts.png"

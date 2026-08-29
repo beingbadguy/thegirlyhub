@@ -1,6 +1,7 @@
 "use client";
 
 import { Megaphone, Sparkles, Tag } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 /**
@@ -47,7 +48,7 @@ export default function HomeAdSlots() {
         data-ad-slot="home-mid-banner"
         className="grid min-h-[140px] place-items-center rounded-2xl border-2 border-dashed border-rose-200/80 bg-rose-50/50 px-6 py-10 text-center"
       >
-        <div>
+        {/* <div>
           <Megaphone className="mx-auto mb-2 size-6 text-rose-300" />
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-400">
             Ad / campaign banner
@@ -55,8 +56,9 @@ export default function HomeAdSlots() {
           <p className="mt-1 text-sm text-rose-900/50">
             728×90 or full-width image / video — drop creative here later
           </p>
-        </div>
+        </div> */}
       </div>
+      <Image src="/ad1.png" alt="ads" fill />
 
       {/* Slot 3 — Two-column conversion cards */}
       <div className="grid gap-5 md:grid-cols-2">
