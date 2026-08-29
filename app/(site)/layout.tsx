@@ -7,6 +7,8 @@ import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
 import ScrollToTop from "@/components/ScrollToTop";
 import AnnouncementBand from "@/components/AnnouncementBand";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -42,6 +44,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

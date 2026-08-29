@@ -21,13 +21,13 @@ export default function HeroBannerSlider() {
   useEffect(() => {
     let mounted = true;
     fetch("/api/banner")
-      .then((response) => (response.ok ? response.json() : null))
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!mounted || !data?.banners?.length) return;
         setBanners(data.banners);
         setActiveIndex(0);
       })
-      .catch(() => undefined);
+      .catch(() => { });
 
     return () => {
       mounted = false;
@@ -36,55 +36,63 @@ export default function HeroBannerSlider() {
 
   useEffect(() => {
     if (banners.length < 2) return;
-    const timer = window.setInterval(() => {
-      setActiveIndex((index) => (index + 1) % banners.length);
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % banners.length);
     }, 5000);
-    return () => window.clearInterval(timer);
+
+    return () => clearInterval(timer);
   }, [banners.length]);
 
   const banner = banners[activeIndex];
 
   return (
-    <section className="">
-      <div className="relative mb-2 mt-4 overflow-hidden rounded-xl shadow-sm">
+    <section>
+      <div className="relative mt-4 mb-3 w-full overflow-hidden rounded-xl bg-white shadow-sm">
+
+        {/* LOADING */}
         {!banner ? (
-          <div
-            aria-label="Loading featured offers"
-            className="aspect-[4/3] md:aspect-[16/7] w-full animate-pulse bg-gray-200"
-          />
+          <div className="w-full h-[200px] md:h-[300px] animate-pulse bg-gray-200 rounded-xl" />
         ) : (
-          <div className="relative aspect-[4/3] md:aspect-[16/7] w-full">
+          <div className="relative w-full flex justify-center items-center bg-white">
+
+            {/* IMAGE - NO CROPPING */}
             <Image
               key={banner._id}
               src={banner.image}
-              alt={banner.title || "Featured offer"}
-              fill
+              alt={banner.title || "banner"}
+              width={1600}
+              height={600}
               priority={activeIndex === 0}
               sizes="100vw"
-              className="object-cover"
+              className="w-full h-auto object-contain"
             />
+
+            {/* TEXT OVERLAY */}
             {(banner.title || banner.subtitle || banner.description) && (
-              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/65 via-black/10 to-transparent p-5 text-white sm:p-8">
+              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 via-black/10 to-transparent p-4 sm:p-6 text-white">
                 <div className="max-w-xl">
                   {banner.subtitle && (
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+                    <p className="text-xs uppercase tracking-widest text-white/80 mb-1">
                       {banner.subtitle}
                     </p>
                   )}
+
                   {banner.title && (
-                    <h1 className="text-2xl font-bold sm:text-4xl">
+                    <h1 className="text-xl sm:text-3xl font-bold">
                       {banner.title}
                     </h1>
                   )}
+
                   {banner.description && (
-                    <p className="mt-2 max-w-lg text-sm text-white/90 sm:text-base">
+                    <p className="mt-1 text-sm sm:text-base text-white/90">
                       {banner.description}
                     </p>
                   )}
+
                   {banner.link && banner.buttonText && (
                     <Link
                       href={banner.link}
-                      className="mt-4 inline-flex rounded bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+                      className="inline-block mt-3 bg-white text-black px-4 py-2 text-sm font-semibold rounded hover:bg-gray-200"
                     >
                       {banner.buttonText}
                     </Link>
@@ -96,36 +104,20 @@ export default function HeroBannerSlider() {
         )}
       </div>
 
+      {/* DOTS */}
       {banners.length > 1 && (
-        <>
-          {/* <button
-            type="button"
-            aria-label="Previous banner"
-            onClick={previous}
-            className="absolute left-6 top-[calc(50%)] -translate-y-1/2 rounded-full bg-white/85 p-2 text-gray-900 shadow hover:bg-white"
-          >
-            <ChevronLeft className="size-5" />
-          </button> */}
-          {/* <button
-            type="button"
-            aria-label="Next banner"
-            onClick={next}
-            className="absolute right-6 top-[calc(50%)] -translate-y-1/2 rounded-full bg-white/85 p-2 text-gray-900 shadow hover:bg-white"
-          >
-            <ChevronRight className="size-5" />
-          </button> */}
-          <div className="flex  h-10 items-center justify-center gap-1.5  ">
-            {banners.map((item, index) => (
-              <button
-                key={item._id}
-                type="button"
-                aria-label={`Show banner ${index + 1}`}
-                onClick={() => setActiveIndex(index)}
-                className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-7 bg-[#33272d]" : "w-1.5 bg-[#d9cbd1]"}`}
-              />
-            ))}
-          </div>
-        </>
+        <div className="flex justify-center items-center gap-1.5 h-8">
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveIndex(index)}
+              className={`h-1.5 rounded-full transition-all ${index === activeIndex
+                  ? "w-7 bg-[#33272d]"
+                  : "w-1.5 bg-[#d9cbd1]"
+                }`}
+            />
+          ))}
+        </div>
       )}
     </section>
   );
