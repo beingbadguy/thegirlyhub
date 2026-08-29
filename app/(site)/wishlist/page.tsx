@@ -3,6 +3,7 @@ import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
 import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import axios, { AxiosError } from "axios";
 import { VscCoffee } from "react-icons/vsc";
 import { useEffect, useState } from "react";
@@ -48,13 +49,8 @@ const WishlistPage = () => {
 
   return (
     <div className="min-h-[70vh] p-4">
-      <div className="mb-4 text-sm text-gray-500">
-        <span
-          className="cursor-pointer hover:text-pink-600"
-          onClick={() => router.push("/")}
-        >
-          Home
-        </span>{" "}
+      <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
+        <BreadcrumbHome />{" "}
         /{" "}
         <span
           className="cursor-pointer hover:text-pink-600"

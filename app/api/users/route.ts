@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     const { page, limit, skip } = getPagination(request);
     const [users, total] = await Promise.all([
       User.find({})
+        .select("-password -pass")
         .sort({ createdAt: -1 }) // optional: most recent users first
         .skip(skip)
         .limit(limit)
@@ -47,7 +48,8 @@ export async function GET(request: NextRequest) {
             path: "products.productId",
             model: "Product",
           },
-        }),
+        })
+        .populate("order"),
       User.countDocuments(),
     ]);
 

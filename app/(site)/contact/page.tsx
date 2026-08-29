@@ -3,6 +3,8 @@
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import {
   FaEnvelope,
   FaPaperPlane,
@@ -83,13 +85,8 @@ const ContactUs = () => {
   return (
     <div className="min-h-screen  px-4 py-10">
       {/* Breadcrumb */}
-      <div className=" mx-auto text-sm text-gray-500 mb-6">
-        <span
-          className="cursor-pointer hover:text-pink-600 transition"
-          onClick={() => router.push("/")}
-        >
-          Home
-        </span>{" "}
+      <div className=" mx-auto text-sm text-gray-500 mb-6 flex items-center gap-1.5 flex-wrap">
+        <BreadcrumbHome />{" "}
         / <span className="text-gray-800">Contact</span>
       </div>
 

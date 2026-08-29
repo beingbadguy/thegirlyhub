@@ -20,7 +20,8 @@ import {
   Sparkles,
   Check,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft
 } from "lucide-react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
@@ -377,7 +378,11 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       
       {/* Breadcrumbs */}
       <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
-        <span className="cursor-pointer transition-colors hover:text-neutral-800" onClick={() => router.push("/")}>
+        <span 
+          className="cursor-pointer transition-colors hover:text-neutral-800 flex items-center gap-1" 
+          onClick={() => router.back()}
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
           Home
         </span>
         <span>/</span>

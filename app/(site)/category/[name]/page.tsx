@@ -8,6 +8,7 @@ import { VscLoading } from "react-icons/vsc";
 import { Heart, Sparkles } from "lucide-react";
 import FilterSidebar from "@/components/FilterSidebar";
 import { IoFilterSharp } from "react-icons/io5";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 
 type Product = React.ComponentProps<typeof ProductCard>["product"];
 
@@ -70,13 +71,8 @@ const Page = () => {
 
   return (
     <div className="min-h-[75vh] p-4">
-      <div className="mb-4 text-sm text-gray-500">
-        <span
-          className="cursor-pointer hover:text-pink-600"
-          onClick={() => router.push("/")}
-        >
-          Home
-        </span>{" "}
+      <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
+        <BreadcrumbHome />{" "}
         /{" "}
         <span
           className="cursor-pointer hover:text-pink-600"

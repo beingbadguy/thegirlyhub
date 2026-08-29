@@ -3,6 +3,7 @@
 import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import axios, { AxiosError } from "axios";
@@ -83,13 +84,8 @@ const CartPage = () => {
 
   return (
     <div className="p-4 min-h-[90vh]">
-      <div className="text-sm text-gray-500 mb-4">
-        <span
-          className="cursor-pointer hover:text-pink-600"
-          onClick={() => router.push("/")}
-        >
-          Home
-        </span>{" "}
+      <div className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 flex-wrap">
+        <BreadcrumbHome />{" "}
         / <span className="cursor-pointer text-black">Cart</span>{" "}
       </div>
 

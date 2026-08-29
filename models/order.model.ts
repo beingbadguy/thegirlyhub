@@ -1,5 +1,26 @@
 import mongoose from "mongoose";
 
+const statusHistorySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      required: true,
+      enum: [
+        "processing",
+        "reviewing",
+        "preparing",
+        "shipped",
+        "delivered",
+        "completed",
+        "cancelled",
+      ],
+    },
+    changedAt: { type: Date, default: Date.now },
+    note: { type: String, default: null },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   products: [
@@ -13,6 +34,14 @@ const orderSchema = new mongoose.Schema({
     },
   ],
   totalAmount: { type: Number, required: true, min: 0 },
+  /** Recorded at checkout — products price before any charges/discounts */
+  subtotal: { type: Number, default: 0 },
+  /** Recorded at checkout — delivery/shipping fee applied */
+  shippingCharge: { type: Number, default: 0 },
+  /** Recorded at checkout — first-order 15% discount amount */
+  firstOrderDiscount: { type: Number, default: 0 },
+  /** Recorded at checkout — coupon discount amount (0 if no coupon) */
+  couponDiscount: { type: Number, default: 0 },
   paymentMethod: {
     type: String,
     required: true,
@@ -33,6 +62,15 @@ const orderSchema = new mongoose.Schema({
       "cancelled",
     ],
   },
+  /** Tracks every status change with a timestamp */
+  statusHistory: {
+    type: [statusHistorySchema],
+    default: [],
+  },
+  /** Air Waybill number — required when status is "shipped" */
+  awbNumber: { type: String, default: null },
+  /** Carrier tracking link — set when status is "shipped" */
+  trackingLink: { type: String, default: null },
   deliveryType: {
     type: String,
     required: true,

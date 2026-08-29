@@ -133,6 +133,9 @@ export async function POST(request: NextRequest) {
       Math.round((subtotal + tax - firstTimeDiscount) * 100) / 100,
     );
 
+    // Track coupon discount separately so it can be stored on the order
+    let appliedCouponDiscount = 0;
+
     if (couponCode) {
       const coupon = await Coupon.findOne({
         code: String(couponCode).toUpperCase(),
@@ -161,15 +164,14 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
-      let discountAmount = 0;
       if (coupon.type === "percentage") {
-        discountAmount = Math.round(((expectedTotal * coupon.discount) / 100) * 100) / 100;
+        appliedCouponDiscount = Math.round(((expectedTotal * coupon.discount) / 100) * 100) / 100;
       } else {
-        discountAmount = coupon.discount;
+        appliedCouponDiscount = coupon.discount;
       }
       expectedTotal = Math.max(
         0,
-        Math.round((expectedTotal - discountAmount) * 100) / 100,
+        Math.round((expectedTotal - appliedCouponDiscount) * 100) / 100,
       );
     }
 
@@ -186,6 +188,10 @@ export async function POST(request: NextRequest) {
     const newOrder = new Order({
       userId: decoded.userId,
       totalAmount: expectedTotal,
+      subtotal,
+      shippingCharge: DELIVERY_CHARGE,
+      firstOrderDiscount: Math.round(firstTimeDiscount * 100) / 100,
+      couponDiscount: appliedCouponDiscount,
       paymentMethod,
       deliveryType: deliveryType || "normal",
       recipientName: recipientName.trim(),

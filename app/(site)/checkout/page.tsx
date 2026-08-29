@@ -9,6 +9,7 @@ import { MdOutlinePayment } from "react-icons/md";
 import { IoCashOutline } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
 import { Check } from "lucide-react";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import {
   DELIVERY_CHARGE,
   FIRST_ORDER_DISCOUNT_RATE,
@@ -350,13 +351,8 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-[80vh] p-4">
-      <div className="mb-4 text-sm text-gray-500">
-        <span
-          className="cursor-pointer hover:text-pink-600"
-          onClick={() => router.push("/")}
-        >
-          Home
-        </span>{" "}
+      <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
+        <BreadcrumbHome />{" "}
         / <span className="text-black">Checkout</span>
       </div>
 

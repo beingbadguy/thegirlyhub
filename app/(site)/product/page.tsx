@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import FilterSidebar from "@/components/FilterSidebar";
 import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 
 type Product = React.ComponentProps<typeof ProductCard>["product"] & {
   description: string;
@@ -94,13 +95,8 @@ const ProductsPage = () => {
 
   return (
     <div className="min-h-screen px-4 py-6">
-      <div className="mb-4 text-sm text-gray-500">
-        <span
-          className="cursor-pointer hover:text-pink-600"
-          onClick={() => router.push("/")}
-        >
-          Home
-        </span>{" "}
+      <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
+        <BreadcrumbHome />{" "}
         / <span className="text-black">Products</span>
       </div>
 
