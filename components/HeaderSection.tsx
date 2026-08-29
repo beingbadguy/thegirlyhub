@@ -20,6 +20,22 @@ import { MdOutlineCategory } from "react-icons/md";
 import { IoPhonePortraitOutline } from "react-icons/io5";
 import { Separator } from "@radix-ui/react-select";
 import { AnimatePresence, motion } from "framer-motion";
+import axios, { AxiosError } from "axios";
+
+type Products = {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  discountedPrice: number;
+  countInStock: number;
+  sold: number;
+  rating: number;
+  numReviews: number;
+  image: string;
+  discountPercentage: number;
+  isActive: boolean;
+};
 
 const HeaderSection = () => {
   const { user, fetchUser, userCart } = useAuthStore();
@@ -33,11 +49,30 @@ const HeaderSection = () => {
   const [announcementIndex, setAnnouncementIndex] = useState(0);
 
   const [menu, setMenu] = useState<boolean>(false);
+  const [products, setProducts] = useState<Products[]>([]);
   const router = useRouter();
 
   if (userCart) {
     // console.log(userCart.products);
   }
+
+
+  const fetchAllProducts = async () => {
+    try {
+      const response = await axios.get("/api/product", {
+        params: { limit: 12 },
+      });
+      setProducts(response.data.products);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error(error.response?.data);
+      } else {
+        console.error("An unknown error occurred:", error);
+      }
+    } finally {
+    }
+  };
+
 
   useEffect(() => {
     if (menu) {
@@ -46,6 +81,10 @@ const HeaderSection = () => {
       document.body.classList.remove("overflow-hidden");
     }
   }, [menu]);
+
+  useEffect(() => {
+    fetchAllProducts();
+  }, []);
 
   useEffect(() => {
     if (userCart?.products?.length) {
@@ -101,9 +140,8 @@ const HeaderSection = () => {
           </Link>
         </div>
         <div
-          className={` ${
-            menu ? "translate-x-0" : "-translate-x-[100%]"
-          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999]`}
+          className={` ${menu ? "translate-x-0" : "-translate-x-[100%]"
+            } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999]`}
         >
           <p
             className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"
@@ -179,26 +217,43 @@ const HeaderSection = () => {
           </p>
           <Separator className="bg-gray-100 h-0.5 w-full lg:hidden my-2" />
 
-          <div
-            className="aspect-video w-full mx-auto  lg:hidden"
+          {/* <div
+            className="w-full mx-auto lg:hidden"
             onClick={() => {
               setMenu(false);
               router.push("/product");
             }}
           >
             <img
-              src="/banner.png"
+              src="/navad.png"
               alt=""
-              className="hidden md:block w-full h-[300px] object-cover mt-12"
+              className="w-full h-[200px] object-contain rounded-lg"
             />
-            <video
-              src="/BASICS.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full md:hidden rounded-lg"
-            />
+
+
+          </div> */}
+
+          <div className="">Trending Products</div>
+          <div className="grid grid-cols-2 gap-3 mt-1 lg:hidden">
+            {products.slice(0, 2).map((product) => (
+              <div
+                key={product._id}
+                className="cursor-pointer"
+                onClick={() => {
+                  setMenu(false);
+                  router.push(`/product/${product._id}`);
+                }}
+              >
+                <div className="size-42 overflow-hidden rounded-lg">
+                  <img
+                    src={product.image}
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <p className="text-xs mt-1 line-clamp-1">{product.title}</p>
+              </div>
+            ))}
           </div>
         </div>
         <div className="flex items-center justify-center gap-5">
