@@ -90,7 +90,7 @@ const AboutUs = () => {
               wisely&apos; persuasion. We believe in offering a vast selection
               while ensuring quality and value for every customer.&quot;
             </p>
-            <cite className="text-gray-500">- The Basics Team</cite>
+            <cite className="text-gray-500">- The GirlyHub Team</cite>
           </blockquote>
         </section>
 
@@ -100,12 +100,11 @@ const AboutUs = () => {
             <HiOutlineSparkles className="text-pink-700 mr-2" /> Our Vision
           </h3>
           <p className="text-gray-600 leading-relaxed">
-            At Basics, our vision is to create the most comprehensive and
+            At GirlyHub, our vision is to create the most comprehensive and
             user-friendly online marketplace where you can effortlessly find and
-            purchase anything your heart desires. From the latest tech gadgets
-            and trendy fashion apparel to essential home goods and unique
-            artisanal crafts, we aim to be your trusted source for all your
-            needs and wants.
+            purchase beautiful lifestyle essentials. From trendy fashion accessories
+            and scrunchies to earrings, jewellery, flats, and beautiful dresses,
+            we aim to be your trusted destination to express your style.
           </p>
           <p className="text-gray-600 leading-relaxed mt-4">
             We are committed to providing a seamless shopping experience with

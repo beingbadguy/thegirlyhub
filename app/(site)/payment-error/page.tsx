@@ -77,10 +77,10 @@ export default function PaymentFailed() {
             <p className="text-xs text-gray-500 text-center">
               Need help? Contact support at{" "}
               <a
-                href="mailto:support@shopbasics.com"
+                href="mailto:officialgirlyhub@gmail.com"
                 className="text-black hover:underline font-medium"
               >
-                support@shopbasics.com
+                officialgirlyhub@gmail.com
               </a>
             </p>
           </div>
