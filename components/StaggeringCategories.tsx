@@ -1,7 +1,7 @@
 "use client";
 
 import axios, { AxiosError } from "axios";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,7 +19,7 @@ interface ShopByCategoryProps {
   paginated?: boolean;
 }
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
   show: {
     transition: {
@@ -28,7 +28,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: {
     opacity: 0,
     y: 30,
@@ -98,7 +98,7 @@ const StaggeringCategories = ({
         {categories.slice(0, 6).map((category) => (
           <motion.li
             key={category._id}
-        
+            variants={itemVariants}
             onClick={() =>
               router.push(`/category/${encodeURIComponent(category.name)}`)
             }

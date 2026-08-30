@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["*"],
+  experimental: {
+    proxyClientMaxBodySize: "50mb",
+  },
   images: {
     remotePatterns: [
       {

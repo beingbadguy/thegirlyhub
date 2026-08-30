@@ -62,10 +62,11 @@ const CartPage = () => {
   };
 
   const cartItems = userCart?.products ?? [];
-  const availableItems = cartItems.filter((item) =>
+  const validCartItems = cartItems.filter((item) => item.productId !== null && item.productId !== undefined);
+  const availableItems = validCartItems.filter((item) =>
     isProductInStock(item.productId),
   );
-  const unavailableItems = cartItems.filter(
+  const unavailableItems = validCartItems.filter(
     (item) => !isProductInStock(item.productId),
   );
 

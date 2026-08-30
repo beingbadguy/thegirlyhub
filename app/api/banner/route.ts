@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const image = formData.get("image");
+    const mobileImage = formData.get("mobileImage");
+    const tabletImage = formData.get("tabletImage");
     const link = String(formData.get("link") || "").trim();
     const displayOrder = parseNumber(formData.get("displayOrder"));
     const status = formData.get("isActive");
@@ -72,11 +74,33 @@ export async function POST(request: NextRequest) {
       { folder: "basics-banners" },
     );
 
+    let mobileImageUrl = undefined;
+    if (mobileImage && isFile(mobileImage)) {
+      const mobileImageBuffer = Buffer.from(await mobileImage.arrayBuffer());
+      const uploadMobile = await cloudinary.v2.uploader.upload(
+        `data:${mobileImage.type};base64,${mobileImageBuffer.toString("base64")}`,
+        { folder: "basics-banners" },
+      );
+      mobileImageUrl = uploadMobile.secure_url;
+    }
+
+    let tabletImageUrl = undefined;
+    if (tabletImage && isFile(tabletImage)) {
+      const tabletImageBuffer = Buffer.from(await tabletImage.arrayBuffer());
+      const uploadTablet = await cloudinary.v2.uploader.upload(
+        `data:${tabletImage.type};base64,${tabletImageBuffer.toString("base64")}`,
+        { folder: "basics-banners" },
+      );
+      tabletImageUrl = uploadTablet.secure_url;
+    }
+
     const banner = await Banner.create({
       title: String(formData.get("title") || "").trim(),
       subtitle: String(formData.get("subtitle") || "").trim(),
       description: String(formData.get("description") || "").trim(),
       image: upload.secure_url,
+      mobileImage: mobileImageUrl,
+      tabletImage: tabletImageUrl,
       link,
       buttonText: String(formData.get("buttonText") || "").trim(),
       displayOrder,

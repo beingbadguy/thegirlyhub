@@ -20,7 +20,7 @@ export default function Home() {
         <HomeAdSlots />
         <NewArrivals limit={12} showSeeMore />
         <TrustStrip />
-        <SummerSaleBanner/>
+        {/* <SummerSaleBanner/> */}
         <Newsletter />
         <Faqs />
         <CountVisitor />

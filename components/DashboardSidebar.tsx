@@ -80,11 +80,10 @@ const DashboardSidebar = () => {
             return (
               <Link href={item.path} key={index} className="w-full">
                 <div
-                  className={` ${
-                    isActive
+                  className={` ${isActive
                       ? "bg-[#d9fb71] text-[#17191c] hover:bg-[#d9fb71]"
                       : "text-white/60 hover:bg-white/10 hover:text-white"
-                  } flex items-center justify-center gap-2 rounded-lg p-2.5 cursor-pointer md:justify-start md:px-3`}
+                    } flex items-center justify-center gap-2 rounded-lg p-2.5 cursor-pointer md:justify-start md:px-3`}
                 >
                   <p className="[&>svg]:size-[17px]">{item.icons}</p>
                   <p className="hidden text-sm md:block">{item.label}</p>

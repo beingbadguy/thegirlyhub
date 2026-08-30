@@ -6,6 +6,8 @@ const bannerSchema = new mongoose.Schema(
     subtitle: { type: String, trim: true, default: "" },
     description: { type: String, trim: true, default: "" },
     image: { type: String, required: true },
+    mobileImage: { type: String },
+    tabletImage: { type: String },
     link: { type: String, required: true, trim: true },
     buttonText: { type: String, trim: true },
     displayOrder: { type: Number, required: true, index: true },

@@ -105,9 +105,8 @@ const Newsletter = () => {
         {/* Message */}
         {message && (
           <p
-            className={`mt-4 text-sm ${
-              isError ? "text-rose-600" : "text-emerald-600"
-            }`}
+            className={`mt-4 text-sm ${isError ? "text-rose-600" : "text-emerald-600"
+              }`}
           >
             {message}
           </p>

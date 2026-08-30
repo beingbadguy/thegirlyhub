@@ -125,7 +125,7 @@ const HeaderSection = () => {
           </motion.span>
         </AnimatePresence>
       </div> */}
-      <nav className="flex items-center justify-between p-4 border-b border-gray-100 ">
+      <nav className="flex items-center justify-between p-4 border-b  border-rose-100 shadow-xs ">
         <div className="font-bold ">
           <Link href={"/"}>
             <span className="relative block h-12 w-36 overflow-hidden">
@@ -138,9 +138,8 @@ const HeaderSection = () => {
           </Link>
         </div>
         <div
-          className={` ${
-            menu ? "translate-x-0" : "-translate-x-[100%]"
-          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999]`}
+          className={` ${menu ? "translate-x-0" : "-translate-x-[100%]"
+            } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999] font-magenda`}
         >
           <p
             className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"
@@ -231,24 +230,56 @@ const HeaderSection = () => {
 
 
           </div> */}
-           <div className="grid grid-cols-2 gap-3 mt-1 lg:hidden">
+          <div className="">Best Sellers</div>
+          <div className="grid grid-cols-2 gap-3 mt-2 lg:hidden">
             {products.slice(0, 2).map((product) => (
               <div
                 key={product._id}
-                className="cursor-pointer"
+                className="group cursor-pointer"
                 onClick={() => {
                   setMenu(false);
                   router.push(`/product/${product._id}`);
                 }}
               >
-                <div className="size-42 overflow-hidden rounded-lg">
+                {/* Image */}
+                <div className="relative w-full h-44 overflow-hidden rounded-2xl bg-gray-100">
                   <img
                     src={product.image}
                     alt={product.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
                   />
+
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition" />
+
+                  {/* Quick view / badge */}
+                  <div className="absolute top-2 left-2 text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-magenda">
+                    NEW
+                  </div>
+
+                  {/* Wishlist icon */}
+                  <div className="absolute top-2 right-2 bg-white/80 backdrop-blur p-1.5 rounded-full shadow">
+                    ❤️
+                  </div>
                 </div>
-                <p className="text-xs mt-1 line-clamp-1">{product.title}</p>
+
+                {/* Content */}
+                <div className="mt-2 px-1">
+                  <p className="text-sm font-medium line-clamp-1">
+                    {product.title}
+                  </p>
+
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-sm font-semibold text-black">
+                      ₹{product.discountedPrice}
+
+                    </p>
+
+                    <p className="text-xs text-gray-500 line-through">
+                      ₹{product.price}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
