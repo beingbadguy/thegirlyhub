@@ -56,7 +56,6 @@ const HeaderSection = () => {
     // console.log(userCart.products);
   }
 
-
   const fetchAllProducts = async () => {
     try {
       const response = await axios.get("/api/product", {
@@ -72,7 +71,6 @@ const HeaderSection = () => {
     } finally {
     }
   };
-
 
   useEffect(() => {
     if (menu) {
@@ -140,8 +138,9 @@ const HeaderSection = () => {
           </Link>
         </div>
         <div
-          className={` ${menu ? "translate-x-0" : "-translate-x-[100%]"
-            } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999]`}
+          className={` ${
+            menu ? "translate-x-0" : "-translate-x-[100%]"
+          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999]`}
         >
           <p
             className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"
@@ -232,9 +231,7 @@ const HeaderSection = () => {
 
 
           </div> */}
-
-          <div className="">Trending Products</div>
-          <div className="grid grid-cols-2 gap-3 mt-1 lg:hidden">
+           <div className="grid grid-cols-2 gap-3 mt-1 lg:hidden">
             {products.slice(0, 2).map((product) => (
               <div
                 key={product._id}

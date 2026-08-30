@@ -27,7 +27,7 @@ export default function HeroBannerSlider() {
         setBanners(data.banners);
         setActiveIndex(0);
       })
-      .catch(() => { });
+      .catch(() => {});
 
     return () => {
       mounted = false;
@@ -47,24 +47,18 @@ export default function HeroBannerSlider() {
 
   return (
     <section>
-      <div className="relative mt-4 mb-3 w-full overflow-hidden rounded-xl bg-white shadow-sm">
-
+      <div className="relative mt-1 mb-3 w-full overflow-hidden rounded-xl">
         {/* LOADING */}
         {!banner ? (
-          <div className="w-full h-[200px] md:h-[300px] animate-pulse bg-gray-200 rounded-xl" />
+          <div className="w-full h-[200px] md:h-[300px] animate-pulse  rounded-xl" />
         ) : (
-          <div className="relative w-full flex justify-center items-center bg-white">
-
+          <div className="relative w-full h-[180px] sm:h-[220px] md:h-[280px] lg:h-[320px]">
             {/* IMAGE - NO CROPPING */}
             <Image
-              key={banner._id}
+              fill
               src={banner.image}
-              alt={banner.title || "banner"}
-              width={1600}
-              height={600}
-              priority={activeIndex === 0}
-              sizes="100vw"
-              className="w-full h-auto object-contain"
+              alt="banner"
+              className="object-contain rounded-xl"
             />
 
             {/* TEXT OVERLAY */}
@@ -111,10 +105,11 @@ export default function HeroBannerSlider() {
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
-              className={`h-1.5 rounded-full transition-all ${index === activeIndex
+              className={`h-1.5 rounded-full transition-all ${
+                index === activeIndex
                   ? "w-7 bg-[#33272d]"
                   : "w-1.5 bg-[#d9cbd1]"
-                }`}
+              }`}
             />
           ))}
         </div>

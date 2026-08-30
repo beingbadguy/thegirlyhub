@@ -2,6 +2,7 @@
 import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import axios, { AxiosError } from "axios";
 import { VscLoading } from "react-icons/vsc";
@@ -58,10 +59,10 @@ function FieldError({ message }: { message?: string }) {
 }
 
 function inputClass(hasError: boolean) {
-  return `w-full rounded border px-3 py-2 outline-none transition focus:ring-2 ${
+  return `w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm outline-none transition focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-400 focus:ring-red-100"
-      : "border-gray-300 focus:border-pink-400 focus:ring-pink-100"
+      : "border-gray-200 focus:border-pink-400 focus:ring-pink-100"
   }`;
 }
 
@@ -137,7 +138,6 @@ export default function CheckoutPage() {
   // Dynamic shipping calculation
   const shippingResult = calculateShipping(subtotal, paymentMode);
   const shippingCharge = shippingResult.shippingCharge;
-  const codFee = shippingResult.codFee;
   const isFreeShipping = shippingResult.isFreeShipping;
 
   const firstTimeDiscount = user?.firstPurchase
@@ -153,7 +153,7 @@ export default function CheckoutPage() {
       couponDiscount = couponDetails.discount;
     }
   }
-  const finalAmount = Math.max(0, baseTotal - couponDiscount) + codFee;
+  const finalAmount = Math.max(0, baseTotal - couponDiscount);
 
   const buildOrderPayload = () => ({
     totalAmount: finalAmount,
@@ -250,24 +250,34 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Create order via our backend
-      const orderRes = await axios.post("/api/razorpay/create-order", {
-        amount: finalAmount,
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      if (!razorpayKey) {
+        setOrderError("Razorpay key is missing. Please contact support.");
+        setPlacingOrder(false);
+        return;
+      }
+
+      const amountInPaise = Math.round(finalAmount * 100);
+
+      // Create Razorpay order via our backend
+      const orderRes = await axios.post("/api/create-order", {
+        amount: amountInPaise,
+        currency: "INR",
       });
 
-      const { order } = orderRes.data;
+      const { order_id, amount, currency } = orderRes.data;
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Frontend public key
-        amount: order.amount,
-        currency: order.currency,
+        key: razorpayKey,
+        amount,
+        currency,
         name: "GirlyHub",
         description: "Thank you for shopping with us!",
-        order_id: order.id,
+        order_id,
         handler: async function (response: any) {
           try {
             setPlacingOrder(true); // Keep loading state true during verification
-            const verifyRes = await axios.post("/api/razorpay/verify", {
+            const verifyRes = await axios.post("/api/verify-payment", {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
@@ -299,6 +309,12 @@ export default function CheckoutPage() {
         },
         theme: {
           color: "#e11d48", // rose-600
+        },
+        modal: {
+          ondismiss: function () {
+            setOrderError("Payment was cancelled. You can try again when ready.");
+            setPlacingOrder(false);
+          },
         },
       };
 
@@ -354,18 +370,28 @@ export default function CheckoutPage() {
   const showError = (field: keyof OrderFieldErrors) =>
     submitted ? fieldErrors[field] : undefined;
 
+  const goToPaymentFailure = (reason: string) => {
+    router.push(`/payment-failure?reason=${encodeURIComponent(reason)}`);
+  };
+
   return (
-    <div className="min-h-[80vh] p-4">
+    <div className="min-h-[80vh] bg-[#fffafb] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
       <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
         <BreadcrumbHome />{" "}
         / <span className="text-black">Checkout</span>
       </div>
 
-      <h1 className="mb-6 text-3xl font-bold">Checkout</h1>
+      <div className="mb-6 flex flex-col gap-1">
+        <h1 className="text-3xl font-bold text-gray-950">Checkout</h1>
+        <p className="text-sm text-gray-500">
+          Review your delivery details and order items before placing the order.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px] xl:gap-8">
         <div>
-          <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm sm:p-6 lg:p-7">
             <h2 className="mb-4 text-lg font-semibold text-rose-950">
               Delivery Details
             </h2>
@@ -516,6 +542,71 @@ export default function CheckoutPage() {
         </div>
 
         <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-rose-950">
+                  Items in this order
+                </h2>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {availableCartItems.length} item{availableCartItems.length === 1 ? "" : "s"} ready for checkout
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/cart")}
+                className="shrink-0 text-xs font-semibold text-rose-600 transition hover:text-rose-700"
+              >
+                Edit cart
+              </button>
+            </div>
+
+            <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
+              {availableCartItems.map((item) => {
+                const product = item.productId;
+                const unitPrice = product.discountedPrice || product.price;
+                const lineTotal = unitPrice * item.quantity;
+
+                return (
+                  <div
+                    key={`${product._id}-${item.size || "default"}`}
+                    className="flex gap-3 rounded-lg border border-gray-100 bg-white p-3"
+                  >
+                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-rose-50">
+                      <Image
+                        src={product.image}
+                        alt={product.title}
+                        fill
+                        className="object-contain p-1"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-950">
+                        {product.title}
+                      </h3>
+                      <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+                        {product.category && <p>Category: {product.category}</p>}
+                        {item.size && item.size.toLowerCase() !== "one size" && (
+                          <p>Size: {item.size}</p>
+                        )}
+                        <p>Quantity: {item.quantity}</p>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                        <span className="text-gray-600">
+                          ₹{unitPrice.toFixed(2)} each
+                        </span>
+                        <span className="font-bold text-rose-700">
+                          ₹{lineTotal.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="rounded-xl border border-rose-100 bg-white p-5 text-sm shadow-sm">
             <h2 className="text-lg font-bold text-rose-950">Order Summary</h2>
             <hr className="my-3 border-gray-200" />
@@ -554,15 +645,6 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-green-600">
                   <p>Coupon discount ({promoCode.toUpperCase()})</p>
                   <p>-₹{couponDiscount.toFixed(2)}</p>
-                </div>
-              )}
-              {paymentMode === "cod" && (
-                <div className="flex justify-between text-gray-600">
-                  <p className="flex items-center gap-1.5">
-                    <IoCashOutline className="size-4" />
-                    COD fee
-                  </p>
-                  <p>₹{codFee.toFixed(2)}</p>
                 </div>
               )}
             </div>
@@ -697,6 +779,7 @@ export default function CheckoutPage() {
             )}
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -9,8 +9,8 @@ export const FREE_SHIPPING_THRESHOLD = 499;
 /** Flat shipping fee when subtotal is below the threshold */
 export const SHIPPING_CHARGE = 49;
 
-/** Extra fee added when payment method is Cash on Delivery */
-export const COD_FEE = 40;
+/** Cash on Delivery does not add any extra fee */
+export const COD_FEE = 0;
 
 /** First‑order discount rate (15 %) */
 export const FIRST_ORDER_DISCOUNT_RATE = 0.15;
@@ -18,7 +18,7 @@ export const FIRST_ORDER_DISCOUNT_RATE = 0.15;
 export interface ShippingResult {
   /** Shipping fee (0 when free shipping applies) */
   shippingCharge: number;
-  /** COD surcharge (0 for online payments) */
+  /** COD surcharge (always 0; kept for compatibility with older order code) */
   codFee: number;
   /** shippingCharge + codFee */
   totalShipping: number;
@@ -43,7 +43,7 @@ export function calculateShipping(
 ): ShippingResult {
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const shippingCharge = isFreeShipping ? 0 : SHIPPING_CHARGE;
-  const codFee = paymentMethod === "cod" ? COD_FEE : 0;
+  const codFee = 0;
   const remainingForFreeShipping = isFreeShipping
     ? 0
     : Math.max(0, Math.round((FREE_SHIPPING_THRESHOLD - subtotal) * 100) / 100);

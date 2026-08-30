@@ -127,13 +127,12 @@ export async function POST(request: NextRequest) {
 
     const shipping = calculateShipping(subtotal, paymentMethod);
     const shippingCharge = shipping.shippingCharge;
-    const codFee = shipping.codFee;
     const firstTimeDiscount = user.firstPurchase
       ? 0
       : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
     let expectedTotal = Math.max(
       0,
-      Math.round((subtotal + shippingCharge + codFee - firstTimeDiscount) * 100) / 100,
+      Math.round((subtotal + shippingCharge - firstTimeDiscount) * 100) / 100,
     );
 
     // Track coupon discount separately so it can be stored on the order
@@ -193,7 +192,6 @@ export async function POST(request: NextRequest) {
       totalAmount: expectedTotal,
       subtotal,
       shippingCharge,
-      codFee,
       firstOrderDiscount: Math.round(firstTimeDiscount * 100) / 100,
       couponDiscount: appliedCouponDiscount,
       paymentMethod,

@@ -84,7 +84,7 @@ export default function ShippingPolicy() {
               For orders below ₹499, a flat shipping fee of <span className="font-medium">₹49</span> applies.
             </li>
             <li>
-              <span className="font-medium text-amber-700">Cash on Delivery (COD)</span> orders incur an additional ₹40 COD fee on top of shipping charges.
+              <span className="font-medium text-amber-700">Cash on Delivery (COD)</span> has no extra COD fee. Only the applicable delivery charge is added.
             </li>
           </ul>
         </div>
