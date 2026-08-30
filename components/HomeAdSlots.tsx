@@ -19,7 +19,6 @@ export default function HomeAdSlots() {
         <div className="absolute -right-6 -top-6 size-32 rounded-full bg-rose-200/40 blur-2xl" />
 
         <div className="relative flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-
           <div className="flex items-start gap-3">
             <div className="grid size-11 place-items-center rounded-full bg-rose-100 text-rose-600">
               <Tag className="size-5" />
@@ -35,7 +34,9 @@ export default function HomeAdSlots() {
               </h3>
 
               <p className="mt-1 max-w-md text-sm text-rose-900/60">
-                Use code <span className="font-semibold text-rose-700">NEWGIRLY15</span> at checkout and save instantly.
+                Use code{" "}
+                <span className="font-semibold text-rose-700">NEWGIRLY15</span>{" "}
+                at checkout and save instantly.
               </p>
             </div>
           </div>
@@ -90,25 +91,27 @@ export default function HomeAdSlots() {
 
       {/* Slot 3 — Two image banners */}
       <div className="grid gap-6 md:grid-cols-2">
+        <Link href="/category/For%20him">
+          <div className="relative w-full h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px] overflow-hidden rounded-2xl border border-teal-400 bg-white  cursor-pointer hover:bg-teal-50 hover:shadow-sm transition-all hover:shadow-teal-200/50">
+            <Image
+              src="/forhim.png"
+              alt="For Him"
+              fill
+              className="object-cover p-2 rounded-2xl"
+            />
+          </div>
+        </Link>
 
-        <div className="relative w-full h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px] overflow-hidden rounded-2xl border border-teal-400 bg-white  cursor-pointer hover:bg-teal-50 hover:shadow-sm transition-all hover:shadow-teal-200/50">
-          <Image
-            src="/forhim.png"
-            alt="For Him"
-            fill
-            className="object-cover p-2 rounded-2xl"
-          />
-        </div>
-
-        <div className="relative w-full h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px] overflow-hidden rounded-2xl border border-pink-400 bg-white  cursor-pointer hover:bg-pink-50 hover:shadow-sm transition-all hover:shadow-pink-200/50 ">
-          <Image
-            src="/forher.png"
-            alt="For Her"
-            fill
-            className="object-cover p-2 rounded-2xl"
-          />
-        </div>
-
+        <Link href="/category/For%20her">
+          <div className="relative w-full h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px] overflow-hidden rounded-2xl border border-pink-400 bg-white  cursor-pointer hover:bg-pink-50 hover:shadow-sm transition-all hover:shadow-pink-200/50 ">
+            <Image
+              src="/forher.png"
+              alt="For Her"
+              fill
+              className="object-cover p-2 rounded-2xl"
+            />
+          </div>
+        </Link>
       </div>
     </section>
   );
