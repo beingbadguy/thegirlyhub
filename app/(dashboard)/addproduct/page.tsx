@@ -13,6 +13,7 @@ import axios, { AxiosError } from "axios";
 import Image from "next/image";
 import { CgClose } from "react-icons/cg";
 import { useRouter } from "next/navigation";
+import { compressImage } from "@/utils/image";
 
 const initialFormData = {
   title: "",
@@ -121,7 +122,8 @@ const Page = () => {
       formData.append("countInStock", String(countInStock));
       formData.append("category", selectedCategory);
       formData.append("info", data.info);
-      formData.append("image", imageLink!);
+      const compressedImage = await compressImage(imageLink!);
+      formData.append("image", compressedImage);
 
       const response = await axios.post("/api/product", formData);
       // console.log(response.data);

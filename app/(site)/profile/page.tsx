@@ -10,6 +10,7 @@ import axios, { AxiosError } from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { compressImage } from "@/utils/image";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import {
   Heart,
@@ -175,7 +176,8 @@ export default function ProfilePage() {
     setUploadingPhoto(true);
     try {
       const formData = new FormData();
-      formData.append("image", file);
+      const compressedImage = await compressImage(file);
+      formData.append("image", compressedImage);
       await axios.put("/api/profileupload", formData);
       await fetchUser();
     } catch (err: unknown) {

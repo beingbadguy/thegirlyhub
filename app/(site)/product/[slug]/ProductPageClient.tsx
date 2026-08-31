@@ -5,6 +5,7 @@ import Image from "next/image";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/store";
+import { compressImage } from "@/utils/image";
 import { isProductInStock } from "@/lib/productStock";
 import ProductCard from "@/components/ProductCard";
 import { motion, AnimatePresence } from "framer-motion";
@@ -223,7 +224,10 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       formData.append("rating", String(reviewRating));
       formData.append("comment", reviewComment);
 
-      reviewPhotos.forEach(file => {
+      const compressedPhotos = await Promise.all(
+        reviewPhotos.map(file => compressImage(file))
+      );
+      compressedPhotos.forEach(file => {
         formData.append("photos", file);
       });
 

@@ -10,6 +10,7 @@ import { VscLoading } from "react-icons/vsc";
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { compressImage } from "@/utils/image";
 
 const Page = () => {
   const [name, setName] = useState("");
@@ -30,7 +31,8 @@ const Page = () => {
       setLoading(true);
       const formData = new FormData();
       formData.append("name", name);
-      formData.append("image", categoryImage);
+      const compressedImage = await compressImage(categoryImage);
+      formData.append("image", compressedImage);
 
       const response = await axios.post("/api/category", formData);
       // console.log(response.data);
