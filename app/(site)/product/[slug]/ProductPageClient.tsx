@@ -21,7 +21,8 @@ import {
   Sparkles,
   Check,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  Share2
 } from "lucide-react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
@@ -115,6 +116,28 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
   // Lightbox state
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Share state
+  const [shareSuccess, setShareSuccess] = useState(false);
+
+  const handleShare = async () => {
+    try {
+      const url = `${window.location.origin}/product/${product.slug}`;
+      if (navigator.share) {
+        await navigator.share({
+          title: product.title,
+          text: product.description,
+          url: url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 2000);
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
 
   const inStock = isProductInStock(product);
 
@@ -420,7 +443,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   const distributionSum = ratingDistribution.reduce((a, b) => a + b, 0) || 1;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F9] px-4 py-6 md:px-8 font-sans text-neutral-900">
+    <div className="min-h-screen bg-[#FAF9F9] px-2 py-4 md:px-8 font-sans text-neutral-900">
 
       {/* Breadcrumbs */}
       <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
@@ -439,12 +462,12 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       </div>
 
       {/* Main product display */}
-      <div className="grid grid-cols-1 gap-6 lg:gap-12 lg:grid-cols-12  mx-auto bg-white  p-4 md:p-8 border border-neutral-100 ">
+      <div className="grid grid-cols-1 gap-6 lg:gap-12 lg:grid-cols-12  mx-auto bg-white  p-2 md:p-8 border border-neutral-100 ">
 
         {/* Left Section: Image Gallery */}
         <div className="lg:col-span-6 flex flex-col gap-4">
           {/* Main Display Image Container */}
-          <div className="relative w-full aspect-square bg-neutral-50 p-4">
+          <div className="relative w-full aspect-square bg-neutral-50 p-1 md:p-4">
             {product.discountPercentage > 0 && (
               <span className="absolute left-4 top-4 z-10 bg-neutral-900 px-3 py-1 text-[10px] font-bold text-white tracking-wider uppercase">
                 {Math.floor(product.discountPercentage)}% Off
@@ -463,6 +486,22 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               )}
             </button>
 
+            {/* Share floating button */}
+            <button
+              onClick={handleShare}
+              className="absolute right-4 top-16 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 border border-neutral-100 transition-all hover:bg-white active:scale-95 cursor-pointer shadow-sm"
+              title="Share Product"
+            >
+              <Share2 className="h-5 w-5 text-neutral-400 hover:text-neutral-800 transition-colors" />
+            </button>
+
+            {/* Share feedback toast */}
+            {shareSuccess && (
+              <div className="absolute right-4 top-28 z-20 bg-neutral-900 text-white text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded shadow-md animate-pulse">
+                Copied!
+              </div>
+            )}
+
             {/* Magnifier glass zoom area */}
             <div
               className="relative w-full h-full cursor-zoom-in"
@@ -474,7 +513,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                 alt={product.title}
                 fill
                 priority
-                className="object-contain p-4"
+                className="object-contain p-1 md:p-4"
               />
 
               {/* Magnifier Lens Container (Desktop only) */}
@@ -505,7 +544,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
         </div>
 
         {/* Right Section: Details & Purchase actions */}
-        <div ref={buySectionRef} className="lg:col-span-6 flex flex-col justify-between space-y-6">
+        <div ref={buySectionRef} className="lg:col-span-6 flex flex-col space-y-6 justify-start">
           <div className="space-y-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-800 text-xs font-semibold uppercase tracking-wider">
               {product.category}
@@ -690,14 +729,14 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                 <button
                   disabled={addingCart}
                   onClick={() => (user ? addToCart(true) : router.push("/login"))}
-                  className="flex-1 h-12 flex items-center justify-center gap-2 bg-rose-600 text-white font-bold text-xs tracking-wider uppercase hover:bg-rose-700 transition-all disabled:opacity-50 cursor-pointer"
+                  className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 bg-rose-600 text-white font-bold text-xs tracking-wider uppercase hover:bg-rose-700 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   Buy Now
                 </button>
                 <button
                   disabled={addingCart}
                   onClick={() => (user ? addToCart(false) : router.push("/login"))}
-                  className="flex-1 h-12 flex items-center justify-center gap-2 font-bold text-xs tracking-wider uppercase transition-all disabled:opacity-50 border border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50 cursor-pointer"
+                  className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 font-bold text-xs tracking-wider uppercase transition-all disabled:opacity-50 border border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50 cursor-pointer"
                 >
                   <ShoppingCart className="w-4 h-4" /> Add to Bag
                 </button>
