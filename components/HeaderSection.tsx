@@ -230,7 +230,7 @@ const HeaderSection = () => {
 
 
           </div> */}
-          <div className="">Best Sellers</div>
+          <div className="lg:hidden mx-auto">Best Sellers</div>
           <div className="grid grid-cols-2 gap-3 mt-2 lg:hidden">
             {products.slice(0, 2).map((product) => (
               <div

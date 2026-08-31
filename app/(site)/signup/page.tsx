@@ -53,85 +53,95 @@ export default function SignupPage() {
     }
   };
   return (
-    <div className="flex items-center justify-center gap-4 min-h-[70vh] flex-col bg-white text-black w-full">
-      {/* <Image
-        src="/girly3.png"
-        alt="logo"
-        width={100}
-        height={100}
-        className=""
-      /> */}
-      <h1 className="text-3xl font-bold">Sign Up</h1>
-      <p className="text-center w-full mx-2 text-sm md:text-md">
-        Welcome, Create account to get started.
-      </p>
+    <div className="min-h-[70vh] bg-white text-black w-full flex flex-col py-6">
+      {/* Breadcrumbs */}
+      <div className="w-full  mx-auto px-4 md:px-8 pb-2 text-left">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
+          <Link
+            href="/"
+            className="cursor-pointer transition-colors hover:text-neutral-800"
+          >
+            Home
+          </Link>
+          <span>/</span>
+          <span className="text-neutral-800 font-bold">Signup</span>
+        </div>
+      </div>
 
-      <form
-        className=" flex items-center justify-center gap-2 flex-col w-[80%] md:w-[50%] lg:w-[30%]"
-        onSubmit={signupHandler}
-      >
-        <Input
-          type="text"
-          placeholder="Full name"
-          name="name"
-          className="w-full"
-          value={data.name}
-          onChange={changeHandler}
-        />
-        <Input
-          type="email"
-          placeholder="Email"
-          name="email"
-          className="w-full"
-          value={data.email}
-          onChange={changeHandler}
-        />
-        <div className="relative w-full">
+      {/* Main content centered */}
+      <div className="flex-1 flex items-center justify-center gap-4 flex-col px-4">
+        <h1 className="text-3xl font-bold">Sign Up</h1>
+        <p className="text-center w-full mx-2 text-sm md:text-md text-neutral-500">
+          Welcome, Create account to get started.
+        </p>
+
+        <form
+          className="flex items-center justify-center gap-2 flex-col w-full max-w-md mt-4"
+          onSubmit={signupHandler}
+        >
           <Input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            name="password"
+            type="text"
+            placeholder="Full name"
+            name="name"
             className="w-full"
-            value={data.password}
+            value={data.name}
             onChange={changeHandler}
           />
-          {showPassword ? (
-            <FiEye
-              className="absolute top-[10px] right-4 cursor-pointer"
-              onClick={() => {
-                setShowPassword(!showPassword);
-              }}
+          <Input
+            type="email"
+            placeholder="Email"
+            name="email"
+            className="w-full"
+            value={data.email}
+            onChange={changeHandler}
+          />
+          <div className="relative w-full">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              name="password"
+              className="w-full"
+              value={data.password}
+              onChange={changeHandler}
             />
-          ) : (
-            <FiEyeOff
-              className="absolute top-[10px] right-4 cursor-pointer"
-              onClick={() => {
-                setShowPassword(!showPassword);
-              }}
-            />
+            {showPassword ? (
+              <FiEye
+                className="absolute top-[10px] right-4 cursor-pointer"
+                onClick={() => {
+                  setShowPassword(!showPassword);
+                }}
+              />
+            ) : (
+              <FiEyeOff
+                className="absolute top-[10px] right-4 cursor-pointer"
+                onClick={() => {
+                  setShowPassword(!showPassword);
+                }}
+              />
+            )}
+          </div>
+          <Button
+            disabled={loading}
+            type="submit"
+            className="bg-rose-500 hover:bg-rose-600 text-white w-full cursor-pointer transition-colors"
+          >
+            {loading ? (
+              <AiOutlineLoading3Quarters className=" animate-spin text-white" />
+            ) : (
+              <div className="flex items-center gap-4">
+                <p>Create Account</p>
+                <MdArrowRightAlt />
+              </div>
+            )}
+          </Button>
+          {signupError && (
+            <div className="text-red-500 font-light text-sm">{signupError}</div>
           )}
-        </div>
-        <Button
-          disabled={loading}
-          type="submit"
-          className="bg-black text-white w-full cursor-pointer"
-        >
-          {loading ? (
-            <AiOutlineLoading3Quarters className=" animate-spin text-white" />
-          ) : (
-            <div className="flex items-center gap-4">
-              <p>Create Account</p>
-              <MdArrowRightAlt />
-            </div>
-          )}
-        </Button>
-        {signupError && (
-          <div className="text-red-500 font-light text-sm">{signupError}</div>
-        )}
-        <Link href="/login " className="text-sm md:text-md">
-          Already have an account? Login
-        </Link>
-      </form>
+          <Link href="/login" className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors">
+            Already have an account? Login
+          </Link>
+        </form>
+      </div>
     </div>
   );
 }

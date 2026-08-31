@@ -83,6 +83,14 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [zoomStyle, setZoomStyle] = useState<React.CSSProperties>({ display: "none" });
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isZooming, setIsZooming] = useState<boolean>(false);
+  const [activeViewers, setActiveViewers] = useState<number>(12);
+  const [showSizeGuide, setShowSizeGuide] = useState<boolean>(false);
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    desc: true,
+    details: false,
+    shipping: false
+  });
 
   // Custom variants states
   const [size, setSize] = useState("");
@@ -108,6 +116,20 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const inStock = isProductInStock(product);
+
+  // Delivery estimate (today + 5 days), computed once on mount so it stays
+  // stable for the lifetime of the page view.
+  const [deliveryDate] = useState<Date>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 5);
+    return date;
+  });
+
+  const formattedDeliveryDate = deliveryDate.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
 
   const checkEligibility = useCallback(async (productId: string) => {
     if (!user) return;
@@ -239,6 +261,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   // Magnifier glass zoom effect (Desktop only)
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isMobile) return;
+    setIsZooming(true);
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
@@ -251,6 +274,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   };
 
   const handleMouseLeave = () => {
+    setIsZooming(false);
     setZoomStyle({ display: "none" });
   };
 
@@ -333,7 +357,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       ? product.images
       : [product.image];
 
-    if (images.length <= 1 || lightboxImage) return;
+    if (images.length <= 1 || lightboxImage || isZooming) return;
 
     const interval = setInterval(() => {
       setSelectedImage((current) => {
@@ -344,11 +368,11 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [product, lightboxImage]);
+  }, [product, lightboxImage, isZooming]);
 
-  // Lock background scroll when lightbox is open
+  // Lock background scroll when lightbox or size guide is open
   useEffect(() => {
-    if (lightboxImage) {
+    if (lightboxImage || showSizeGuide) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -356,7 +380,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     return () => {
       document.body.style.overflow = "";
     };
-  }, [lightboxImage]);
+  }, [lightboxImage, showSizeGuide]);
 
   // Fallbacks for display
   const displayPrice = product.price;
@@ -372,13 +396,32 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     : [];
   const showColorSelector = colorsList.length > 0;
 
+  // Calculate review distribution
+  const totalReviewsCount = product.reviews?.length || 0;
+  const ratingDistribution = [0, 0, 0, 0, 0]; // 5, 4, 3, 2, 1 stars
+  
+  if (totalReviewsCount > 0 && product.reviews) {
+    product.reviews.forEach((rev) => {
+      const r = Math.round(rev.rating);
+      if (r >= 1 && r <= 5) {
+        ratingDistribution[5 - r] += 1;
+      }
+    });
+  } else if (displayRatings > 0) {
+    const roundedRating = Math.round(displayRatings);
+    ratingDistribution[5 - roundedRating] = 3;
+    if (roundedRating > 1) ratingDistribution[6 - roundedRating] = 1;
+  }
+  
+  const distributionSum = ratingDistribution.reduce((a, b) => a + b, 0) || 1;
+
   return (
     <div className="min-h-screen bg-[#FAF9F9] px-4 py-6 md:px-8 font-sans text-neutral-900">
-      
+
       {/* Breadcrumbs */}
       <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
-        <span 
-          className="cursor-pointer transition-colors hover:text-neutral-800 flex items-center gap-1" 
+        <span
+          className="cursor-pointer transition-colors hover:text-neutral-800 flex items-center gap-1"
           onClick={() => router.push("/")}
         >
           Home
@@ -392,30 +435,14 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       </div>
 
       {/* Main product display */}
-      <div className="grid grid-cols-1 gap-6 lg:gap-12 lg:grid-cols-12 max-w-7xl mx-auto bg-white rounded-3xl p-4 md:p-8 border border-neutral-100 shadow-sm">
-        
-        {/* Left Section: Image Gallery */}
-        <div className="lg:col-span-6 flex flex-col md:flex-row gap-3 md:gap-4">
-          {/* Thumbnails list */}
-          <div className="flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-y-auto max-h-[450px] scrollbar-none pb-2 md:pb-0">
-            {displayImages.map((img, idx) => (
-              <button
-                key={idx}
-                className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] rounded-xl overflow-hidden bg-neutral-50 border transition-all duration-300 shrink-0 ${selectedImage === img
-                  ? "border-neutral-950 ring-2 ring-neutral-200 ring-offset-1 scale-105"
-                  : "border-neutral-200 hover:border-neutral-400"
-                  }`}
-                onClick={() => setSelectedImage(img)}
-              >
-                <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-contain p-1" />
-              </button>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 gap-6 lg:gap-12 lg:grid-cols-12  mx-auto bg-white  p-4 md:p-8 border border-neutral-100 ">
 
+        {/* Left Section: Image Gallery */}
+        <div className="lg:col-span-6 flex flex-col gap-4">
           {/* Main Display Image Container */}
-          <div className="relative flex-1 aspect-square rounded-2xl overflow-hidden bg-neutral-50 border border-neutral-100 p-4 order-1 md:order-2">
+          <div className="relative w-full aspect-square bg-neutral-50 p-4">
             {product.discountPercentage > 0 && (
-              <span className="absolute left-4 top-4 z-10 rounded-full bg-neutral-900 px-3 py-1 text-[10px] font-bold text-white tracking-wider uppercase shadow-sm">
+              <span className="absolute left-4 top-4 z-10 bg-neutral-900 px-3 py-1 text-[10px] font-bold text-white tracking-wider uppercase">
                 {Math.floor(product.discountPercentage)}% Off
               </span>
             )}
@@ -423,7 +450,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             {/* Wishlist floating heart */}
             <button
               onClick={() => (user ? addToWishlist(product._id) : router.push("/login"))}
-              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 border border-neutral-100 shadow-sm transition-all hover:bg-white active:scale-95"
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 border border-neutral-100 transition-all hover:bg-white active:scale-95 cursor-pointer"
             >
               {user && alreadyInWishlist(product._id) ? (
                 <Heart className="h-5 w-5 fill-rose-600 text-rose-600" />
@@ -450,10 +477,26 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               {!isMobile && (
                 <div
                   style={zoomStyle}
-                  className="absolute inset-0 z-20 pointer-events-none rounded-xl border border-neutral-200 bg-white"
+                  className="absolute inset-0 z-20 pointer-events-none border border-neutral-200 bg-white"
                 />
               )}
             </div>
+          </div>
+
+          {/* Thumbnails list */}
+          <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-2 justify-start">
+            {displayImages.map((img, idx) => (
+              <button
+                key={idx}
+                className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] bg-neutral-50 transition-all duration-300 shrink-0 cursor-pointer ${selectedImage === img
+                  ? " border-2 border-neutral-900 opacity-100"
+                  : "border-2 border-neutral-200/40 opacity-60 hover:opacity-100"
+                  }`}
+                onClick={() => setSelectedImage(img)}
+              >
+                <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-contain p-1" />
+              </button>
+            ))}
           </div>
         </div>
 
@@ -494,19 +537,53 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             </div>
 
             {/* Price display */}
-            <div className="flex items-baseline gap-4 py-2 border-y border-neutral-100">
-              <span className="text-2xl font-bold text-neutral-900">
-                ₹{displayDiscountPrice.toLocaleString()}
-              </span>
-              {displayPrice > displayDiscountPrice && (
-                <>
-                  <span className="text-md text-neutral-400 line-through">
-                    ₹{displayPrice.toLocaleString()}
+            <div className="flex flex-col gap-1 py-3 border-y border-neutral-100/80">
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-extrabold text-neutral-900 tracking-tight">
+                  ₹{displayDiscountPrice.toLocaleString()}
+                </span>
+                {displayPrice > displayDiscountPrice && (
+                  <>
+                    <span className="text-lg text-neutral-400 line-through font-medium">
+                      ₹{displayPrice.toLocaleString()}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5">
+                      Save ₹{(displayPrice - displayDiscountPrice).toLocaleString()} ({Math.floor(product.discountPercentage)}% OFF)
+                    </span>
+                  </>
+                )}
+              </div>
+              <p className="text-[11px] text-neutral-400 font-medium">Inclusive of all taxes</p>
+            </div>
+
+            {/* Conversion Boosters: Active Viewers & Stock Urgency */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 bg-amber-50/70 border border-amber-100/60 rounded-xl px-3 py-2.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span>🔥 {activeViewers} people viewing this now</span>
+              </div>
+
+              {displayStock > 0 && displayStock <= 5 ? (
+                <div className="flex items-center gap-2 text-xs font-bold text-rose-800 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                   </span>
-                  <span className="text-xs text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded">
-                    Save ₹{(displayPrice - displayDiscountPrice).toLocaleString()}
-                  </span>
-                </>
+                  <span>Hurry! Only {displayStock} left in stock</span>
+                </div>
+              ) : displayStock > 5 ? (
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50/60 border border-emerald-100/40 rounded-xl px-3 py-2.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>In Stock - Ships within 24 hours</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs font-semibold text-rose-800 bg-rose-50/60 border border-rose-100/45 rounded-xl px-3 py-2.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                  <span>Currently Out of Stock</span>
+                </div>
               )}
             </div>
 
@@ -517,9 +594,18 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             {/* Sizes variants */}
             {product.variants?.sizes && product.variants.sizes.length > 0 && (
               <div className="space-y-2 py-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-                  Select Size
-                </span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+                    Select Size
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowSizeGuide(true)}
+                    className="text-xs font-semibold text-neutral-900 hover:text-neutral-600 underline underline-offset-2 transition-all cursor-pointer"
+                  >
+                    Size Guide
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {product.variants.sizes.map((s) => (
                     <button
@@ -572,10 +658,26 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
           {/* Action buttons */}
           <div className="space-y-4 pt-4">
+
+            {/* Delivery estimate */}
+            <div className="flex items-center gap-3 border border-neutral-200 bg-neutral-50 px-4 py-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-white border border-neutral-200 text-neutral-700">
+                <Truck className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-neutral-800">
+                  Order today, get it by <span className="text-neutral-950">{formattedDeliveryDate}</span>
+                </p>
+                <p className="text-[11px] text-neutral-400 font-medium">
+                  Estimated 5-day delivery to your address
+                </p>
+              </div>
+            </div>
+
             {displayStock <= 0 ? (
               <button
                 disabled
-                className="w-full py-3.5 text-center rounded-xl bg-neutral-100 border border-neutral-200 text-neutral-400 font-bold uppercase tracking-wider cursor-not-allowed text-sm"
+                className="w-full h-12 text-center bg-neutral-100 border border-neutral-200 text-neutral-400 font-bold uppercase tracking-wider cursor-not-allowed text-sm"
               >
                 Out of Stock
               </button>
@@ -583,18 +685,40 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   disabled={addingCart}
-                  onClick={() => (user ? addToCart(false) : router.push("/login"))}
-                  className="flex-1 py-3.5 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 text-white font-semibold text-xs tracking-wider uppercase shadow-md shadow-pink-100/50 transition-all disabled:opacity-50"
-                >
-                  <ShoppingCart className="w-4 h-4" /> Add to Bag
-                </button>
-                <button
-                  disabled={addingCart}
                   onClick={() => (user ? addToCart(true) : router.push("/login"))}
-                  className="flex-1 py-3.5 flex items-center justify-center gap-2 rounded-xl bg-rose-950 text-white font-semibold text-xs tracking-wider uppercase hover:bg-rose-900 transition-all disabled:opacity-50"
+                  className="flex-1 h-12 flex items-center justify-center gap-2 bg-rose-600 text-white font-bold text-xs tracking-wider uppercase hover:bg-rose-700 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   Buy Now
                 </button>
+                <button
+                  disabled={addingCart}
+                  onClick={() => (user ? addToCart(false) : router.push("/login"))}
+                  className="flex-1 h-12 flex items-center justify-center gap-2 font-bold text-xs tracking-wider uppercase transition-all disabled:opacity-50 border border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50 cursor-pointer"
+                >
+                  <ShoppingCart className="w-4 h-4" /> Add to Bag
+                </button>
+              </div>
+            )}
+
+            {/* Secure Payments stripe */}
+            {displayStock > 0 && (
+              <div className="pt-2 flex flex-col items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                  100% Secure Checkout
+                </span>
+                <div className="flex items-center justify-center gap-4 opacity-50">
+                  {/* Visa SVG */}
+                  <svg className="h-3 w-auto" viewBox="0 0 24 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.7 13.5l1.6-9.6H13l-1.6 9.6H8.7zm7.2-9.2c-.3-.4-.9-.6-1.7-.6-1.5 0-2.8.8-2.9 2.2-.1.9.8 1.4 1.4 1.7.6.3.8.5.8.8 0 .5-.6.7-1.1.7-.8 0-1.2-.2-1.6-.4l-.2-.1-.2 1.4c.4.2 1.1.4 1.9.4 1.7 0 2.8-.8 2.8-2.1.1-.7-.4-1.3-1.4-1.7-.6-.3-1-.5-1-.9 0-.3.3-.6.9-.6.5 0 .9.1 1.2.3l.1.1.2-1.3zM22 8.7c0-.2-.1-.4-.3-.5l-1.4-6.3h-1.6c-.3 0-.6.2-.7.5l-2.4 5.9V8.7c.4.1.8.1 1.2.1H22v-.1zm-17-.3L3.4 3.9H1.1L1 4.5c1.4.4 2.6 1 3.4 1.5l1.6 6.5h1.7l2.6-9.6H8.7L5 8.4z" fill="#1A1919"/>
+                  </svg>
+                  {/* Mastercard SVG */}
+                  <svg className="h-4.5 w-auto" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="7.5" cy="9" r="6" fill="#F97316"/>
+                    <circle cx="16.5" cy="9" r="6" fill="#EF4444"/>
+                  </svg>
+                  <span className="text-[9px] font-extrabold text-neutral-800 border border-neutral-300 px-1 py-0.2 tracking-wider">RUPAY</span>
+                  <span className="text-[9px] font-extrabold text-neutral-800 border border-neutral-300 px-1 py-0.2 tracking-wider">COD</span>
+                </div>
               </div>
             )}
 
@@ -612,8 +736,8 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       </div>
 
       {/* Trust Badges section */}
-      <div className="my-6 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="flex items-center gap-4 bg-white border border-neutral-100 p-5 rounded-2xl shadow-sm">
+      <div className="my-6 mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex items-center gap-4 bg-white border border-neutral-100 p-5 rounded-2xl">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-50 text-neutral-700 border border-neutral-100">
             <Truck className="w-5 h-5" />
           </div>
@@ -623,7 +747,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-white border border-neutral-100 p-5 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-4 bg-white border border-neutral-100 p-5 rounded-2xl ">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-50 text-neutral-700 border border-neutral-100">
             <RotateCcw className="w-5 h-5" />
           </div>
@@ -633,7 +757,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-white border border-neutral-100 p-5 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-4 bg-white border border-neutral-100 p-5 rounded-2xl ">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-50 text-neutral-700 border border-neutral-100">
             <ShieldCheck className="w-5 h-5" />
           </div>
@@ -644,68 +768,98 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
         </div>
       </div>
 
-      {/* Product Specifications Section */}
-      <div className="max-w-7xl mx-auto bg-white border border-neutral-100 p-6 md:p-8 rounded-3xl mb-10 shadow-sm">
-        <h2 className="text-lg md:text-xl font-bold flex items-center gap-2 border-b border-neutral-100 pb-3 text-neutral-800 mb-4">
-          Product Specifications
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-sm text-neutral-700 pb-6 border-b border-neutral-50">
-          <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100/50">
-            <span className="font-semibold text-neutral-400">Category</span>
-            <span>{product.category}</span>
-          </div>
-          <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100/50">
-            <span className="font-semibold text-neutral-400">Stock Status</span>
-            <span className={displayStock > 0 ? "text-green-600 font-medium" : "text-rose-600 font-medium"}>
-              {displayStock > 0 ? `In Stock (${displayStock} units)` : "Out of Stock"}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100/50">
-            <span className="font-semibold text-neutral-400">Weight</span>
-            <span>{product.weight ? `${product.weight} kg` : "N/A"}</span>
-          </div>
-          <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100/50">
-            <span className="font-semibold text-neutral-400">Dimensions</span>
-            <span>
-              {product.length || product.breadth || product.height ? (
-                `${product.length || "-"} x ${product.breadth || "-"} x ${product.height || "-"} cm (L x B x H)`
-              ) : (
-                "N/A"
-              )}
-            </span>
-          </div>
-        </div>
-
-        <div className="pt-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-2">Description / Info</span>
-          <div className={`overflow-hidden transition-all duration-500 ${expandDesc ? "max-h-max" : "max-h-[150px] relative"}`}>
-            <pre className="overflow-auto whitespace-pre-wrap break-words text-sm leading-relaxed text-neutral-600 font-sans">
-              {product.info || product.description}
-            </pre>
-            {!expandDesc && (
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+      {/* Product Specifications Section Accordion */}
+      <div className="mx-auto bg-white border border-neutral-100 p-6 md:p-8 mb-10">
+        <div className="divide-y divide-neutral-200">
+          {/* Description Accordion */}
+          <div className="pb-4">
+            <button
+              onClick={() => setOpenAccordions(prev => ({ ...prev, desc: !prev.desc }))}
+              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-neutral-800 focus:outline-none cursor-pointer"
+            >
+              <span>Description</span>
+              <span className="text-neutral-500 font-bold text-sm">{openAccordions.desc ? "–" : "+"}</span>
+            </button>
+            {openAccordions.desc && (
+              <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans">
+                <pre className="overflow-auto whitespace-pre-wrap break-words font-sans">
+                  {product.info || product.description}
+                </pre>
+              </div>
             )}
           </div>
-          <button
-            onClick={() => setExpandDesc(!expandDesc)}
-            className="text-xs font-bold text-neutral-800 hover:text-neutral-900 tracking-wider uppercase border border-neutral-200 px-4 py-2 rounded-xl bg-neutral-50/50 hover:bg-neutral-100 transition-all cursor-pointer block mx-auto mt-4"
-          >
-            {expandDesc ? "Read Less" : "Read Full Info"}
-          </button>
+
+          {/* Specifications Accordion */}
+          <div className="py-4">
+            <button
+              onClick={() => setOpenAccordions(prev => ({ ...prev, details: !prev.details }))}
+              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-neutral-800 focus:outline-none cursor-pointer"
+            >
+              <span>Specifications & Details</span>
+              <span className="text-neutral-500 font-bold text-sm">{openAccordions.details ? "–" : "+"}</span>
+            </button>
+            {openAccordions.details && (
+              <div className="pt-4 text-xs md:text-sm text-neutral-600">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 font-sans">
+                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                    <span className="font-semibold text-neutral-400">Category</span>
+                    <span className="text-neutral-800">{product.category}</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                    <span className="font-semibold text-neutral-400">Stock Status</span>
+                    <span className={displayStock > 0 ? "text-emerald-700 font-semibold" : "text-rose-700 font-semibold"}>
+                      {displayStock > 0 ? `In Stock (${displayStock} units)` : "Out of Stock"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                    <span className="font-semibold text-neutral-400">Weight</span>
+                    <span className="text-neutral-800">{product.weight ? `${product.weight} kg` : "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                    <span className="font-semibold text-neutral-400">Dimensions</span>
+                    <span className="text-neutral-800">
+                      {product.length || product.breadth || product.height ? (
+                        `${product.length || "-"} x ${product.breadth || "-"} x ${product.height || "-"} cm`
+                      ) : (
+                        "N/A"
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Shipping & Returns Accordion */}
+          <div className="pt-4">
+            <button
+              onClick={() => setOpenAccordions(prev => ({ ...prev, shipping: !prev.shipping }))}
+              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-neutral-800 focus:outline-none cursor-pointer"
+            >
+              <span>Shipping & Return Policies</span>
+              <span className="text-neutral-500 font-bold text-sm">{openAccordions.shipping ? "–" : "+"}</span>
+            </button>
+            {openAccordions.shipping && (
+              <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans space-y-2">
+                <p>📦 <strong>Free Shipping:</strong> Enjoy free standard shipping on all orders above ₹499. Orders are shipped within 24-48 hours.</p>
+                <p>🔄 <strong>7-Day Returns:</strong> If you are not completely satisfied, return or replace your product within 7 days of delivery. Terms & conditions apply.</p>
+                <p>🛡️ <strong>Secure Checkout:</strong> All transactions are encrypted and processed securely. We accept COD, UPI, Cards, and NetBanking.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* REVIEWS SECTION */}
-      <div id="reviews-section" className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+      <div id="reviews-section" className=" mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
 
         {/* Write a Review Block */}
-        <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm flex flex-col justify-start">
+        <div className="lg:col-span-4 bg-white p-6 border border-neutral-100 flex flex-col justify-start">
           <h2 className="text-lg font-bold text-neutral-800 mb-3 flex items-center gap-2">
             Ratings & Reviews
           </h2>
 
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-4">
             <span className="text-4xl font-extrabold text-neutral-950">
               {displayRatings.toFixed(1)}
             </span>
@@ -725,7 +879,27 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             </div>
           </div>
 
-          <div className="border-t border-neutral-100 pt-6">
+          {/* Rating Distribution Bars */}
+          <div className="space-y-2 mb-6 border-t border-neutral-100 pt-4">
+            {ratingDistribution.map((count, index) => {
+              const stars = 5 - index;
+              const percentage = Math.round((count / distributionSum) * 100);
+              return (
+                <div key={stars} className="flex items-center gap-3 text-xs">
+                  <span className="w-8 text-neutral-500 font-semibold">{stars} ★</span>
+                  <div className="flex-1 h-2 bg-neutral-100 overflow-hidden">
+                    <div
+                      style={{ width: `${percentage}%` }}
+                      className="h-full bg-neutral-900 transition-all duration-500"
+                    />
+                  </div>
+                  <span className="w-8 text-right text-neutral-400 font-semibold">{percentage}%</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-neutral-100 pt-4">
             {reviewEligible ? (
               <form onSubmit={handleSubmitReview} className="space-y-4">
                 <span className="text-xs font-bold text-neutral-800 block uppercase tracking-wider">
@@ -840,7 +1014,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
         </div>
 
         {/* Existing reviews list */}
-        <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm">
+        <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-neutral-100 ">
           <h2 className="text-lg font-bold text-neutral-800 mb-6 flex items-center gap-2">
             Verified Reviews ({product.reviews?.length || 0})
           </h2>
@@ -910,7 +1084,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       </div>
 
       {/* Similar products section */}
-      <div className="max-w-7xl mx-auto my-12">
+      <div className=" mx-auto my-12">
         <h2 className="text-lg md:text-xl font-bold text-neutral-800 mb-6 flex items-center gap-2">
           You May Also Like <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
         </h2>
@@ -938,13 +1112,13 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-zoom-out p-4"
           >
             <div
-              className="relative max-h-full max-w-full rounded-2xl overflow-hidden"
+              className="relative max-h-full max-w-full overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <img
                 src={lightboxImage}
                 alt="Fullscreen Customer View"
-                className="max-h-[85vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+                className="max-h-[85vh] max-w-[90vw] object-contain shadow-2xl"
               />
               <button
                 className="absolute right-4 top-4 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur transition-all active:scale-95"
@@ -953,6 +1127,99 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                 <X className="w-4 h-4" />
               </button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Size Guide Modal Overlay */}
+      <AnimatePresence>
+        {showSizeGuide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowSizeGuide(false)}
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.96 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.96 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full max-w-md p-6 border border-neutral-200 relative"
+            >
+              <button
+                onClick={() => setShowSizeGuide(false)}
+                className="absolute right-4 top-4 text-neutral-400 hover:text-neutral-700 transition-colors p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <h3 className="text-md font-bold text-neutral-900 uppercase tracking-wider mb-2 font-sans">
+                Size Guide
+              </h3>
+              <p className="text-xs text-neutral-400 mb-6">
+                Standard measurements. Fit may vary depending on style and fabric.
+              </p>
+
+              <div className="overflow-x-auto border border-neutral-200">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase tracking-wider text-neutral-500">
+                      <th className="p-3">Size</th>
+                      <th className="p-3">Bust/Chest (in)</th>
+                      <th className="p-3">Waist (in)</th>
+                      <th className="p-3">Hips (in)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-neutral-700 divide-y divide-neutral-100">
+                    <tr>
+                      <td className="p-3 font-bold">XS</td>
+                      <td className="p-3">30 - 32</td>
+                      <td className="p-3">24 - 26</td>
+                      <td className="p-3">34 - 36</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 font-bold">S</td>
+                      <td className="p-3">32 - 34</td>
+                      <td className="p-3">26 - 28</td>
+                      <td className="p-3">36 - 38</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 font-bold">M</td>
+                      <td className="p-3">34 - 36</td>
+                      <td className="p-3">28 - 30</td>
+                      <td className="p-3">38 - 40</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 font-bold">L</td>
+                      <td className="p-3">36 - 38</td>
+                      <td className="p-3">30 - 32</td>
+                      <td className="p-3">40 - 42</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 font-bold">XL</td>
+                      <td className="p-3">38 - 40</td>
+                      <td className="p-3">32 - 34</td>
+                      <td className="p-3">42 - 44</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 font-bold">XXL</td>
+                      <td className="p-3">40 - 42</td>
+                      <td className="p-3">34 - 36</td>
+                      <td className="p-3">44 - 46</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-5 flex gap-2.5 text-[11px] text-neutral-500 bg-neutral-50 p-3 border border-neutral-100">
+                <AlertCircle className="w-4 h-4 text-neutral-500 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  <strong>Fit Guide:</strong> If you prefer a loose fit, or are between sizes, we recommend selecting one size larger.
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

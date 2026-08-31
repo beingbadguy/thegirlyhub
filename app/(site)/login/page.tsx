@@ -54,82 +54,92 @@ export default function LoginPage() {
     }
   };
   return (
-    <div className="flex items-center justify-center gap-4 min-h-[70vh] flex-col bg-white text-black w-full">
-      {/* <Image
-        src="/girly3.png"
-        alt="logo"
-        width={100}
-        height={100}
-        className=""
-      /> */}
-      <h1 className="text-3xl font-bold">Log In</h1>
-      <p className="text-center w-full text-sm md:text-md">
-        Welcome back, Log In to start shopping.
-      </p>
-
-      <form
-        className=" flex items-center justify-center gap-2 flex-col w-[80%] md:w-[50%] lg:w-[30%]"
-        onSubmit={loginHandler}
-      >
-        <Input
-          type="email"
-          placeholder="Email"
-          name="email"
-          value={data.email}
-          onChange={changeHandler}
-          className="w-full"
-        />
-
-        <div className="relative w-full">
-          <Input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            name="password"
-            className="w-full"
-            value={data.password}
-            onChange={changeHandler}
-          />
-          {showPassword ? (
-            <FiEye
-              className="absolute top-[10px] right-4 cursor-pointer"
-              onClick={() => {
-                setShowPassword(!showPassword);
-              }}
-            />
-          ) : (
-            <FiEyeOff
-              className="absolute top-[10px] right-4 cursor-pointer"
-              onClick={() => {
-                setShowPassword(!showPassword);
-              }}
-            />
-          )}
+    <div className="min-h-[70vh] bg-white text-black w-full flex flex-col py-6">
+      {/* Breadcrumbs */}
+      <div className="w-full  mx-auto px-4 md:px-8 pb-2 text-left">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
+          <Link
+            href="/"
+            className="cursor-pointer transition-colors hover:text-neutral-800"
+          >
+            Home
+          </Link>
+          <span>/</span>
+          <span className="text-neutral-800 font-bold">Login</span>
         </div>
+      </div>
 
-        <Link href={"/forget"} className="w-full text-right text-sm">
-          Forget Password
-        </Link>
-        <Button
-          disabled={loading}
-          type="submit"
-          className="bg-black text-white w-full  cursor-pointer"
+      {/* Main content centered */}
+      <div className="flex-1 flex items-center justify-center gap-4 flex-col px-4">
+        <h1 className="text-3xl font-bold">Log In</h1>
+        <p className="text-center w-full text-sm md:text-md text-neutral-500">
+          Welcome back, Log In to start shopping.
+        </p>
+
+        <form
+          className="flex items-center justify-center gap-2 flex-col w-full max-w-md mt-4"
+          onSubmit={loginHandler}
         >
-          {loading ? (
-            <AiOutlineLoading3Quarters className=" animate-spin text-white" />
-          ) : (
-            <div className="flex items-center gap-4">
-              <p>Log In</p>
-              <MdArrowRightAlt />
-            </div>
+          <Input
+            type="email"
+            placeholder="Email"
+            name="email"
+            value={data.email}
+            onChange={changeHandler}
+            className="w-full"
+          />
+
+          <div className="relative w-full">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              name="password"
+              className="w-full"
+              value={data.password}
+              onChange={changeHandler}
+            />
+            {showPassword ? (
+              <FiEye
+                className="absolute top-[10px] right-4 cursor-pointer"
+                onClick={() => {
+                  setShowPassword(!showPassword);
+                }}
+              />
+            ) : (
+              <FiEyeOff
+                className="absolute top-[10px] right-4 cursor-pointer"
+                onClick={() => {
+                  setShowPassword(!showPassword);
+                }}
+              />
+            )}
+          </div>
+
+          <Link href={"/forget"} className="w-full text-right text-sm text-neutral-500 hover:text-rose-500 transition-colors">
+            Forget Password
+          </Link>
+          <Button
+            disabled={loading}
+            type="submit"
+            className="bg-rose-500 hover:bg-rose-600 text-white w-full cursor-pointer transition-colors"
+          >
+            {loading ? (
+              <AiOutlineLoading3Quarters className=" animate-spin text-white" />
+            ) : (
+              <div className="flex items-center gap-4">
+                <p>Log In</p>
+                <MdArrowRightAlt />
+              </div>
+            )}
+          </Button>
+          {loginError && (
+            <div className="text-red-500 font-light text-sm">{loginError}</div>
           )}
-        </Button>
-        {loginError && (
-          <div className="text-red-500 font-light text-sm">{loginError}</div>
-        )}
-        <Link href="/signup" className="text-sm md:text-md">
-          Dont have an account? Signup
-        </Link>
-      </form>
+          <Link href="/signup" className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors">
+            Dont have an account? Signup
+          </Link>
+        </form>
+      </div>
     </div>
   );
 }
