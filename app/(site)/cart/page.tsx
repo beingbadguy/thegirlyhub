@@ -11,16 +11,13 @@ import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 
 const CartPage = () => {
-  const { user, fetchUserCart, userCart } = useAuthStore();
+  const { user, fetchUserCart, userCart, updateCartQuantity, removeFromCart } =
+    useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
     document.title = "Shopping Bag | GirlyHub";
-    if (!user) {
-      router.push("/login");
-    } else {
-      fetchUserCart();
-    }
+    fetchUserCart();
   }, [user]);
   // console.log(user?.firstPurchase);
 
@@ -31,11 +28,7 @@ const CartPage = () => {
     // console.log("Increase/decrease quantity for:", productId);
 
     try {
-      await axios.put(`/api/cart/${productId}`, {
-        quantity: quantity,
-      });
-      // console.log(response.data);
-      fetchUserCart();
+      await updateCartQuantity(productId, quantity);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
@@ -49,9 +42,7 @@ const CartPage = () => {
     // console.log("Delete product:", productId);
 
     try {
-      await axios.delete(`/api/cart/${productId}`);
-      // console.log(response.data);
-      fetchUserCart();
+      await removeFromCart(productId);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);

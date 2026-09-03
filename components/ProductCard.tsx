@@ -75,10 +75,6 @@ export default function ProductCard({
 
   const handleCardAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
     try {
       let defaultSize = "M";
       const cat = product.category || "";
@@ -88,34 +84,16 @@ export default function ProductCard({
         defaultSize = "One Size";
       }
 
-      await axios.post(`/api/cart/${product._id}`, {
-        size: defaultSize,
-        color: "",
-      });
-      fetchUserCart();
+      await useAuthStore.getState().addToCart(product._id, defaultSize);
       setAddedText(true);
       setTimeout(() => setAddedText(false), 2000);
     } catch (err: unknown) {
       console.error("Failed to add to cart from card:", err);
-      if (err instanceof AxiosError) {
-        const msg = err.response?.data?.message || "";
-        if (
-          err.response?.status === 401 ||
-          msg.toLowerCase().includes("log in") ||
-          msg.toLowerCase().includes("unauthorized")
-        ) {
-          router.push("/login");
-        }
-      }
     }
   };
 
   const handleCardBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
     goToProduct();
   };
 

@@ -3,8 +3,9 @@
 import { ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/store";
 
 type AddToCartButtonProps = {
   productId: string;
@@ -34,14 +35,10 @@ export default function AddToCartButton({
     setLoading(true);
     setError("");
     try {
-      await axios.post(`/api/cart/${productId}`, { size: "" });
+      await useAuthStore.getState().addToCart(productId, "");
       if (buyNow) router.push("/cart");
     } catch (error) {
       if (error instanceof AxiosError) {
-        if (error.response?.status === 401) {
-          router.push("/login");
-          return;
-        }
         setError(error.response?.data?.message || "Could not add to cart");
       }
     } finally {

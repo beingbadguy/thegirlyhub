@@ -64,12 +64,8 @@ export async function middleware(request: NextRequest) {
   // Protected routes (only accessible if logged in)
   const protectedRoutes = [
     "/profile",
-    "/cart",
-    "/checkout",
     "/orders",
     "/wishlist",
-    "/successfull",
-    "/success",
   ];
   const onlyForAdmins = [
     "/dashboard",

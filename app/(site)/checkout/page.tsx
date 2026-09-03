@@ -111,10 +111,8 @@ export default function CheckoutPage() {
       setZip(user.zip ? String(user.zip) : "");
       setPhone(user.phone ? String(user.phone) : "");
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (user === null) router.push("/login");
+    // Guest checkout: allow users without login to proceed
+    // The email field will be required for guest checkout
   }, [user]);
 
   useEffect(() => {
@@ -257,13 +255,8 @@ export default function CheckoutPage() {
         return;
       }
 
-      const amountInPaise = Math.round(finalAmount * 100);
-
-      // Create Razorpay order via our backend
-      const orderRes = await axios.post("/api/create-order", {
-        amount: amountInPaise,
-        currency: "INR",
-      });
+      // Create Razorpay order via our backend with full order payload
+      const orderRes = await axios.post("/api/create-order", buildOrderPayload());
 
       const { order_id, amount, currency } = orderRes.data;
 
@@ -281,11 +274,6 @@ export default function CheckoutPage() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
-              orderData: {
-                ...buildOrderPayload(),
-                userId: user?._id,
-                paymentMethod: "online"
-              }
             });
 
             if (verifyRes.data.success) {

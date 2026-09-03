@@ -1,16 +1,29 @@
+import { databaseConnection } from "@/config/databseConnection";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
+import { prepareCheckout } from "@/lib/prepareCheckout";
+import PendingPayment from "@/models/pendingPayment.model";
 import Razorpay from "razorpay";
 import { NextRequest, NextResponse } from "next/server";
 
-const MIN_AMOUNT_IN_PAISE = 100;
-
 export async function POST(req: NextRequest) {
+  await databaseConnection();
+
   try {
     const decoded = await fetchTokenDetails(req);
-    if (!decoded) {
+    const body = await req.json();
+
+    const prepared = await prepareCheckout(
+      {
+        ...body,
+        paymentMethod: "online",
+      },
+      decoded?.userId,
+    );
+
+    if (!prepared.ok) {
       return NextResponse.json(
-        { success: false, message: "You must log in to create a payment order." },
-        { status: 401 },
+        { success: false, message: prepared.message, errors: prepared.errors },
+        { status: prepared.status },
       );
     }
 
@@ -24,26 +37,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { amount, currency = "INR", receipt } = await req.json();
-    const amountInPaise = Number(amount);
-
-    if (!Number.isFinite(amountInPaise) || amountInPaise < MIN_AMOUNT_IN_PAISE) {
-      return NextResponse.json(
-        { success: false, message: "Amount must be at least 100 paise." },
-        { status: 400 },
-      );
-    }
-
     const razorpay = new Razorpay({
       key_id: keyId,
       key_secret: keySecret,
     });
 
-    const order = await razorpay.orders.create({
-      amount: Math.round(amountInPaise),
-      currency,
-      receipt: receipt || `receipt_${Date.now()}`,
+    const amountInPaise = prepared.data.expectedAmountInPaise;
+    if (amountInPaise < 100) {
+      return NextResponse.json(
+        { success: false, message: "Amount must be at least ₹1." },
+        { status: 400 },
+      );
+    }
+
+    const pending = await PendingPayment.create({
+      razorpayOrderId: `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      amountInPaise,
+      userId: prepared.data.userId,
+      isGuest: prepared.data.isGuest,
+      orderPayload: body,
+      status: "pending",
     });
+
+    const order = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: "INR",
+      receipt: `gh_${pending._id.toString().slice(-12)}`,
+      notes: {
+        pendingId: pending._id.toString(),
+        guest: prepared.data.isGuest ? "1" : "0",
+      },
+    });
+
+    pending.razorpayOrderId = order.id;
+    pending.updatedAt = new Date();
+    await pending.save();
 
     return NextResponse.json(
       {
@@ -51,6 +79,7 @@ export async function POST(req: NextRequest) {
         order_id: order.id,
         amount: order.amount,
         currency: order.currency,
+        pendingId: pending._id,
       },
       { status: 200 },
     );

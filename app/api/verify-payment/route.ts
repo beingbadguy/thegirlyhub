@@ -1,19 +1,11 @@
 import { databaseConnection } from "@/config/databseConnection";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
-import { FIRST_ORDER_DISCOUNT_RATE } from "@/lib/orderValidation";
-import { calculateShipping } from "@/lib/shipping";
-import Cart from "@/models/cart.model";
-import Coupon from "@/models/coupon.model";
+import { placeOrderRecord } from "@/lib/placeOrderRecord";
+import { prepareCheckout } from "@/lib/prepareCheckout";
 import Order from "@/models/order.model";
-import Product from "@/models/product.model";
-import User from "@/models/user.model";
-import {
-  OrderConfirmationMail,
-  orderPlacedMessageToAdmin,
-} from "@/services/sendMail";
+import PendingPayment from "@/models/pendingPayment.model";
 import crypto from "crypto";
-import { after, NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
+import { NextRequest, NextResponse } from "next/server";
 
 function signaturesMatch(generatedSignature: string, razorpaySignature: string) {
   const generated = Buffer.from(generatedSignature);
@@ -30,18 +22,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const decoded = await fetchTokenDetails(req);
-    if (!decoded) {
-      return NextResponse.json(
-        { success: false, message: "You must log in to verify a payment." },
-        { status: 401 },
-      );
-    }
-
     const {
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
-      orderData,
     } = await req.json();
 
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
@@ -51,16 +35,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!orderData) {
-      return NextResponse.json(
-        { success: false, message: "Missing order details." },
-        { status: 400 },
-      );
-    }
-
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    if (!keyId || !keySecret) {
+    if (!keySecret) {
       return NextResponse.json(
         { success: false, message: "Razorpay is not configured." },
         { status: 500 },
@@ -87,194 +63,57 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const {
-      paymentMethod,
-      deliveryType,
-      recipientName,
-      email,
-      address,
-      city,
-      state,
-      landmark,
-      orderNotes,
-      phone,
-      zip,
-      couponCode,
-      products: payloadProducts,
-    } = orderData;
-    const userId = decoded.userId.toString();
-
-    const user = await User.findById(userId);
-    if (!user) {
+    const pending = await PendingPayment.findOne({
+      razorpayOrderId: razorpay_order_id,
+    });
+    if (!pending) {
       return NextResponse.json(
-        { success: false, message: "User not found." },
+        {
+          success: false,
+          message: "Payment session not found. Please try checkout again.",
+        },
         { status: 404 },
       );
     }
 
-    if (!Array.isArray(payloadProducts) || payloadProducts.length === 0) {
+    if (pending.userId && decoded?.userId && pending.userId.toString() !== decoded.userId) {
       return NextResponse.json(
-        { success: false, message: "Your cart is empty." },
-        { status: 400 },
+        { success: false, message: "This payment does not belong to your account." },
+        { status: 403 },
       );
     }
 
-    const dbProducts = await Product.find({
-      _id: { $in: payloadProducts.map((p: any) => p.productId) },
-    });
-    const productsById = new Map(dbProducts.map((p) => [p._id.toString(), p]));
-
-    let subtotal = 0;
-    const verifiedProducts = [];
-
-    for (const item of payloadProducts) {
-      const dbProduct = productsById.get(String(item.productId));
-      if (!dbProduct || !dbProduct.isActive) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `"${item.title || "A product"}" is no longer available.`,
-          },
-          { status: 400 },
-        );
-      }
-
-      if (dbProduct.countInStock < item.quantity) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `Only ${dbProduct.countInStock} unit(s) left for "${dbProduct.title}".`,
-          },
-          { status: 400 },
-        );
-      }
-
-      subtotal += dbProduct.discountedPrice * item.quantity;
-      verifiedProducts.push({
-        productId: dbProduct._id,
-        quantity: item.quantity,
-        title: dbProduct.title,
-        price: dbProduct.discountedPrice,
-        image: dbProduct.image,
-        size: item.size || "",
-      });
-    }
-
-    const shipping = calculateShipping(subtotal, "online");
-    const shippingCharge = shipping.shippingCharge;
-    const firstTimeDiscount = user.firstPurchase
-      ? 0
-      : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
-    let expectedTotal = Math.max(
-      0,
-      Math.round((subtotal + shippingCharge - firstTimeDiscount) * 100) / 100,
+    const prepared = await prepareCheckout(
+      {
+        ...pending.orderPayload,
+        paymentMethod: "online",
+      },
+      pending.userId?.toString() || decoded?.userId,
     );
-    let appliedCouponDiscount = 0;
 
-    if (couponCode) {
-      const coupon = await Coupon.findOne({
-        code: String(couponCode).toUpperCase(),
-      });
-
-      if (coupon && coupon.isActive) {
-        appliedCouponDiscount =
-          coupon.type === "percentage"
-            ? Math.round(((expectedTotal * coupon.discount) / 100) * 100) / 100
-            : coupon.discount;
-        expectedTotal = Math.max(
-          0,
-          Math.round((expectedTotal - appliedCouponDiscount) * 100) / 100,
-        );
-
-        await Coupon.findOneAndUpdate(
-          { code: String(couponCode).toUpperCase() },
-          { $addToSet: { usersAvailed: userId } },
-        );
-      }
+    if (!prepared.ok) {
+      return NextResponse.json(
+        { success: false, message: prepared.message },
+        { status: prepared.status },
+      );
     }
 
-    const razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
-    const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
-    const expectedAmountInPaise = Math.round(expectedTotal * 100);
-
-    if (Number(razorpayOrder.amount) !== expectedAmountInPaise) {
+    if (prepared.data.expectedAmountInPaise !== pending.amountInPaise) {
       return NextResponse.json(
         { success: false, message: "Paid amount does not match order total." },
         { status: 400 },
       );
     }
 
-    const newOrder = new Order({
-      userId,
-      totalAmount: expectedTotal,
-      subtotal,
-      shippingCharge,
-      firstOrderDiscount: Math.round(firstTimeDiscount * 100) / 100,
-      couponDiscount: appliedCouponDiscount,
-      paymentMethod: paymentMethod || "online",
-      deliveryType: deliveryType || "normal",
-      recipientName: String(recipientName).trim(),
-      email: email?.trim() || user.email,
-      address: String(address).trim(),
-      city: String(city).trim(),
-      state: String(state).trim(),
-      landmark: landmark?.trim() || null,
-      orderNotes: orderNotes?.trim() || null,
-      phone: Number(phone),
-      zip: Number(zip),
-      products: verifiedProducts,
-      couponCode: couponCode || null,
+    const newOrder = await placeOrderRecord(prepared.data, {
       paymentId: razorpay_payment_id,
-      status: "processing",
+      paymentStatus: "paid",
     });
 
-    await newOrder.save();
-
-    await Promise.all([
-      ...verifiedProducts.map((item) =>
-        Product.findByIdAndUpdate(item.productId, {
-          $inc: { sold: item.quantity, countInStock: -item.quantity },
-        }),
-      ),
-      Cart.findOneAndDelete({ userId }),
-    ]);
-
-    user.order.push(newOrder._id);
-    user.firstPurchase = true;
-    user.cart = [];
-    user.address = String(address).trim();
-    user.city = String(city).trim();
-    user.state = String(state).trim();
-    user.landmark = landmark?.trim() || null;
-    user.zip = Number(zip);
-    user.phone = Number(phone);
-    user.updatedAt = new Date();
-    await user.save();
-
-    const mailPayload = {
-      _id: newOrder._id.toString(),
-      totalAmount: newOrder.totalAmount,
-      address: `${newOrder.address}, ${newOrder.city}, ${newOrder.state} - ${newOrder.zip}`,
-      paymentMethod: newOrder.paymentMethod,
-      deliveryType: newOrder.deliveryType,
-      products: verifiedProducts,
-    };
-    const customerEmail = user.email;
-    const customerName = user.name || recipientName;
-
-    after(async () => {
-      try {
-        await Promise.all([
-          OrderConfirmationMail(customerEmail, customerName, mailPayload),
-          orderPlacedMessageToAdmin(customerEmail, customerName),
-        ]);
-      } catch (mailError) {
-        console.error("Order confirmation email failed:", mailError);
-      }
-    });
+    pending.status = "paid";
+    pending.paymentId = razorpay_payment_id;
+    pending.updatedAt = new Date();
+    await pending.save();
 
     return NextResponse.json(
       { success: true, orderId: newOrder._id },

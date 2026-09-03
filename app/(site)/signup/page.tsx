@@ -9,9 +9,10 @@ import { FormEvent, useState, useEffect } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { MdArrowRightAlt } from "react-icons/md";
+import SocialAuthButtons from "@/components/SocialAuthButtons";
 
 export default function SignupPage() {
-  const { setUser, fetchUserCart } = useAuthStore();
+  const { setUser, fetchUserCart, syncCartAfterAuth } = useAuthStore();
   const router = useRouter();
   useEffect(() => {
     document.title = "Sign Up | GirlyHub";
@@ -37,8 +38,8 @@ export default function SignupPage() {
       const response = await axios.post("/api/signup", data);
       // console.log(response.data);
       setUser(response.data.data);
+      await syncCartAfterAuth();
       fetchUserCart();
-
       router.push("/");
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -140,6 +141,7 @@ export default function SignupPage() {
           <Link href="/login" className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors">
             Already have an account? Login
           </Link>
+          <SocialAuthButtons />
         </form>
       </div>
     </div>

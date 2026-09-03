@@ -2,7 +2,15 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: false, default: null },
+  authProvider: {
+    type: String,
+    enum: ["local", "google", "facebook", "apple"],
+    default: "local",
+  },
+  googleId: { type: String, default: null },
+  facebookId: { type: String, default: null },
+  appleId: { type: String, default: null },
   image: {
     type: String,
     // required: true,

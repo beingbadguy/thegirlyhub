@@ -173,8 +173,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     setAddingCart(true);
     setCartError("");
     try {
-      await axios.post(`/api/cart/${product._id}`, { size, color });
-      fetchUserCart();
+      await useAuthStore.getState().addToCart(product._id, size);
       if (goDirectlyToCart) {
         router.push("/checkout");
       } else {
@@ -183,16 +182,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        const msg = error.response?.data?.message || "";
-        if (
-          error.response?.status === 401 ||
-          msg.toLowerCase().includes("log in") ||
-          msg.toLowerCase().includes("unauthorized")
-        ) {
-          router.push("/login");
-        } else {
-          setCartError(msg || "Could not add to cart.");
-        }
+        setCartError(error.response?.data?.message || "Could not add to cart.");
       }
     } finally {
       setAddingCart(false);
@@ -728,14 +718,14 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   disabled={addingCart}
-                  onClick={() => (user ? addToCart(true) : router.push("/login"))}
+                  onClick={() => addToCart(true)}
                   className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 bg-rose-600 text-white font-bold text-xs tracking-wider uppercase hover:bg-rose-700 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   Buy Now
                 </button>
                 <button
                   disabled={addingCart}
-                  onClick={() => (user ? addToCart(false) : router.push("/login"))}
+                  onClick={() => addToCart(false)}
                   className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 font-bold text-xs tracking-wider uppercase transition-all disabled:opacity-50 border border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50 cursor-pointer"
                 >
                   <ShoppingCart className="w-4 h-4" /> Add to Bag
@@ -1289,14 +1279,14 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             <div className="flex gap-2 shrink-0">
               <button
                 disabled={addingCart}
-                onClick={() => (user ? addToCart(false) : router.push("/login"))}
+                onClick={() => addToCart(false)}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-400 to-rose-500 text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 active:scale-95"
               >
                 + Bag
               </button>
               <button
                 disabled={addingCart}
-                onClick={() => (user ? addToCart(true) : router.push("/login"))}
+                onClick={() => addToCart(true)}
                 className="px-5 py-2.5 rounded-xl bg-rose-950 text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 active:scale-95"
               >
                 Buy Now

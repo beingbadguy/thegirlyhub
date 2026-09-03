@@ -18,13 +18,15 @@ export async function GET(request: NextRequest) {
   try {
     const decodedToken = await fetchTokenDetails(request);
     if (!decodedToken) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         {
           success: false,
           message: "Invalid token",
         },
         { status: 401 }
       );
+      response.cookies.delete("basics");
+      return response;
     }
     // const user = await User.findById(decodedToken.userId)
     const user = await User.findById(decodedToken.userId)

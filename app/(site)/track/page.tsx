@@ -5,7 +5,7 @@ import { FaSearch } from "react-icons/fa";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { MdErrorOutline } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
-import { Check, X, Clock, MapPin, Truck, CreditCard, Tag } from "lucide-react";
+import { Check, X, Clock, MapPin, Truck, CreditCard, Tag, Copy, CheckCheck, PackageCheck } from "lucide-react";
 
 type OrderStatus =
   | "processing"
@@ -143,6 +143,7 @@ export default function TrackOrderPage() {
   const [order, setOrder]     = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
+  const [copied, setCopied]   = useState(false);
 
   useEffect(() => {
     document.title = "Track Order | GirlyHub";
@@ -177,6 +178,13 @@ export default function TrackOrderPage() {
     }
   };
 
+  const copyOrderId = async () => {
+    if (!order?._id) return;
+    await navigator.clipboard.writeText(order._id);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  };
+
   const getProductTitle = (item: any) =>
     item.productId?.title || item.title || "Product";
   const getProductPrice = (item: any) =>
@@ -193,69 +201,89 @@ export default function TrackOrderPage() {
     order?.couponCode ? Math.max(0, subtotal + shippingCharge - firstOrderDiscount - (order?.totalAmount ?? 0)) : 0
   );
   return (
-    <div className="min-h-[80vh] bg-rose-50/20 py-10 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-[80vh] bg-[#fffafc] px-4 py-8 sm:py-12">
+      <div className="mx-auto max-w-4xl space-y-6">
         
         {/* Search Header */}
-        <div className="bg-white rounded-2xl border border-rose-100 p-6 shadow-sm">
-          <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4 justify-center">
-            <BsBoxSeam className="text-pink-600 w-5 h-5" />
-            Track Your Order
-          </h1>
-
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              value={orderId}
-              onChange={(e) => setOrderId(e.target.value.trim())}
-              placeholder="Enter your 24-character Order ID (e.g. 66a91e...)"
-              className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-200 focus:border-pink-400 transition-all bg-white"
-            />
-            <button
-              onClick={handleTrackOrder}
-              disabled={loading}
-              className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {loading ? (
-                <AiOutlineLoading3Quarters className="animate-spin" />
-              ) : (
-                <>
-                  <FaSearch className="w-3.5 h-3.5" />
-                  Track Order
-                </>
-              )}
-            </button>
-          </div>
-
-          {error && (
-            <div className="mt-3 text-xs font-medium text-red-600 flex items-center gap-1.5">
-              <MdErrorOutline className="w-4 h-4" />
-              <span>{error}</span>
+        <div className="relative overflow-hidden rounded-[1.75rem] bg-[#3d071e] px-5 py-7 text-white shadow-[0_18px_50px_rgba(91,13,55,0.16)] sm:px-8">
+          <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full border-[24px] border-white/10" />
+          <div className="relative">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-pink-200">Delivery desk</p>
+                <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
+                  <BsBoxSeam className="h-6 w-6 text-pink-300" />
+                  Track your order
+                </h1>
+                <p className="mt-2 max-w-md text-sm text-pink-100/75">Follow your parcel from preparation to your doorstep.</p>
+              </div>
+              <PackageCheck className="hidden h-12 w-12 text-pink-200/40 sm:block" />
             </div>
-          )}
+
+            <div className="flex flex-col gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-sm sm:flex-row">
+              <input
+                type="text"
+                value={orderId}
+                onChange={(e) => setOrderId(e.target.value.trim())}
+                onKeyDown={(e) => e.key === "Enter" && handleTrackOrder()}
+                placeholder="Paste your 24-character order ID"
+                aria-label="Order ID"
+                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-pink-300"
+              />
+              <button
+                onClick={handleTrackOrder}
+                disabled={loading}
+                className="flex items-center justify-center gap-2 rounded-xl bg-pink-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-pink-400 active:scale-[.98] disabled:opacity-50"
+              >
+                {loading ? <AiOutlineLoading3Quarters className="animate-spin" /> : <FaSearch className="h-3.5 w-3.5" />}
+                {loading ? "Searching" : "Find order"}
+              </button>
+            </div>
+
+            {error && (
+              <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-pink-200">
+                <MdErrorOutline className="h-4 w-4" />
+                <span>{error}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Order Details Display */}
         {order && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden space-y-6 p-6">
+          <div className="space-y-6 overflow-hidden rounded-[1.75rem] border border-rose-100 bg-white p-5 shadow-[0_14px_40px_rgba(91,13,55,0.08)] sm:space-y-7 sm:p-7">
             
             {/* Header info */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <div className="border-b border-rose-100 bg-rose-50/50 py-5">
+              <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Order ID</p>
-                <code className="text-sm font-mono font-bold text-pink-700">{order._id}</code>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-400">Order reference</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <code className="break-all text-sm font-mono font-bold text-[#3d071e]">{order._id}</code>
+                  <button type="button" onClick={copyOrderId} aria-label="Copy order ID" className="rounded-md p-1.5 text-rose-500 transition hover:bg-rose-100">
+                    {copied ? <CheckCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div className="text-right">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[order.status].bg} ${STATUS_COLORS[order.status].text}`}>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${STATUS_COLORS[order.status].bg} ${STATUS_COLORS[order.status].text}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[order.status].dot}`} />
                   {STATUS_LABELS[order.status]}
                 </span>
               </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-rose-400" />{new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                <span className="flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5 text-rose-400" />{order.paymentMethod === "cod" ? "Cash on delivery" : "Online payment"}</span>
+              </div>
             </div>
 
             {/* Timeline */}
-            <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Status Timeline</p>
+            <div className="space-y-3 py-6">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Shipment progress</p>
+                <Clock className="h-4 w-4 text-rose-300" />
+              </div>
               <StatusTimeline currentStatus={order.status} />
             </div>
 
@@ -291,7 +319,7 @@ export default function TrackOrderPage() {
                     <img
                       src={getProductImage(item)}
                       alt={getProductTitle(item)}
-                      className="w-14 h-16 object-cover rounded-lg bg-gray-100 flex-shrink-0"
+                      className="w-14 h-16 object-cover rounded-lg bg-gray-100 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 line-clamp-1">{getProductTitle(item)}</p>

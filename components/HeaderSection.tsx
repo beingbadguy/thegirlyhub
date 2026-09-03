@@ -305,11 +305,7 @@ const HeaderSection = () => {
           <div
             className="cursor-pointer relative"
             onClick={() => {
-              if (user) {
-                router.push("/cart");
-              } else {
-                router.push("/login");
-              }
+              router.push("/cart");
             }}
           >
             <ShoppingBag />

@@ -9,9 +9,10 @@ import { useAuthStore } from "@/store/store";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { MdArrowRightAlt } from "react-icons/md";
+import SocialAuthButtons from "@/components/SocialAuthButtons";
 
 export default function LoginPage() {
-  const { setUser, fetchUserCart } = useAuthStore();
+  const { setUser, fetchUserCart, syncCartAfterAuth } = useAuthStore();
   const router = useRouter();
   useEffect(() => {
     document.title = "Login | GirlyHub";
@@ -34,9 +35,10 @@ export default function LoginPage() {
     try {
       const response = await axios.post("/api/login", data);
       // console.log(response.data);
-      setUser(response.data.data); // Update  user state with the returned user object
+      setUser(response.data.data);
+      await syncCartAfterAuth();
       fetchUserCart();
-      router.push("/"); // Redirect to home page after successful login
+      router.push("/");
       // if (await response.data.data.isVerified) {
       // } else {
       //   router.push("/verify"); // Redirect to home page after successful login
@@ -138,6 +140,7 @@ export default function LoginPage() {
           <Link href="/signup" className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors">
             Dont have an account? Signup
           </Link>
+          <SocialAuthButtons />
         </form>
       </div>
     </div>
