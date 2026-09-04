@@ -61,12 +61,6 @@ export async function middleware(request: NextRequest) {
     "/reset",
   ];
 
-  // Protected routes (only accessible if logged in)
-  const protectedRoutes = [
-    "/profile",
-    "/orders",
-    "/wishlist",
-  ];
   const onlyForAdmins = [
     "/dashboard",
     "/orders",
@@ -82,6 +76,7 @@ export async function middleware(request: NextRequest) {
     "/editcategory",
     "/others",
   ];
+  const protectedRoutes = ["/orders"];
   const isAdminRoute =
     path === "/admin" ||
     path.startsWith("/admin/") ||
@@ -91,7 +86,6 @@ export async function middleware(request: NextRequest) {
   const isAdminLogin = path === "/admin/admin";
 
   if (!token) {
-    // If no token, restrict access to protected routes
     if (protectedRoutes.includes(path) || (isAdminRoute && !isAdminLogin)) {
       return NextResponse.redirect(
         new URL(isAdminRoute ? "/admin/admin" : "/login", request.url),
@@ -110,8 +104,10 @@ export async function middleware(request: NextRequest) {
   const decoded = await verifyJWT(token);
 
   if (!decoded) {
-    // If JWT is invalid or expired, clear cookie and redirect to login
-    const response = NextResponse.redirect(new URL("/login", request.url));
+    // Let public user pages render their own unauthenticated state.
+    const response = isAdminRoute
+      ? NextResponse.redirect(new URL("/admin/admin", request.url))
+      : NextResponse.next();
     response.cookies.delete("basics");
     return response;
   }

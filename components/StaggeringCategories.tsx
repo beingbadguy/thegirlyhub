@@ -45,9 +45,7 @@ const itemVariants: Variants = {
   },
 };
 
-const StaggeringCategories = ({
-  limit = 6,
-}: ShopByCategoryProps) => {
+const StaggeringCategories = ({ limit = 6 }: ShopByCategoryProps) => {
   const [catLoading, setCatLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
@@ -114,7 +112,7 @@ const StaggeringCategories = ({
               <div className="absolute inset-0 bg-rose-900/0 transition-colors duration-300 group-hover:bg-rose-900/10" />
             </div>
 
-            <span className="mt-4 text-sm font-medium text-rose-950 transition-colors group-hover:text-rose-600">
+            <span className="mt-4 text-sm font-medium text-rose-950 transition-colors group-hover:text-rose-600 font-instrument">
               {category.name}
             </span>
           </motion.li>

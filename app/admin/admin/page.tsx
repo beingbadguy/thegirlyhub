@@ -48,7 +48,14 @@ export default function AdminLoginPage() {
       router.replace("/dashboard");
     } catch (requestError: unknown) {
       if (requestError instanceof AxiosError) {
-        setError(requestError.response?.data?.message || "Unable to sign in.");
+        const details = requestError.response?.data;
+        if (details?.needsVerification) {
+          router.push(
+            `/verify?email=${encodeURIComponent(details.email || credentials.email)}&next=/dashboard`,
+          );
+          return;
+        }
+        setError(details?.message || "Unable to sign in.");
       } else {
         setError("Unable to sign in. Please try again.");
       }

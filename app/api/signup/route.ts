@@ -2,10 +2,10 @@ import User from "@/models/user.model";
 import { databaseConnection } from "@/config/databseConnection";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { generateTokenAndSetCookie } from "@/lib/generateTokenAndSetCookie";
 import crypto from "crypto";
 import {
   newUserJoinedNotification,
+  sendEmailVerificationMail,
   welcomeUserMail,
 } from "@/services/sendMail";
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Missing required fields",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Invalid email address",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
     if (password.length < 6) {
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Password must be at least 6 characters long",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Email already exists",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -68,28 +68,26 @@ export async function POST(request: NextRequest) {
       isVerified: false,
     });
     await newUser.save();
+    const userData = newUser.toObject();
+    delete userData.password;
+    delete userData.pass;
+    delete userData.verificationToken;
+    delete userData.verificationTokenExpiry;
+
     const response = NextResponse.json(
       {
         success: true,
         message: "User registered successfully",
-        data: newUser,
+        data: userData,
       },
       {
         status: 200,
-      }
+      },
     );
-    generateTokenAndSetCookie(
-      newUser._id,
-      newUser.isVerified,
-      newUser.role,
-      response
-    );
-
+    await sendEmailVerificationMail(newUser.email, verificationToken);
     await welcomeUserMail(newUser.email, newUser.name);
     await newUserJoinedNotification(newUser.email, newUser.name);
 
-    newUser.password = undefined;
-    newUser.pass = undefined;
     return response;
   } catch (error) {
     console.log(error);
@@ -98,7 +96,7 @@ export async function POST(request: NextRequest) {
         success: false,
         message: "Failed to register user",
       },
-      { status: 401 }
+      { status: 401 },
     );
   }
 }

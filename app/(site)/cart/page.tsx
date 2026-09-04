@@ -9,21 +9,25 @@ import Image from "next/image";
 import axios, { AxiosError } from "axios";
 import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
+import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 
 const CartPage = () => {
-  const { user, fetchUserCart, userCart, updateCartQuantity, removeFromCart } =
-    useAuthStore();
+  const { user, userCart, updateCartQuantity, removeFromCart } = useAuthStore();
   const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     document.title = "Shopping Bag | GirlyHub";
-    fetchUserCart();
-  }, [user]);
+    useAuthStore
+      .getState()
+      .fetchUser()
+      .finally(() => setAuthChecked(true));
+  }, []);
   // console.log(user?.firstPurchase);
 
   const handleChangeCartQuantity = async (
     productId: string,
-    quantity: number
+    quantity: number,
   ) => {
     // console.log("Increase/decrease quantity for:", productId);
 
@@ -53,7 +57,9 @@ const CartPage = () => {
   };
 
   const cartItems = userCart?.products ?? [];
-  const validCartItems = cartItems.filter((item) => item.productId !== null && item.productId !== undefined);
+  const validCartItems = cartItems.filter(
+    (item) => item.productId !== null && item.productId !== undefined,
+  );
   const availableItems = validCartItems.filter((item) =>
     isProductInStock(item.productId),
   );
@@ -78,6 +84,19 @@ const CartPage = () => {
     : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
   const totalAfterDiscount = subtotal + shippingCharge - firstTimeDiscount;
 
+  if (!authChecked) {
+    return <div className="min-h-[72vh] bg-[#fffafc]" />;
+  }
+
+  if (!user) {
+    return (
+      <GuestAuthPrompt
+        title="Your bag is ready"
+        description="Please log in to view your saved items, manage your bag, and continue to checkout."
+      />
+    );
+  }
+
   // State for Toast Notification
   const [showToast, setShowToast] = useState(false);
   const prevSubtotalRef = useRef(subtotal);
@@ -94,8 +113,8 @@ const CartPage = () => {
   return (
     <div className="p-4 min-h-[90vh]">
       <div className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome />{" "}
-        / <span className="cursor-pointer text-black">Cart</span>{" "}
+        <BreadcrumbHome /> /{" "}
+        <span className="cursor-pointer text-black">Cart</span>{" "}
       </div>
 
       <h1 className="py-2 font-bold text-pink-700 text-3xl">Your Cart</h1>
@@ -151,7 +170,7 @@ const CartPage = () => {
                           if (item.quantity > 1) {
                             handleChangeCartQuantity(
                               item.productId._id,
-                              item.quantity - 1
+                              item.quantity - 1,
                             );
                           } else {
                             console.log("Quantity cannot be less than 1");
@@ -246,14 +265,28 @@ const CartPage = () => {
             {/* Free Shipping Progress Indicator */}
             <div className="space-y-2 p-3 bg-pink-50/55 rounded-xl border border-pink-100/50">
               <div className="flex justify-between text-xs font-semibold">
-                <span className={isFreeShipping ? "text-green-600 flex items-center gap-1" : "text-gray-600"}>
+                <span
+                  className={
+                    isFreeShipping
+                      ? "text-green-600 flex items-center gap-1"
+                      : "text-gray-600"
+                  }
+                >
                   {isFreeShipping ? (
                     <>🚀 Free shipping unlocked!</>
                   ) : (
-                    <>Add <span className="font-bold text-pink-600">₹{remainingForFreeShipping}</span> more to get FREE shipping 🚚</>
+                    <>
+                      Add{" "}
+                      <span className="font-bold text-pink-600">
+                        ₹{remainingForFreeShipping}
+                      </span>{" "}
+                      more to get FREE shipping 🚚
+                    </>
                   )}
                 </span>
-                <span className="text-gray-500 font-bold">₹{subtotal} / ₹499</span>
+                <span className="text-gray-500 font-bold">
+                  ₹{subtotal} / ₹499
+                </span>
               </div>
               <div className="w-full bg-gray-200/80 rounded-full h-2 overflow-hidden">
                 <div
@@ -263,7 +296,8 @@ const CartPage = () => {
               </div>
               {isFreeShipping && (
                 <div className="text-[11px] text-green-700 font-medium flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-green-600 animate-pulse" /> You saved ₹49 on shipping 🎉
+                  <Sparkles className="w-3 h-3 text-green-600 animate-pulse" />{" "}
+                  You saved ₹49 on shipping 🎉
                 </div>
               )}
             </div>
@@ -272,21 +306,30 @@ const CartPage = () => {
             <hr className="w-full border-gray-100" />
             <div className="flex justify-between text-gray-600">
               <p>Total products</p>
-              <p className="font-semibold text-gray-800">{availableItems.length} Products</p>
+              <p className="font-semibold text-gray-800">
+                {availableItems.length} Products
+              </p>
             </div>
             <div className="flex justify-between text-gray-600">
               <p>Subtotal</p>
-              <p className="font-semibold text-gray-800">₹{subtotal.toFixed(2)}</p>
+              <p className="font-semibold text-gray-800">
+                ₹{subtotal.toFixed(2)}
+              </p>
             </div>
 
             <div className="flex justify-between text-gray-600">
               <p>Delivery charge</p>
               {isFreeShipping ? (
                 <p className="text-green-600 font-bold flex items-center gap-1">
-                  <span className="line-through text-xs text-gray-400 font-normal">₹49.00</span> FREE
+                  <span className="line-through text-xs text-gray-400 font-normal">
+                    ₹49.00
+                  </span>{" "}
+                  FREE
                 </p>
               ) : (
-                <p className="font-semibold text-gray-800">₹{shippingCharge.toFixed(2)}</p>
+                <p className="font-semibold text-gray-800">
+                  ₹{shippingCharge.toFixed(2)}
+                </p>
               )}
             </div>
             {!user?.firstPurchase && (
@@ -298,7 +341,9 @@ const CartPage = () => {
 
             <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-3 text-gray-950">
               <p>Total payment</p>
-              <p className="text-pink-600 text-lg">₹{totalAfterDiscount.toFixed(2)}</p>
+              <p className="text-pink-600 text-lg">
+                ₹{totalAfterDiscount.toFixed(2)}
+              </p>
             </div>
 
             <button
@@ -308,7 +353,9 @@ const CartPage = () => {
                 router.push("/checkout");
               }}
             >
-              {availableItems.length === 0 ? "NO ITEMS TO CHECKOUT" : "CHECKOUT"}
+              {availableItems.length === 0
+                ? "NO ITEMS TO CHECKOUT"
+                : "CHECKOUT"}
             </button>
             <p className="text-xs text-gray-500">
               By selecting a payment method, you agree to our Terms of Use,
@@ -326,7 +373,9 @@ const CartPage = () => {
       {showToast && (
         <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-green-500 animate-bounce transition-all duration-300">
           <Sparkles className="w-5 h-5 text-white" />
-          <span className="font-bold text-sm">Congrats! You unlocked FREE shipping 🚀</span>
+          <span className="font-bold text-sm">
+            Congrats! You unlocked FREE shipping 🚀
+          </span>
         </div>
       )}
     </div>

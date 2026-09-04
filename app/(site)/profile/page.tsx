@@ -21,6 +21,7 @@ import {
   ShoppingBag,
   User,
 } from "lucide-react";
+import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 
 type Order = {
   _id: string;
@@ -93,6 +94,7 @@ export default function ProfilePage() {
   const [orderPage, setOrderPage] = useState(1);
   const [cartPage, setCartPage] = useState(1);
   const [wishlistPage, setWishlistPage] = useState(1);
+  const [authChecked, setAuthChecked] = useState(false);
   const itemsPerPage = 12;
 
   const [address, setAddress] = useState("");
@@ -115,15 +117,15 @@ export default function ProfilePage() {
 
   useEffect(() => {
     document.title = "My Profile | GirlyHub";
-    fetchUser();
-    fetchUserOrders();
-    fetchUserCart();
-    fetchUserWishlist();
+    fetchUser().finally(() => setAuthChecked(true));
   }, []);
 
   useEffect(() => {
-    if (user === null) router.push("/login");
-  }, [user, router]);
+    if (!user) return;
+    fetchUserOrders();
+    fetchUserCart();
+    fetchUserWishlist();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -251,11 +253,20 @@ export default function ProfilePage() {
     { label: "Wishlist", key: "wishlist", icon: <Heart className="size-4" /> },
   ];
 
-  if (!user) {
+  if (!authChecked) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
         <AiOutlineLoading3Quarters className="animate-spin text-2xl text-rose-600" />
       </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <GuestAuthPrompt
+        title="Your profile is private"
+        description="Please log in to manage your account, track orders, and keep your GirlyHub details up to date."
+      />
     );
   }
 
@@ -279,7 +290,9 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="min-w-0">
-              <p className="truncate font-semibold text-rose-950">{user.name}</p>
+              <p className="truncate font-semibold text-rose-950">
+                {user.name}
+              </p>
               <p className="truncate text-xs text-rose-900/55">{user.email}</p>
             </div>
           </div>
@@ -319,7 +332,9 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="min-w-0">
-              <p className="truncate font-semibold text-rose-950">{user.name}</p>
+              <p className="truncate font-semibold text-rose-950">
+                {user.name}
+              </p>
               <p className="truncate text-xs text-rose-900/55">{user.email}</p>
             </div>
           </div>
@@ -563,183 +578,193 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {menu === "orders" && (() => {
-            const orderTotalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
-            const paginatedOrders = filteredOrders.slice(
-              (orderPage - 1) * itemsPerPage,
-              orderPage * itemsPerPage,
-            );
+          {menu === "orders" &&
+            (() => {
+              const orderTotalPages =
+                Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+              const paginatedOrders = filteredOrders.slice(
+                (orderPage - 1) * itemsPerPage,
+                orderPage * itemsPerPage,
+              );
 
-            return (
-              <div className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm sm:p-5">
-                <h1 className="mb-4 font-serif text-2xl text-rose-950">
-                  Orders ({orders.length})
-                </h1>
-                <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-                  {ORDER_FILTERS.map((filter) => {
-                    const count =
-                      filter.key === "all"
-                        ? orders.length
-                        : orderCounts[filter.key] || 0;
-                    return (
-                      <button
-                        key={filter.key}
-                        type="button"
-                        onClick={() => {
-                          setOrderFilter(filter.key);
-                          setOrderPage(1);
-                        }}
-                        className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition sm:text-sm ${
-                          orderFilter === filter.key
-                            ? "bg-rose-700 text-white"
-                            : "bg-rose-50 text-rose-800 hover:bg-rose-100"
-                        }`}
-                      >
-                        {filter.label} ({count})
-                      </button>
-                    );
-                  })}
-                </div>
-                {orders.length === 0 ? (
-                  <p className="text-sm text-rose-900/60">
-                    You have not placed any orders yet.
-                  </p>
-                ) : filteredOrders.length === 0 ? (
-                  <p className="text-sm text-rose-900/60">
-                    No {orderFilter} orders.
-                  </p>
-                ) : (
-                  <div>
-                    {paginatedOrders.map((order) => (
-                      <OrderDetailsCard
-                        order={order as never}
-                        key={order._id}
-                        fetchUserOrders={fetchUserOrders}
+              return (
+                <div className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm sm:p-5">
+                  <h1 className="mb-4 font-serif text-2xl text-rose-950">
+                    Orders ({orders.length})
+                  </h1>
+                  <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+                    {ORDER_FILTERS.map((filter) => {
+                      const count =
+                        filter.key === "all"
+                          ? orders.length
+                          : orderCounts[filter.key] || 0;
+                      return (
+                        <button
+                          key={filter.key}
+                          type="button"
+                          onClick={() => {
+                            setOrderFilter(filter.key);
+                            setOrderPage(1);
+                          }}
+                          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition sm:text-sm ${
+                            orderFilter === filter.key
+                              ? "bg-rose-700 text-white"
+                              : "bg-rose-50 text-rose-800 hover:bg-rose-100"
+                          }`}
+                        >
+                          {filter.label} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {orders.length === 0 ? (
+                    <p className="text-sm text-rose-900/60">
+                      You have not placed any orders yet.
+                    </p>
+                  ) : filteredOrders.length === 0 ? (
+                    <p className="text-sm text-rose-900/60">
+                      No {orderFilter} orders.
+                    </p>
+                  ) : (
+                    <div>
+                      {paginatedOrders.map((order) => (
+                        <OrderDetailsCard
+                          order={order as never}
+                          key={order._id}
+                          fetchUserOrders={fetchUserOrders}
+                        />
+                      ))}
+                      <PaginationControls
+                        page={orderPage}
+                        totalPages={orderTotalPages}
+                        onPageChange={setOrderPage}
                       />
-                    ))}
-                    <PaginationControls
-                      page={orderPage}
-                      totalPages={orderTotalPages}
-                      onPageChange={setOrderPage}
-                    />
-                    {filteredOrders.length > itemsPerPage && (
-                      <p className="mt-3 text-center text-xs text-rose-900/50">
-                        Showing page {orderPage} of {orderTotalPages} ({filteredOrders.length} orders)
-                      </p>
+                      {filteredOrders.length > itemsPerPage && (
+                        <p className="mt-3 text-center text-xs text-rose-900/50">
+                          Showing page {orderPage} of {orderTotalPages} (
+                          {filteredOrders.length} orders)
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+          {menu === "cart" &&
+            (() => {
+              const cartTotalPages = Math.ceil(cartCount / itemsPerPage) || 1;
+              const paginatedCart = (userCart?.products || []).slice(
+                (cartPage - 1) * itemsPerPage,
+                cartPage * itemsPerPage,
+              );
+
+              return (
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h1 className="font-serif text-2xl text-rose-950">
+                      Cart ({cartCount})
+                    </h1>
+                    {cartCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => router.push("/cart")}
+                        className="text-sm font-medium text-rose-700 hover:underline"
+                      >
+                        Go to cart
+                      </button>
                     )}
                   </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {menu === "cart" && (() => {
-            const cartTotalPages = Math.ceil(cartCount / itemsPerPage) || 1;
-            const paginatedCart = (userCart?.products || []).slice(
-              (cartPage - 1) * itemsPerPage,
-              cartPage * itemsPerPage,
-            );
-
-            return (
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <h1 className="font-serif text-2xl text-rose-950">
-                    Cart ({cartCount})
-                  </h1>
-                  {cartCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => router.push("/cart")}
-                      className="text-sm font-medium text-rose-700 hover:underline"
-                    >
-                      Go to cart
-                    </button>
+                  {cartCount === 0 ? (
+                    <p className="rounded-2xl border border-rose-100 bg-white p-8 text-sm text-rose-900/60">
+                      Your cart is empty.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {paginatedCart.map((item) => (
+                          <ProductCard
+                            key={item.productId._id}
+                            product={item.productId}
+                            onRemove={() => removeFromCart(item.productId._id)}
+                          />
+                        ))}
+                      </div>
+                      <PaginationControls
+                        page={cartPage}
+                        totalPages={cartTotalPages}
+                        onPageChange={setCartPage}
+                      />
+                      {cartCount > itemsPerPage && (
+                        <p className="mt-3 text-center text-xs text-rose-900/50">
+                          Showing page {cartPage} of {cartTotalPages} (
+                          {cartCount} items)
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
-                {cartCount === 0 ? (
-                  <p className="rounded-2xl border border-rose-100 bg-white p-8 text-sm text-rose-900/60">
-                    Your cart is empty.
-                  </p>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {paginatedCart.map((item) => (
-                        <ProductCard
-                          key={item.productId._id}
-                          product={item.productId}
-                          onRemove={() => removeFromCart(item.productId._id)}
-                        />
-                      ))}
-                    </div>
-                    <PaginationControls
-                      page={cartPage}
-                      totalPages={cartTotalPages}
-                      onPageChange={setCartPage}
-                    />
-                    {cartCount > itemsPerPage && (
-                      <p className="mt-3 text-center text-xs text-rose-900/50">
-                        Showing page {cartPage} of {cartTotalPages} ({cartCount} items)
-                      </p>
+              );
+            })()}
+
+          {menu === "wishlist" &&
+            (() => {
+              const wishlistTotalPages =
+                Math.ceil(wishlistCount / itemsPerPage) || 1;
+              const paginatedWishlist = (userWishlist?.products || []).slice(
+                (wishlistPage - 1) * itemsPerPage,
+                wishlistPage * itemsPerPage,
+              );
+
+              return (
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h1 className="font-serif text-2xl text-rose-950">
+                      Wishlist ({wishlistCount})
+                    </h1>
+                    {wishlistCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => router.push("/wishlist")}
+                        className="text-sm font-medium text-rose-700 hover:underline"
+                      >
+                        Open wishlist
+                      </button>
                     )}
-                  </>
-                )}
-              </div>
-            );
-          })()}
-
-          {menu === "wishlist" && (() => {
-            const wishlistTotalPages = Math.ceil(wishlistCount / itemsPerPage) || 1;
-            const paginatedWishlist = (userWishlist?.products || []).slice(
-              (wishlistPage - 1) * itemsPerPage,
-              wishlistPage * itemsPerPage,
-            );
-
-            return (
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <h1 className="font-serif text-2xl text-rose-950">
-                    Wishlist ({wishlistCount})
-                  </h1>
-                  {wishlistCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => router.push("/wishlist")}
-                      className="text-sm font-medium text-rose-700 hover:underline"
-                    >
-                      Open wishlist
-                    </button>
+                  </div>
+                  {wishlistCount === 0 ? (
+                    <p className="rounded-2xl border border-rose-100 bg-white p-8 text-sm text-rose-900/60">
+                      Your wishlist is empty.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {paginatedWishlist.map((item) => (
+                          <ProductCard
+                            key={item.productId._id}
+                            product={item.productId}
+                            onRemove={() =>
+                              removeFromWishlist(item.productId._id)
+                            }
+                          />
+                        ))}
+                      </div>
+                      <PaginationControls
+                        page={wishlistPage}
+                        totalPages={wishlistTotalPages}
+                        onPageChange={setWishlistPage}
+                      />
+                      {wishlistCount > itemsPerPage && (
+                        <p className="mt-3 text-center text-xs text-rose-900/50">
+                          Showing page {wishlistPage} of {wishlistTotalPages} (
+                          {wishlistCount} items)
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
-                {wishlistCount === 0 ? (
-                  <p className="rounded-2xl border border-rose-100 bg-white p-8 text-sm text-rose-900/60">
-                    Your wishlist is empty.
-                  </p>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {paginatedWishlist.map((item) => (
-                        <ProductCard
-                          key={item.productId._id}
-                          product={item.productId}
-                          onRemove={() => removeFromWishlist(item.productId._id)}
-                        />
-                      ))}
-                    </div>
-                    <PaginationControls
-                      page={wishlistPage}
-                      totalPages={wishlistTotalPages}
-                      onPageChange={setWishlistPage}
-                    />
-                    {wishlistCount > itemsPerPage && (
-                      <p className="mt-3 text-center text-xs text-rose-900/50">
-                        Showing page {wishlistPage} of {wishlistTotalPages} ({wishlistCount} items)
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })()}
+              );
+            })()}
         </section>
       </div>
 

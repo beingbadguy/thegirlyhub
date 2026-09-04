@@ -120,7 +120,7 @@ const ShopByCategory = ({
               </div>
 
               {/* TITLE */}
-              <h3 className="text-sm font-semibold text-gray-800 transition-colors duration-300 group-hover:text-rose-600">
+              <h3 className="text-sm font-semibold text-gray-800 transition-colors duration-300 group-hover:text-rose-600 font-instrument">
                 {category.name}
               </h3>
             </div>

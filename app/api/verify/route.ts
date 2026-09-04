@@ -16,17 +16,20 @@ export async function POST(request: NextRequest) {
           message: "Please Provide a valid token",
           success: false,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    const user = await User.findOne({ verificationToken: token });
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpiry: { $gt: new Date() },
+    });
     if (!user) {
       return NextResponse.json(
         {
           message: "Invalid Code",
           success: false,
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
     user.isVerified = true;
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
         message: "User verified successfully",
         success: true,
       },
-      { status: 200 }
+      { status: 200 },
     );
 
     generateTokenAndSetCookie(user._id, user.isVerified, user.role, response);
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
         message: "An error occurred while  verifiying",
         success: false,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

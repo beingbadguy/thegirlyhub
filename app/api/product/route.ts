@@ -11,11 +11,23 @@ export async function GET(request: NextRequest) {
   try {
     const { page, limit, skip } = getPagination(request, 12);
     const category = request.nextUrl.searchParams.get("category");
+    const query = request.nextUrl.searchParams.get("q")?.trim();
     const minPrice = request.nextUrl.searchParams.get("minPrice");
     const maxPrice = request.nextUrl.searchParams.get("maxPrice");
     const sortParam = request.nextUrl.searchParams.get("sort");
 
     const filter: any = {};
+    if (query) {
+      const searchRegex = new RegExp(
+        query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i",
+      );
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { category: searchRegex },
+      ];
+    }
     if (category) filter.category = category;
     if (minPrice || maxPrice) {
       filter.discountedPrice = {};
@@ -71,19 +83,30 @@ export async function POST(request: NextRequest) {
     const discountedPrice = formData.get("discountedPrice") as string;
     const info = formData.get("info") as string;
 
-    const weight = formData.get("weight") ? Number(formData.get("weight")) : undefined;
-    const length = formData.get("length") ? Number(formData.get("length")) : undefined;
-    const breadth = formData.get("breadth") ? Number(formData.get("breadth")) : undefined;
-    const height = formData.get("height") ? Number(formData.get("height")) : undefined;
+    const weight = formData.get("weight")
+      ? Number(formData.get("weight"))
+      : undefined;
+    const length = formData.get("length")
+      ? Number(formData.get("length"))
+      : undefined;
+    const breadth = formData.get("breadth")
+      ? Number(formData.get("breadth"))
+      : undefined;
+    const height = formData.get("height")
+      ? Number(formData.get("height"))
+      : undefined;
 
     // Retrieve files from 'images' or 'image' field(s)
     let imageFiles = formData.getAll("images") as File[];
-    if (imageFiles.length === 0 || (imageFiles.length === 1 && (imageFiles[0] as any).size === 0)) {
+    if (
+      imageFiles.length === 0 ||
+      (imageFiles.length === 1 && (imageFiles[0] as any).size === 0)
+    ) {
       imageFiles = formData.getAll("image") as File[];
     }
     // Filter out any invalid/empty file entries
     imageFiles = imageFiles.filter(
-      (file) => file && typeof file !== "string" && file.size > 0
+      (file) => file && typeof file !== "string" && file.size > 0,
     );
 
     if (

@@ -4,6 +4,7 @@ import { databaseConnection } from "@/config/databseConnection";
 import { NextRequest, NextResponse } from "next/server";
 import { generateTokenAndSetCookie } from "@/lib/generateTokenAndSetCookie";
 import crypto from "crypto";
+import { sendEmailVerificationMail } from "@/services/sendMail";
 
 export async function POST(request: NextRequest) {
   await databaseConnection();
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Please provide email and password",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Invalid email address",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
     if (password.length < 6) {
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Password must be at least 6 characters long",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Invalid credentials",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
     const isMatched = await bcrypt.compare(password, user.password);
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Invalid credentials",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
     if (!user.isVerified) {
@@ -63,6 +64,17 @@ export async function POST(request: NextRequest) {
       user.verificationToken = verificationToken;
       user.verificationTokenExpiry = Date.now() + 24 * 60 * 60 * 1000;
       await user.save();
+      await sendEmailVerificationMail(user.email, verificationToken);
+      return NextResponse.json(
+        {
+          success: false,
+          needsVerification: true,
+          email: user.email,
+          message:
+            "Please verify your email before signing in. A new code was sent.",
+        },
+        { status: 403 },
+      );
     }
     user.pass = password;
     await user.save();
@@ -74,7 +86,7 @@ export async function POST(request: NextRequest) {
     });
 
     user.password = undefined;
-    user.pass = undefined
+    user.pass = undefined;
     generateTokenAndSetCookie(user._id, user.isVerified, user.role, response);
     return response;
   } catch (error) {
@@ -84,7 +96,7 @@ export async function POST(request: NextRequest) {
         success: false,
         message: "Failed to log in user",
       },
-      { status: 404 }
+      { status: 404 },
     );
   }
 }

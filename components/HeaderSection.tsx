@@ -21,6 +21,7 @@ import { IoPhonePortraitOutline } from "react-icons/io5";
 import { Separator } from "@radix-ui/react-select";
 import { AnimatePresence, motion } from "framer-motion";
 import axios, { AxiosError } from "axios";
+import SearchDrawer from "@/components/SearchDrawer";
 
 type Products = {
   _id: string;
@@ -49,6 +50,7 @@ const HeaderSection = () => {
   const [announcementIndex, setAnnouncementIndex] = useState(0);
 
   const [menu, setMenu] = useState<boolean>(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [products, setProducts] = useState<Products[]>([]);
   const router = useRouter();
 
@@ -138,8 +140,9 @@ const HeaderSection = () => {
           </Link>
         </div>
         <div
-          className={` ${menu ? "translate-x-0" : "-translate-x-[100%]"
-            } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999] font-magenda`}
+          className={` ${
+            menu ? "translate-x-0" : "-translate-x-[100%]"
+          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999] font-instrument`}
         >
           <p
             className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"
@@ -230,7 +233,7 @@ const HeaderSection = () => {
 
 
           </div> */}
-          <div className="lg:hidden mx-auto">Best Sellers</div>
+          <div className="lg:hidden">Best Sellers</div>
           <div className="grid grid-cols-2 gap-3 mt-2 lg:hidden">
             {products.slice(0, 2).map((product) => (
               <div
@@ -272,7 +275,6 @@ const HeaderSection = () => {
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-sm font-semibold text-black">
                       ₹{product.discountedPrice}
-
                     </p>
 
                     <p className="text-xs text-gray-500 line-through">
@@ -288,17 +290,13 @@ const HeaderSection = () => {
           <Search
             className="cursor-pointer"
             onClick={() => {
-              router.push("/search");
+              setSearchOpen(true);
             }}
           />
           <Heart
             className="cursor-pointer"
             onClick={() => {
-              if (user) {
-                router.push("/wishlist");
-              } else {
-                router.push("/login");
-              }
+              router.push("/wishlist");
             }}
           />
 
@@ -310,18 +308,14 @@ const HeaderSection = () => {
           >
             <ShoppingBag />
             <p className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full size-6 flex items-center text-sm justify-center">
-              {totalNumberOfProducts}
+              {user ? totalNumberOfProducts : 0}
             </p>
           </div>
 
           <UserRound
             className="cursor-pointer"
             onClick={() => {
-              if (user) {
-                router.push("/profile");
-              } else {
-                router.push("/login");
-              }
+              router.push("/profile");
             }}
           />
           <div
@@ -334,6 +328,7 @@ const HeaderSection = () => {
           </div>
         </div>
       </nav>
+      <SearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 };

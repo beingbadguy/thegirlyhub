@@ -95,7 +95,10 @@ export default function SocialAuthButtons({
     setLoading("facebook");
     setError("");
     try {
-      await loadScript("https://connect.facebook.net/en_US/sdk.js", "facebook-jssdk");
+      await loadScript(
+        "https://connect.facebook.net/en_US/sdk.js",
+        "facebook-jssdk",
+      );
       await new Promise<void>((resolve) => {
         if (window.FB) {
           resolve();
@@ -201,7 +204,10 @@ export default function SocialAuthButtons({
 
       {googleClientId && (
         <div className="flex justify-center">
-          <div ref={googleBtnRef} className="min-h-[40px] w-full max-w-[360px]" />
+          <div
+            ref={googleBtnRef}
+            className="min-h-[40px] w-full max-w-[360px]"
+          />
         </div>
       )}
 

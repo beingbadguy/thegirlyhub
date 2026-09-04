@@ -71,13 +71,20 @@ export default function ResetPage({ token }: { token: string }) {
 
       {/* Main content centered */}
       <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md bg-white border border-neutral-100 p-8">
-          <h2 className="text-xl font-bold text-center text-neutral-900 mb-6 tracking-tight uppercase">Change Password</h2>
+        <div className="w-full max-w-md p-0 md:p-2">
+          <h2 className="text-xl font-bold text-center text-neutral-900 mb-6 tracking-tight uppercase">
+            Change Password
+          </h2>
 
-          <form onSubmit={changePassword} className="flex flex-col gap-5 w-full">
+          <form
+            onSubmit={changePassword}
+            className="flex flex-col gap-5 w-full"
+          >
             {/* New Password input */}
             <div className="w-full space-y-1.5 text-left">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">New Password</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                New Password
+              </label>
               <div className="relative flex items-center border border-neutral-200 rounded-xl focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-100 transition-all bg-white w-full px-4 h-12">
                 <Lock className="w-4 h-4 text-neutral-400 shrink-0 mr-3" />
                 <input
@@ -92,7 +99,11 @@ export default function ResetPage({ token }: { token: string }) {
                   onClick={() => setShowPassword(!showPassword)}
                   className="text-neutral-400 hover:text-neutral-600 transition-colors shrink-0 ml-2 cursor-pointer"
                 >
-                  {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <FiEyeOff className="w-4 h-4" />
+                  ) : (
+                    <FiEye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -100,7 +111,9 @@ export default function ResetPage({ token }: { token: string }) {
             {/* Dynamic Validation Checks */}
             <div className="w-full space-y-2 py-1.5 text-left">
               {/* Lowercase check */}
-              <div className={`flex items-center gap-2 text-xs transition-colors duration-200 ${hasLowercase ? "text-rose-600 font-semibold" : "text-neutral-400"}`}>
+              <div
+                className={`flex items-center gap-2 text-xs transition-colors duration-200 ${hasLowercase ? "text-rose-600 font-semibold" : "text-neutral-400"}`}
+              >
                 {hasLowercase ? (
                   <Check className="w-4 h-4 text-rose-500 shrink-0" />
                 ) : (
@@ -110,7 +123,9 @@ export default function ResetPage({ token }: { token: string }) {
               </div>
 
               {/* Length check */}
-              <div className={`flex items-center gap-2 text-xs transition-colors duration-200 ${isMinLength ? "text-rose-600 font-semibold" : "text-neutral-400"}`}>
+              <div
+                className={`flex items-center gap-2 text-xs transition-colors duration-200 ${isMinLength ? "text-rose-600 font-semibold" : "text-neutral-400"}`}
+              >
                 {isMinLength ? (
                   <Check className="w-4 h-4 text-rose-500 shrink-0" />
                 ) : (
@@ -120,7 +135,9 @@ export default function ResetPage({ token }: { token: string }) {
               </div>
 
               {/* Uppercase check */}
-              <div className={`flex items-center gap-2 text-xs transition-colors duration-200 ${hasUppercase ? "text-rose-600 font-semibold" : "text-neutral-400"}`}>
+              <div
+                className={`flex items-center gap-2 text-xs transition-colors duration-200 ${hasUppercase ? "text-rose-600 font-semibold" : "text-neutral-400"}`}
+              >
                 {hasUppercase ? (
                   <Check className="w-4 h-4 text-rose-500 shrink-0" />
                 ) : (
@@ -130,7 +147,9 @@ export default function ResetPage({ token }: { token: string }) {
               </div>
 
               {/* Number check */}
-              <div className={`flex items-center gap-2 text-xs transition-colors duration-200 ${hasNumber ? "text-rose-600 font-semibold" : "text-neutral-400"}`}>
+              <div
+                className={`flex items-center gap-2 text-xs transition-colors duration-200 ${hasNumber ? "text-rose-600 font-semibold" : "text-neutral-400"}`}
+              >
                 {hasNumber ? (
                   <Check className="w-4 h-4 text-rose-500 shrink-0" />
                 ) : (
@@ -142,7 +161,9 @@ export default function ResetPage({ token }: { token: string }) {
 
             {/* New Confirm Password input */}
             <div className="w-full space-y-1.5 text-left pb-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">New Confirm Password</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                New Confirm Password
+              </label>
               <div className="relative flex items-center border border-neutral-200 rounded-xl focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-100 transition-all bg-white w-full px-4 h-12">
                 <Lock className="w-4 h-4 text-neutral-400 shrink-0 mr-3" />
                 <input
@@ -157,17 +178,25 @@ export default function ResetPage({ token }: { token: string }) {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="text-neutral-400 hover:text-neutral-600 transition-colors shrink-0 ml-2 cursor-pointer"
                 >
-                  {showConfirmPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                  {showConfirmPassword ? (
+                    <FiEyeOff className="w-4 h-4" />
+                  ) : (
+                    <FiEye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {password && confirmPassword && password !== confirmPassword && (
-                <p className="text-rose-600 text-xs mt-1 font-semibold">Passwords do not match</p>
+                <p className="text-rose-600 text-xs mt-1 font-semibold">
+                  Passwords do not match
+                </p>
               )}
             </div>
 
             {/* Error notifications */}
             {error && (
-              <div className={`text-xs text-center font-semibold p-2.5 border ${error.includes("successful") ? "text-emerald-700 bg-emerald-50 border-emerald-100" : "text-rose-600 bg-rose-50 border-rose-100"}`}>
+              <div
+                className={`text-xs text-center font-semibold p-2.5 border ${error.includes("successful") ? "text-emerald-700 bg-emerald-50 border-emerald-100" : "text-rose-600 bg-rose-50 border-rose-100"}`}
+              >
                 {error}
               </div>
             )}
@@ -182,7 +211,14 @@ export default function ResetPage({ token }: { token: string }) {
                 Cancel
               </button>
               <button
-                disabled={loading || !hasLowercase || !hasUppercase || !hasNumber || !isMinLength || password !== confirmPassword}
+                disabled={
+                  loading ||
+                  !hasLowercase ||
+                  !hasUppercase ||
+                  !hasNumber ||
+                  !isMinLength ||
+                  password !== confirmPassword
+                }
                 type="submit"
                 className="flex-1 h-11 flex items-center justify-center rounded-full bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs tracking-wider uppercase disabled:opacity-50 disabled:bg-neutral-200 disabled:text-neutral-400 transition-colors cursor-pointer"
               >

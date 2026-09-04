@@ -7,11 +7,13 @@ import BreadcrumbHome from "@/components/BreadcrumbHome";
 import axios, { AxiosError } from "axios";
 import { VscCoffee } from "react-icons/vsc";
 import { useEffect, useState } from "react";
+import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 
 const WishlistPage = () => {
   const router = useRouter();
-  const { fetchUser, fetchUserWishlist, userWishlist } = useAuthStore();
+  const { user, fetchUser, fetchUserWishlist, userWishlist } = useAuthStore();
   const [page, setPage] = useState(1);
+  const [authChecked, setAuthChecked] = useState(false);
   const itemsPerPage = 12;
 
   const handleRemoveFromWishlist = async (productId: string) => {
@@ -33,7 +35,7 @@ const WishlistPage = () => {
 
   useEffect(() => {
     document.title = "My Wishlist | GirlyHub";
-    fetchUserWishlist();
+    fetchUser().finally(() => setAuthChecked(true));
   }, []);
 
   useEffect(() => {
@@ -47,11 +49,23 @@ const WishlistPage = () => {
     page * itemsPerPage,
   );
 
+  if (!authChecked) {
+    return <div className="min-h-[72vh] bg-[#fffafc]" />;
+  }
+
+  if (!user) {
+    return (
+      <GuestAuthPrompt
+        title="Your wishlist is waiting"
+        description="Please log in to save your favorite pieces and find them here whenever inspiration strikes."
+      />
+    );
+  }
+
   return (
     <div className="min-h-[70vh] p-4">
       <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome />{" "}
-        /{" "}
+        <BreadcrumbHome /> /{" "}
         <span
           className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/product")}
@@ -108,7 +122,8 @@ const WishlistPage = () => {
 
       {totalItems > 0 && (
         <p className="mt-4 text-center text-sm text-rose-900/50">
-          Showing page {page} of {totalPages} ({totalItems} item{totalItems !== 1 ? "s" : ""} in wishlist)
+          Showing page {page} of {totalPages} ({totalItems} item
+          {totalItems !== 1 ? "s" : ""} in wishlist)
         </p>
       )}
     </div>

@@ -46,7 +46,14 @@ export default function LoginPage() {
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.log(error.response?.data);
-        setLoginError(error.response?.data.message);
+        const details = error.response?.data;
+        if (details?.needsVerification) {
+          router.push(
+            `/verify?email=${encodeURIComponent(details.email || data.email)}&next=/`,
+          );
+          return;
+        }
+        setLoginError(details?.message || "Unable to sign in.");
       } else {
         console.error("An unknown error occurred:", error);
         setLoginError("An unknown error occured, try again later.");
@@ -56,7 +63,7 @@ export default function LoginPage() {
     }
   };
   return (
-    <div className="min-h-[70vh] bg-white text-black w-full flex flex-col py-6">
+    <div className="min-h-[78vh] bg-[#fcfcfb] text-black w-full flex flex-col px-4 py-10">
       {/* Breadcrumbs */}
       <div className="w-full  mx-auto px-4 md:px-8 pb-2 text-left">
         <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
@@ -73,75 +80,87 @@ export default function LoginPage() {
 
       {/* Main content centered */}
       <div className="flex-1 flex items-center justify-center gap-4 flex-col px-4">
-        <h1 className="text-3xl font-bold">Log In</h1>
-        <p className="text-center w-full text-sm md:text-md text-neutral-500">
-          Welcome back, Log In to start shopping.
-        </p>
+        <div className="w-full max-w-[430px] px-0 py-6">
+          <h1 className="text-center text-[27px] font-semibold tracking-[-0.03em]">
+            Welcome back
+          </h1>
+          <p className="mt-2 text-center text-sm text-neutral-500">
+            Sign in to continue to GirlyHub.
+          </p>
 
-        <form
-          className="flex items-center justify-center gap-2 flex-col w-full max-w-md mt-4"
-          onSubmit={loginHandler}
-        >
-          <Input
-            type="email"
-            placeholder="Email"
-            name="email"
-            value={data.email}
-            onChange={changeHandler}
-            className="w-full"
-          />
-
-          <div className="relative w-full">
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              name="password"
-              className="w-full"
-              value={data.password}
-              onChange={changeHandler}
-            />
-            {showPassword ? (
-              <FiEye
-                className="absolute top-[10px] right-4 cursor-pointer"
-                onClick={() => {
-                  setShowPassword(!showPassword);
-                }}
-              />
-            ) : (
-              <FiEyeOff
-                className="absolute top-[10px] right-4 cursor-pointer"
-                onClick={() => {
-                  setShowPassword(!showPassword);
-                }}
-              />
-            )}
-          </div>
-
-          <Link href={"/forget"} className="w-full text-right text-sm text-neutral-500 hover:text-rose-500 transition-colors">
-            Forget Password
-          </Link>
-          <Button
-            disabled={loading}
-            type="submit"
-            className="bg-rose-500 hover:bg-rose-600 text-white w-full cursor-pointer transition-colors"
+          <form
+            className="flex items-center justify-center gap-3 flex-col w-full mt-7"
+            onSubmit={loginHandler}
           >
-            {loading ? (
-              <AiOutlineLoading3Quarters className=" animate-spin text-white" />
-            ) : (
-              <div className="flex items-center gap-4">
-                <p>Log In</p>
-                <MdArrowRightAlt />
+            <Input
+              type="email"
+              placeholder="Email"
+              name="email"
+              value={data.email}
+              onChange={changeHandler}
+              className="h-12 w-full rounded-xl border-black/10 bg-[#fcfcfb] px-4"
+            />
+
+            <div className="relative w-full">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                name="password"
+                className="h-12 w-full rounded-xl border-black/10 bg-[#fcfcfb] px-4 pr-12"
+                value={data.password}
+                onChange={changeHandler}
+              />
+              {showPassword ? (
+                <FiEye
+                  className="absolute top-[10px] right-4 cursor-pointer"
+                  onClick={() => {
+                    setShowPassword(!showPassword);
+                  }}
+                />
+              ) : (
+                <FiEyeOff
+                  className="absolute top-[10px] right-4 cursor-pointer"
+                  onClick={() => {
+                    setShowPassword(!showPassword);
+                  }}
+                />
+              )}
+            </div>
+
+            <Link
+              href={"/forget"}
+              className="w-full text-right text-sm text-neutral-500 hover:text-rose-500 transition-colors"
+            >
+              Forget Password
+            </Link>
+            <Button
+              disabled={loading}
+              type="submit"
+              className="h-12 bg-rose-600 hover:bg-rose-700 text-white w-full cursor-pointer transition-colors rounded-xl"
+            >
+              {loading ? (
+                <AiOutlineLoading3Quarters className=" animate-spin text-white" />
+              ) : (
+                <div className="flex items-center gap-4">
+                  <p>Log In</p>
+                  <MdArrowRightAlt />
+                </div>
+              )}
+            </Button>
+            {loginError && (
+              <div className="text-red-500 font-light text-sm">
+                {loginError}
               </div>
             )}
-          </Button>
-          {loginError && (
-            <div className="text-red-500 font-light text-sm">{loginError}</div>
-          )}
-          <Link href="/signup" className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors">
-            Dont have an account? Signup
-          </Link>
-          <SocialAuthButtons />
-        </form>
+            <Link
+              href="/signup"
+              className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors"
+            >
+              Dont have an account? Signup
+            </Link>
+            <SocialAuthButtons />
+          </form>
+        </div>
       </div>
     </div>
   );

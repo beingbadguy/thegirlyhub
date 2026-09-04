@@ -52,9 +52,10 @@ export default function ProductCard({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const images = product.images && product.images.length > 0
-    ? product.images
-    : [product.image];
+  const images =
+    product.images && product.images.length > 0
+      ? product.images
+      : [product.image];
 
   useEffect(() => {
     if (!isHovered || images.length <= 1) return;
@@ -80,7 +81,9 @@ export default function ProductCard({
       const cat = product.category || "";
       if (["Shoes", "Slippers", "shoes", "flats"].includes(cat)) {
         defaultSize = "7";
-      } else if (!["Lowers", "Jeans", "Shirts", "dresses", "suits"].includes(cat)) {
+      } else if (
+        !["Lowers", "Jeans", "Shirts", "dresses", "suits"].includes(cat)
+      ) {
         defaultSize = "One Size";
       }
 
@@ -114,10 +117,10 @@ export default function ProductCard({
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-100 bg-white p-4 shadow-sm transition-all duration-300 hover:border-neutral-200 hover:shadow-md ${className}`}
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-100 bg-white p-4 transition-all duration-300 hover:border-neutral-200 ${className}`}
     >
       {/* Image area with overlays */}
-      <div 
+      <div
         className="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-neutral-100/85 border border-neutral-100/50 cursor-pointer"
         onClick={goToProduct}
       >
@@ -140,7 +143,7 @@ export default function ProductCard({
                 if (user) {
                   addToWishlist(product._id);
                 } else {
-                  router.push("/login");
+                  router.push("/wishlist");
                 }
               }}
             >
@@ -184,7 +187,9 @@ export default function ProductCard({
               <span
                 key={idx}
                 className={`size-1.5 rounded-full transition-all duration-300 ${
-                  idx === activeImageIndex ? "bg-rose-600 w-3" : "bg-neutral-300/80"
+                  idx === activeImageIndex
+                    ? "bg-rose-600 w-3"
+                    : "bg-neutral-300/80"
                 }`}
               />
             ))}
@@ -224,8 +229,9 @@ export default function ProductCard({
 
       {showStock && (
         <p
-          className={`mt-1 text-xs font-medium mb-2 ${inStock ? "text-green-600" : "text-rose-600"
-            }`}
+          className={`mt-1 text-xs font-medium mb-2 ${
+            inStock ? "text-green-600" : "text-rose-600"
+          }`}
         >
           {inStock ? "In Stock" : "Out of Stock"}
         </p>

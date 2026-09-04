@@ -48,6 +48,8 @@ const features = [
   },
 ];
 
+
+
 const TrustStrip = () => {
   return (
     <section className="bg-[#fdf7f9] py-10">
@@ -57,7 +59,7 @@ const TrustStrip = () => {
           return (
             <div
               key={index}
-              className="flex flex-col items-center text-center group cursor-default"
+              className="flex font-instrument flex-col items-center text-center group cursor-default"
             >
               {/* ICON WRAPPER */}
               <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-rose-100/70 transition-all duration-300 group-hover:scale-105 group-hover:bg-rose-200">
@@ -65,7 +67,7 @@ const TrustStrip = () => {
               </div>
 
               {/* TEXT */}
-              <h3 className="text-sm font-semibold tracking-wide text-gray-800">
+              <h3 className="text-sm font-semibold font-instrument tracking-wide text-gray-800">
                 {item.title}
               </h3>
               <p className="text-xs tracking-widest text-gray-500">

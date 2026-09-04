@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Poppins, Bodoni_Moda, Prata } from "next/font/google";
+import {
+  Instrument_Serif,
+  Poppins,
+  Bodoni_Moda,
+  Prata,
+} from "next/font/google";
 // import "../globals.css";
 import "./globals.css";
 import HeaderSection from "@/components/HeaderSection";
@@ -8,7 +13,6 @@ import { Analytics } from "@vercel/analytics/react";
 import ScrollToTop from "@/components/ScrollToTop";
 import AnnouncementBand from "@/components/AnnouncementBand";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -27,6 +31,13 @@ const prata = Prata({
   variable: "--font-prata",
   weight: "400",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
   display: "swap",
 });
 
@@ -53,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${prata.variable} antialiased custom-scrollbar `}
+        className={`${poppins.variable} ${bodoniModa.variable} ${prata.variable} ${instrumentSerif.variable} antialiased custom-scrollbar `}
       >
         <AnnouncementBand />
         <ScrollToTop />

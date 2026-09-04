@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuthStore } from "@/store/store";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,7 +11,6 @@ import { MdArrowRightAlt } from "react-icons/md";
 import SocialAuthButtons from "@/components/SocialAuthButtons";
 
 export default function SignupPage() {
-  const { setUser, fetchUserCart, syncCartAfterAuth } = useAuthStore();
   const router = useRouter();
   useEffect(() => {
     document.title = "Sign Up | GirlyHub";
@@ -37,10 +35,7 @@ export default function SignupPage() {
     try {
       const response = await axios.post("/api/signup", data);
       // console.log(response.data);
-      setUser(response.data.data);
-      await syncCartAfterAuth();
-      fetchUserCart();
-      router.push("/");
+      router.push(`/verify?email=${encodeURIComponent(data.email)}&next=/`);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.log(error.response?.data);
@@ -54,7 +49,7 @@ export default function SignupPage() {
     }
   };
   return (
-    <div className="min-h-[70vh] bg-white text-black w-full flex flex-col py-6">
+    <div className="min-h-[78vh] bg-[#fcfcfb] text-black w-full flex flex-col px-4 py-10">
       {/* Breadcrumbs */}
       <div className="w-full  mx-auto px-4 md:px-8 pb-2 text-left">
         <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
@@ -71,78 +66,87 @@ export default function SignupPage() {
 
       {/* Main content centered */}
       <div className="flex-1 flex items-center justify-center gap-4 flex-col px-4">
-        <h1 className="text-3xl font-bold">Sign Up</h1>
-        <p className="text-center w-full mx-2 text-sm md:text-md text-neutral-500">
-          Welcome, Create account to get started.
-        </p>
+        <div className="w-full max-w-[430px] px-0 py-6">
+          <h1 className="text-center text-[27px] font-semibold tracking-[-0.03em]">
+            Create your account
+          </h1>
+          <p className="mt-2 text-center text-sm text-neutral-500">
+            Join GirlyHub and discover something lovely.
+          </p>
 
-        <form
-          className="flex items-center justify-center gap-2 flex-col w-full max-w-md mt-4"
-          onSubmit={signupHandler}
-        >
-          <Input
-            type="text"
-            placeholder="Full name"
-            name="name"
-            className="w-full"
-            value={data.name}
-            onChange={changeHandler}
-          />
-          <Input
-            type="email"
-            placeholder="Email"
-            name="email"
-            className="w-full"
-            value={data.email}
-            onChange={changeHandler}
-          />
-          <div className="relative w-full">
+          <form
+            className="flex items-center justify-center gap-3 flex-col w-full mt-7"
+            onSubmit={signupHandler}
+          >
             <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              name="password"
-              className="w-full"
-              value={data.password}
+              type="text"
+              placeholder="Full name"
+              name="name"
+              className="h-12 w-full rounded-xl border-black/10 bg-[#fcfcfb] px-4"
+              value={data.name}
               onChange={changeHandler}
             />
-            {showPassword ? (
-              <FiEye
-                className="absolute top-[10px] right-4 cursor-pointer"
-                onClick={() => {
-                  setShowPassword(!showPassword);
-                }}
+            <Input
+              type="email"
+              placeholder="Email"
+              name="email"
+              className="h-12 w-full rounded-xl border-black/10 bg-[#fcfcfb] px-4"
+              value={data.email}
+              onChange={changeHandler}
+            />
+            <div className="relative w-full">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                name="password"
+                className="h-12 w-full rounded-xl border-black/10 bg-[#fcfcfb] px-4 pr-12"
+                value={data.password}
+                onChange={changeHandler}
               />
-            ) : (
-              <FiEyeOff
-                className="absolute top-[10px] right-4 cursor-pointer"
-                onClick={() => {
-                  setShowPassword(!showPassword);
-                }}
-              />
-            )}
-          </div>
-          <Button
-            disabled={loading}
-            type="submit"
-            className="bg-rose-500 hover:bg-rose-600 text-white w-full cursor-pointer transition-colors"
-          >
-            {loading ? (
-              <AiOutlineLoading3Quarters className=" animate-spin text-white" />
-            ) : (
-              <div className="flex items-center gap-4">
-                <p>Create Account</p>
-                <MdArrowRightAlt />
+              {showPassword ? (
+                <FiEye
+                  className="absolute top-[10px] right-4 cursor-pointer"
+                  onClick={() => {
+                    setShowPassword(!showPassword);
+                  }}
+                />
+              ) : (
+                <FiEyeOff
+                  className="absolute top-[10px] right-4 cursor-pointer"
+                  onClick={() => {
+                    setShowPassword(!showPassword);
+                  }}
+                />
+              )}
+            </div>
+            <Button
+              disabled={loading}
+              type="submit"
+              className="h-12 bg-rose-600 hover:bg-rose-700 text-white w-full cursor-pointer transition-colors rounded-xl"
+            >
+              {loading ? (
+                <AiOutlineLoading3Quarters className=" animate-spin text-white" />
+              ) : (
+                <div className="flex items-center gap-4">
+                  <p>Create Account</p>
+                  <MdArrowRightAlt />
+                </div>
+              )}
+            </Button>
+            {signupError && (
+              <div className="text-red-500 font-light text-sm">
+                {signupError}
               </div>
             )}
-          </Button>
-          {signupError && (
-            <div className="text-red-500 font-light text-sm">{signupError}</div>
-          )}
-          <Link href="/login" className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors">
-            Already have an account? Login
-          </Link>
-          <SocialAuthButtons />
-        </form>
+            <Link
+              href="/login"
+              className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors"
+            >
+              Already have an account? Login
+            </Link>
+            <SocialAuthButtons />
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
@@ -13,44 +13,37 @@ const Page = () => {
   const [products, setProducts] = useState<Products[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const itemsPerPage = 12;
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     document.title = "Search Products | GirlyHub";
-    const fetchAllProducts = async () => {
+
+    const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
         const response = await axios.get("/api/product", {
-          params: { page: 1, limit: 100 },
+          params: { q: query.trim() || undefined, page, limit: 12 },
         });
         setProducts(response.data.products);
+        setTotalItems(response.data.pagination.total);
+        setTotalPages(response.data.pagination.totalPages || 1);
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          console.error(error.response?.data);
-        }
+        console.error("Failed to search products:", error);
+        setProducts([]);
+        setTotalItems(0);
+        setTotalPages(1);
       } finally {
         setLoading(false);
       }
-    };
-    fetchAllProducts();
-  }, []);
+    }, 250);
 
-  const searchedProducts = products.filter((product) =>
-    product.title.toLowerCase().includes(query.toLowerCase()),
-  );
-
-  const activeList = query.trim().length > 0 ? searchedProducts : products;
-  const totalItems = activeList.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    return () => window.clearTimeout(timer);
+  }, [query, page]);
 
   useEffect(() => {
     setPage(1);
   }, [query]);
-
-  const paginatedList = activeList.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage,
-  );
 
   const grid = (items: Products[]) => (
     <div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -97,11 +90,13 @@ const Page = () => {
           <div className="flex h-32 items-center justify-center">
             <AiOutlineLoading3Quarters className="animate-spin text-2xl text-rose-600" />
           </div>
-        ) : query.trim().length > 0 ? (
+        ) : (
           <>
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-xl font-semibold text-rose-950 md:text-2xl">
-                Searched Products for &quot;{query}&quot;
+                {query.trim()
+                  ? `Searched Products for "${query.trim()}"`
+                  : "All Products"}
               </h2>
               <span className="text-sm text-rose-900/60">
                 {totalItems} result{totalItems !== 1 ? "s" : ""}
@@ -109,7 +104,7 @@ const Page = () => {
             </div>
             {totalItems > 0 ? (
               <>
-                {grid(paginatedList)}
+                {grid(products)}
                 <PaginationControls
                   page={page}
                   totalPages={totalPages}
@@ -118,40 +113,14 @@ const Page = () => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 />
-                {totalItems > itemsPerPage && (
-                  <p className="mt-3 text-center text-sm text-rose-900/50">
-                    Showing page {page} of {totalPages} ({totalItems} products)
-                  </p>
-                )}
+                <p className="mt-3 text-center text-sm text-rose-900/50">
+                  Showing page {page} of {totalPages} ({totalItems} products)
+                </p>
               </>
             ) : (
               <p className="my-8 text-center text-rose-900/60">
-                No products found matching &quot;{query}&quot;. Try another search term!
-              </p>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-xl font-semibold text-rose-950 md:text-2xl">
-                All Products
-              </h2>
-              <span className="text-sm text-rose-900/60">
-                {totalItems} products
-              </span>
-            </div>
-            {grid(paginatedList)}
-            <PaginationControls
-              page={page}
-              totalPages={totalPages}
-              onPageChange={(p) => {
-                setPage(p);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            />
-            {totalItems > itemsPerPage && (
-              <p className="mt-3 text-center text-sm text-rose-900/50">
-                Showing page {page} of {totalPages} ({totalItems} products)
+                No products found matching &quot;{query}&quot;. Try another
+                search term!
               </p>
             )}
           </>

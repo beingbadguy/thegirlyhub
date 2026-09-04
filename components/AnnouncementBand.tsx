@@ -2,7 +2,7 @@
 
 const messages = [
   "✨ 100+ Satisfied Customers",
-  // "🚚 Free shipping on orders above ₹150",
+  "🚚 Free shipping on orders above ",
   "🎁 15% off on your first order",
   "📦 Easy Exchange & Returns",
   "🛍️ COD Available",
@@ -20,7 +20,7 @@ export default function AnnouncementBand() {
         {[...messages, ...messages].map((msg, i) => (
           <span
             key={i}
-            className="text-[11px] font-medium tracking-widest text-rose-100/90 uppercase"
+            className="text-[11px] font-medium tracking-widest text-rose-100/90 uppercase "
           >
             {msg}
             <span className="mx-5 inline-block text-rose-300/40">|</span>
