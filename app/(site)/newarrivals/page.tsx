@@ -5,10 +5,9 @@ import BreadcrumbHome from "@/components/BreadcrumbHome";
 
 const page = () => {
   return (
-    <div className="min-h-[70vh] p-4">
+    <div className="min-h-[70vh] px-4 py-6 sm:px-6 lg:px-8">
       <div className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome />{" "}
-        /{" "}
+        <BreadcrumbHome /> /{" "}
         <span className="cursor-pointer hover:text-pink-600">
           <Link href={"/product"}>Products</Link>
         </span>{" "}

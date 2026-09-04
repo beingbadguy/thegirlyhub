@@ -94,10 +94,9 @@ const ProductsPage = () => {
   }
 
   return (
-    <div className="min-h-screen px-4 py-6">
+    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome />{" "}
-        / <span className="text-black">Products</span>
+        <BreadcrumbHome /> / <span className="text-black">Products</span>
       </div>
 
       {showFilter && (

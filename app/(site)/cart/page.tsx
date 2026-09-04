@@ -4,9 +4,9 @@ import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
-import { Minus, Plus, Trash2, Sparkles, AlertCircle } from "lucide-react";
+import { Minus, Plus, Trash2, Sparkles } from "lucide-react";
 import Image from "next/image";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
@@ -84,19 +84,6 @@ const CartPage = () => {
     : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
   const totalAfterDiscount = subtotal + shippingCharge - firstTimeDiscount;
 
-  if (!authChecked) {
-    return <div className="min-h-[72vh] bg-[#fffafc]" />;
-  }
-
-  if (!user) {
-    return (
-      <GuestAuthPrompt
-        title="Your bag is ready"
-        description="Please log in to view your saved items, manage your bag, and continue to checkout."
-      />
-    );
-  }
-
   // State for Toast Notification
   const [showToast, setShowToast] = useState(false);
   const prevSubtotalRef = useRef(subtotal);
@@ -110,8 +97,21 @@ const CartPage = () => {
     prevSubtotalRef.current = subtotal;
   }, [subtotal]);
 
+  if (!authChecked) {
+    return <div className="min-h-[72vh] bg-[#fffafc]" />;
+  }
+
+  if (!user) {
+    return (
+      <GuestAuthPrompt
+        title="Your bag is ready"
+        description="Please log in to view your saved items, manage your bag, and continue to checkout."
+      />
+    );
+  }
+
   return (
-    <div className="p-4 min-h-[90vh]">
+    <div className="min-h-[90vh] px-4 py-6 sm:px-6 lg:px-8">
       <div className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 flex-wrap">
         <BreadcrumbHome /> /{" "}
         <span className="cursor-pointer text-black">Cart</span>{" "}
@@ -347,7 +347,7 @@ const CartPage = () => {
             </div>
 
             <button
-              className="w-full bg-black hover:bg-black/80 active:scale-95 transition-all duration-200 cursor-pointer text-white py-3 font-semibold rounded-xl disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all duration-200 cursor-pointer text-white py-3 font-semibold rounded-xl disabled:cursor-not-allowed disabled:opacity-50"
               disabled={availableItems.length === 0}
               onClick={() => {
                 router.push("/checkout");

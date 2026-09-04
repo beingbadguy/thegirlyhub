@@ -146,7 +146,8 @@ export default function CheckoutPage() {
   let couponDiscount = 0;
   if (couponDetails) {
     if (couponDetails.type === "percentage") {
-      couponDiscount = Math.round(((baseTotal * couponDetails.discount) / 100) * 100) / 100;
+      couponDiscount =
+        Math.round(((baseTotal * couponDetails.discount) / 100) * 100) / 100;
     } else {
       couponDiscount = couponDetails.discount;
     }
@@ -256,7 +257,10 @@ export default function CheckoutPage() {
       }
 
       // Create Razorpay order via our backend with full order payload
-      const orderRes = await axios.post("/api/create-order", buildOrderPayload());
+      const orderRes = await axios.post(
+        "/api/create-order",
+        buildOrderPayload(),
+      );
 
       const { order_id, amount, currency } = orderRes.data;
 
@@ -285,7 +289,9 @@ export default function CheckoutPage() {
             }
           } catch (error) {
             console.error("Verification error", error);
-            setOrderError("Payment verification failed. Please contact support.");
+            setOrderError(
+              "Payment verification failed. Please contact support.",
+            );
           } finally {
             setPlacingOrder(false);
           }
@@ -300,7 +306,9 @@ export default function CheckoutPage() {
         },
         modal: {
           ondismiss: function () {
-            setOrderError("Payment was cancelled. You can try again when ready.");
+            setOrderError(
+              "Payment was cancelled. You can try again when ready.",
+            );
             setPlacingOrder(false);
           },
         },
@@ -312,10 +320,11 @@ export default function CheckoutPage() {
         setPlacingOrder(false);
       });
       paymentObject.open();
-
     } catch (error) {
       console.error(error);
-      setOrderError("Something went wrong initializing payment. Please try again.");
+      setOrderError(
+        "Something went wrong initializing payment. Please try again.",
+      );
       setPlacingOrder(false);
     }
   };
@@ -358,416 +367,451 @@ export default function CheckoutPage() {
   const showError = (field: keyof OrderFieldErrors) =>
     submitted ? fieldErrors[field] : undefined;
 
-  const goToPaymentFailure = (reason: string) => {
-    router.push(`/payment-failure?reason=${encodeURIComponent(reason)}`);
-  };
-
   return (
     <div className="min-h-[80vh] bg-[#fffafb] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-      <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome />{" "}
-        / <span className="text-black">Checkout</span>
-      </div>
-
-      <div className="mb-6 flex flex-col gap-1">
-        <h1 className="text-3xl font-bold text-gray-950">Checkout</h1>
-        <p className="text-sm text-gray-500">
-          Review your delivery details and order items before placing the order.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px] xl:gap-8">
-        <div>
-          <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm sm:p-6 lg:p-7">
-            <h2 className="mb-4 text-lg font-semibold text-rose-950">
-              Delivery Details
-            </h2>
-
-            <div className="space-y-4">
-              <div
-                data-invalid={showError("recipientName") ? "true" : undefined}
-              >
-                <RequiredLabel>Full name</RequiredLabel>
-                <input
-                  value={recipientName}
-                  onChange={(e) => {
-                    setRecipientName(e.target.value);
-                    clearFieldError("recipientName");
-                  }}
-                  placeholder="Recipient full name"
-                  className={inputClass(!!showError("recipientName"))}
-                />
-                <FieldError message={showError("recipientName")} />
-              </div>
-
-              <div data-invalid={showError("email") ? "true" : undefined}>
-                <label className="mb-1 block text-sm font-medium text-gray-800">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    clearFieldError("email");
-                  }}
-                  placeholder="you@example.com"
-                  className={inputClass(!!showError("email"))}
-                />
-                <FieldError message={showError("email")} />
-              </div>
-
-              <div data-invalid={showError("address") ? "true" : undefined}>
-                <RequiredLabel>
-                  Address (please enter proper address ){" "}
-                </RequiredLabel>
-                <textarea
-                  value={address}
-                  onChange={(e) => {
-                    setAddress(e.target.value);
-                    clearFieldError("address");
-                  }}
-                  placeholder="House no., street, area"
-                  rows={3}
-                  className={inputClass(!!showError("address"))}
-                />
-                <FieldError message={showError("address")} />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div data-invalid={showError("city") ? "true" : undefined}>
-                  <RequiredLabel>City</RequiredLabel>
-                  <input
-                    value={city}
-                    onChange={(e) => {
-                      setCity(e.target.value);
-                      clearFieldError("city");
-                    }}
-                    placeholder="City"
-                    className={inputClass(!!showError("city"))}
-                  />
-                  <FieldError message={showError("city")} />
-                </div>
-
-                <div data-invalid={showError("state") ? "true" : undefined}>
-                  <RequiredLabel>State</RequiredLabel>
-                  <select
-                    value={state}
-                    onChange={(e) => {
-                      setState(e.target.value);
-                      clearFieldError("state");
-                    }}
-                    className={inputClass(!!showError("state"))}
-                  >
-                    <option value="">Select state</option>
-                    {INDIAN_STATES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                  <FieldError message={showError("state")} />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-800">
-                  Landmark
-                </label>
-                <input
-                  value={landmark}
-                  onChange={(e) => setLandmark(e.target.value)}
-                  placeholder="Near school, mall, etc. (optional)"
-                  className={inputClass(false)}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div data-invalid={showError("zip") ? "true" : undefined}>
-                  <RequiredLabel>Pincode</RequiredLabel>
-                  <input
-                    value={zip}
-                    onChange={(e) => {
-                      setZip(e.target.value.replace(/\D/g, "").slice(0, 6));
-                      clearFieldError("zip");
-                    }}
-                    placeholder="6-digit pincode"
-                    className={inputClass(!!showError("zip"))}
-                  />
-                  <FieldError message={showError("zip")} />
-                </div>
-
-                <div data-invalid={showError("phone") ? "true" : undefined}>
-                  <RequiredLabel>Phone</RequiredLabel>
-                  <input
-                    value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
-                      clearFieldError("phone");
-                    }}
-                    placeholder="10-digit mobile"
-                    className={inputClass(!!showError("phone"))}
-                  />
-                  <FieldError message={showError("phone")} />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-800">
-                  Order notes
-                </label>
-                <textarea
-                  value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value.slice(0, 500))}
-                  placeholder="Delivery instructions, gift wrap, etc. (optional)"
-                  rows={2}
-                  className={inputClass(false)}
-                />
-              </div>
-            </div>
-          </div>
+        <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
+          <BreadcrumbHome /> / <span className="text-black">Checkout</span>
         </div>
 
-        <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-bold text-rose-950">
-                  Items in this order
-                </h2>
-                <p className="mt-0.5 text-xs text-gray-500">
-                  {availableCartItems.length} item{availableCartItems.length === 1 ? "" : "s"} ready for checkout
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => router.push("/cart")}
-                className="shrink-0 text-xs font-semibold text-rose-600 transition hover:text-rose-700"
-              >
-                Edit cart
-              </button>
-            </div>
+        <div className="mb-6 flex flex-col gap-1">
+          <h1 className="text-3xl font-bold text-gray-950">Checkout</h1>
+          <p className="text-sm text-gray-500">
+            Review your delivery details and order items before placing the
+            order.
+          </p>
+        </div>
 
-            <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
-              {availableCartItems.map((item) => {
-                const product = item.productId;
-                const unitPrice = product.discountedPrice || product.price;
-                const lineTotal = unitPrice * item.quantity;
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px] xl:gap-8">
+          <div>
+            <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm sm:p-6 lg:p-7">
+              <h2 className="mb-4 text-lg font-semibold text-rose-950">
+                Delivery Details
+              </h2>
 
-                return (
-                  <div
-                    key={`${product._id}-${item.size || "default"}`}
-                    className="flex gap-3 rounded-lg border border-gray-100 bg-white p-3"
-                  >
-                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-rose-50">
-                      <Image
-                        src={product.image}
-                        alt={product.title}
-                        fill
-                        className="object-contain p-1"
+              <div className="space-y-4">
+                <div
+                  data-invalid={showError("recipientName") ? "true" : undefined}
+                >
+                  <RequiredLabel>Full name</RequiredLabel>
+                  <input
+                    autoComplete="name"
+                    value={recipientName}
+                    onChange={(e) => {
+                      setRecipientName(e.target.value);
+                      clearFieldError("recipientName");
+                    }}
+                    placeholder="Recipient full name"
+                    className={inputClass(!!showError("recipientName"))}
+                  />
+                  <FieldError message={showError("recipientName")} />
+                </div>
+
+                <div data-invalid={showError("email") ? "true" : undefined}>
+                  <label className="mb-1 block text-sm font-medium text-gray-800">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearFieldError("email");
+                    }}
+                    placeholder="you@example.com"
+                    className={inputClass(!!showError("email"))}
+                  />
+                  <FieldError message={showError("email")} />
+                </div>
+
+                <div data-invalid={showError("address") ? "true" : undefined}>
+                  <RequiredLabel>
+                    Address (please enter proper address ){" "}
+                  </RequiredLabel>
+                  <textarea
+                    autoComplete="street-address"
+                    value={address}
+                    onChange={(e) => {
+                      setAddress(e.target.value);
+                      clearFieldError("address");
+                    }}
+                    placeholder="House no., street, area"
+                    rows={3}
+                    className={inputClass(!!showError("address"))}
+                  />
+                  <FieldError message={showError("address")} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div data-invalid={showError("city") ? "true" : undefined}>
+                    <RequiredLabel>City</RequiredLabel>
+                    <input
+                      autoComplete="address-level2"
+                      value={city}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        clearFieldError("city");
+                      }}
+                      placeholder="City"
+                      className={inputClass(!!showError("city"))}
+                    />
+                    <FieldError message={showError("city")} />
+                  </div>
+
+                  <div data-invalid={showError("state") ? "true" : undefined}>
+                    <RequiredLabel>State</RequiredLabel>
+                    <select
+                      autoComplete="address-level1"
+                      value={state}
+                      onChange={(e) => {
+                        setState(e.target.value);
+                        clearFieldError("state");
+                      }}
+                      className={inputClass(!!showError("state"))}
+                    >
+                      <option value="">Select state</option>
+                      {INDIAN_STATES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                    <FieldError message={showError("state")} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-800">
+                    Landmark
+                  </label>
+                  <input
+                    autoComplete="address-line2"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    placeholder="Near school, mall, etc. (optional)"
+                    className={inputClass(false)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div data-invalid={showError("zip") ? "true" : undefined}>
+                    <RequiredLabel>Pincode</RequiredLabel>
+                    <input
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      value={zip}
+                      onChange={(e) => {
+                        setZip(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        clearFieldError("zip");
+                      }}
+                      placeholder="6-digit pincode"
+                      className={inputClass(!!showError("zip"))}
+                    />
+                    <FieldError message={showError("zip")} />
+                  </div>
+
+                  <div data-invalid={showError("phone") ? "true" : undefined}>
+                    <RequiredLabel>Phone</RequiredLabel>
+                    <div
+                      className={`flex items-center overflow-hidden rounded-lg border bg-white transition focus-within:ring-2 ${
+                        showError("phone")
+                          ? "border-red-400 focus-within:border-red-400 focus-within:ring-red-100"
+                          : "border-gray-200 focus-within:border-pink-400 focus-within:ring-pink-100"
+                      }`}
+                    >
+                      <span className="border-r border-gray-200 bg-rose-50 px-3.5 py-2.5 text-sm font-semibold text-rose-700">
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        autoComplete="tel-national"
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(
+                            e.target.value.replace(/\D/g, "").slice(0, 10),
+                          );
+                          clearFieldError("phone");
+                        }}
+                        placeholder="10-digit mobile number"
+                        aria-label="10-digit Indian mobile number"
+                        className="min-w-0 flex-1 bg-transparent px-3.5 py-2.5 text-sm outline-none"
                       />
                     </div>
+                    <p className="mt-1 text-[11px] text-gray-400">
+                      We&apos;ll use this number for delivery updates.
+                    </p>
+                    <FieldError message={showError("phone")} />
+                  </div>
+                </div>
 
-                    <div className="min-w-0 flex-1">
-                      <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-950">
-                        {product.title}
-                      </h3>
-                      <div className="mt-1 space-y-0.5 text-xs text-gray-500">
-                        {product.category && <p>Category: {product.category}</p>}
-                        {item.size && item.size.toLowerCase() !== "one size" && (
-                          <p>Size: {item.size}</p>
-                        )}
-                        <p>Quantity: {item.quantity}</p>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-800">
+                    Order notes
+                  </label>
+                  <textarea
+                    maxLength={500}
+                    value={orderNotes}
+                    onChange={(e) =>
+                      setOrderNotes(e.target.value.slice(0, 500))
+                    }
+                    placeholder="Delivery instructions, gift wrap, etc. (optional)"
+                    rows={2}
+                    className={inputClass(false)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-rose-950">
+                    Items in this order
+                  </h2>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {availableCartItems.length} item
+                    {availableCartItems.length === 1 ? "" : "s"} ready for
+                    checkout
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push("/cart")}
+                  className="shrink-0 text-xs font-semibold text-rose-600 transition hover:text-rose-700"
+                >
+                  Edit cart
+                </button>
+              </div>
+
+              <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
+                {availableCartItems.map((item) => {
+                  const product = item.productId;
+                  const unitPrice = product.discountedPrice || product.price;
+                  const lineTotal = unitPrice * item.quantity;
+
+                  return (
+                    <div
+                      key={`${product._id}-${item.size || "default"}`}
+                      className="flex gap-3 rounded-lg border border-gray-100 bg-white p-3"
+                    >
+                      <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-rose-50">
+                        <Image
+                          src={product.image}
+                          alt={product.title}
+                          fill
+                          className="object-contain p-1"
+                        />
                       </div>
-                      <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-                        <span className="text-gray-600">
-                          ₹{unitPrice.toFixed(2)} each
-                        </span>
-                        <span className="font-bold text-rose-700">
-                          ₹{lineTotal.toFixed(2)}
-                        </span>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-950">
+                          {product.title}
+                        </h3>
+                        <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+                          {product.category && (
+                            <p>Category: {product.category}</p>
+                          )}
+                          {item.size &&
+                            item.size.toLowerCase() !== "one size" && (
+                              <p>Size: {item.size}</p>
+                            )}
+                          <p>Quantity: {item.quantity}</p>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                          <span className="text-gray-600">
+                            ₹{unitPrice.toFixed(2)} each
+                          </span>
+                          <span className="font-bold text-rose-700">
+                            ₹{lineTotal.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-rose-100 bg-white p-5 text-sm shadow-sm">
-            <h2 className="text-lg font-bold text-rose-950">Order Summary</h2>
-            <hr className="my-3 border-gray-200" />
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <p className="text-gray-600">
-                  Items ({availableCartItems.length})
-                </p>
-                <p>₹{subtotal.toFixed(2)}</p>
+                  );
+                })}
               </div>
-              <div className="flex justify-between">
-                <p className="flex items-center gap-1.5 text-gray-600">
-                  <TbTruckDelivery className="size-4" />
-                  Delivery charge
-                </p>
-                {isFreeShipping ? (
-                  <p className="text-green-600 font-bold flex items-center gap-1">
-                    <span className="line-through text-xs text-gray-400 font-normal">₹49.00</span> FREE
+            </div>
+
+            <div className="rounded-xl border border-rose-100 bg-white p-5 text-sm shadow-sm">
+              <h2 className="text-lg font-bold text-rose-950">Order Summary</h2>
+              <hr className="my-3 border-gray-200" />
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <p className="text-gray-600">
+                    Items ({availableCartItems.length})
                   </p>
-                ) : (
-                  <p>₹{shippingCharge.toFixed(2)}</p>
+                  <p>₹{subtotal.toFixed(2)}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="flex items-center gap-1.5 text-gray-600">
+                    <TbTruckDelivery className="size-4" />
+                    Delivery charge
+                  </p>
+                  {isFreeShipping ? (
+                    <p className="text-green-600 font-bold flex items-center gap-1">
+                      <span className="line-through text-xs text-gray-400 font-normal">
+                        ₹49.00
+                      </span>{" "}
+                      FREE
+                    </p>
+                  ) : (
+                    <p>₹{shippingCharge.toFixed(2)}</p>
+                  )}
+                </div>
+                {isFreeShipping && (
+                  <div className="text-[11px] text-green-700 font-medium">
+                    You saved ₹49 on shipping 🎉
+                  </div>
+                )}
+                {!user?.firstPurchase && (
+                  <div className="flex justify-between text-green-600">
+                    <p>First order discount (15%)</p>
+                    <p>-₹{firstTimeDiscount.toFixed(2)}</p>
+                  </div>
+                )}
+                {couponApplied && (
+                  <div className="flex justify-between text-green-600">
+                    <p>Coupon discount ({promoCode.toUpperCase()})</p>
+                    <p>-₹{couponDiscount.toFixed(2)}</p>
+                  </div>
                 )}
               </div>
-              {isFreeShipping && (
-                <div className="text-[11px] text-green-700 font-medium">
-                  You saved ₹49 on shipping 🎉
-                </div>
-              )}
-              {!user?.firstPurchase && (
-                <div className="flex justify-between text-green-600">
-                  <p>First order discount (15%)</p>
-                  <p>-₹{firstTimeDiscount.toFixed(2)}</p>
-                </div>
-              )}
-              {couponApplied && (
-                <div className="flex justify-between text-green-600">
-                  <p>Coupon discount ({promoCode.toUpperCase()})</p>
-                  <p>-₹{couponDiscount.toFixed(2)}</p>
-                </div>
+              <div className="mt-3 flex justify-between border-t border-gray-100 pt-3 text-base font-bold">
+                <p>Total</p>
+                <p className="text-rose-700">₹{finalAmount.toFixed(2)}</p>
+              </div>
+
+              {showError("products") && (
+                <FieldError message={showError("products")} />
               )}
             </div>
-            <div className="mt-3 flex justify-between border-t border-gray-100 pt-3 text-base font-bold">
-              <p>Total</p>
-              <p className="text-rose-700">₹{finalAmount.toFixed(2)}</p>
-            </div>
 
-            {showError("products") && (
-              <FieldError message={showError("products")} />
-            )}
-          </div>
-
-          <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold text-gray-800">
-              How would you like to pay?
-            </h2>
-            <div className="space-y-2.5">
-              <button
-                type="button"
-                onClick={() => setPaymentMode("cod")}
-                className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
-                  paymentMode === "cod"
-                    ? "border-rose-500 bg-rose-50 shadow-sm"
-                    : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
-                }`}
-              >
-                <span
-                  className={`grid size-10 shrink-0 place-items-center rounded-full ${
+            <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-semibold text-gray-800">
+                How would you like to pay?
+              </h2>
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMode("cod")}
+                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
                     paymentMode === "cod"
-                      ? "bg-rose-600 text-white"
-                      : "bg-gray-100 text-gray-600"
+                      ? "border-rose-500 bg-rose-50 shadow-sm"
+                      : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
                   }`}
                 >
-                  <IoCashOutline className="size-5" />
-                </span>
-                <span className="flex-1">
-                  <span className="block text-sm font-semibold text-gray-900">
-                    Cash on Delivery
+                  <span
+                    className={`grid size-10 shrink-0 place-items-center rounded-full ${
+                      paymentMode === "cod"
+                        ? "bg-rose-600 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    <IoCashOutline className="size-5" />
                   </span>
-                  <span className="block text-xs text-gray-500">
-                    Pay when your order arrives
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-gray-900">
+                      Cash on Delivery
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      Pay when your order arrives
+                    </span>
                   </span>
-                </span>
-                {paymentMode === "cod" && (
-                  <Check className="size-5 shrink-0 text-rose-600" />
-                )}
-              </button>
+                  {paymentMode === "cod" && (
+                    <Check className="size-5 shrink-0 text-rose-600" />
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setPaymentMode("online")}
-                className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
-                  paymentMode === "online"
-                    ? "border-rose-500 bg-rose-50 shadow-sm"
-                    : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
-                }`}
-              >
-                <span
-                  className={`grid size-10 shrink-0 place-items-center rounded-full ${
+                <button
+                  type="button"
+                  onClick={() => setPaymentMode("online")}
+                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
                     paymentMode === "online"
-                      ? "bg-rose-600 text-white"
-                      : "bg-gray-100 text-gray-600"
+                      ? "border-rose-500 bg-rose-50 shadow-sm"
+                      : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
                   }`}
                 >
-                  <MdOutlinePayment className="size-5" />
-                </span>
-                <span className="flex-1">
-                  <span className="block text-sm font-semibold text-gray-900">
-                    Online Payment
+                  <span
+                    className={`grid size-10 shrink-0 place-items-center rounded-full ${
+                      paymentMode === "online"
+                        ? "bg-rose-600 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    <MdOutlinePayment className="size-5" />
                   </span>
-                  <span className="block text-xs text-gray-500">
-                    UPI, card, or net banking
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-gray-900">
+                      Online Payment
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      UPI, card, or net banking
+                    </span>
                   </span>
-                </span>
-                {paymentMode === "online" && (
-                  <Check className="size-5 shrink-0 text-rose-600" />
-                )}
-              </button>
+                  {paymentMode === "online" && (
+                    <Check className="size-5 shrink-0 text-rose-600" />
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
-            <label htmlFor="promo" className="text-sm font-medium">
-              Promo code
-            </label>
-            <div className="mt-2 flex">
-              <input
-                id="promo"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                placeholder="Enter code"
-                className="w-full rounded-l-lg border border-gray-200 px-3 py-2 text-sm"
-                disabled={couponApplied}
-              />
-              <Button
-                disabled={promoCodeLoading || couponApplied}
-                onClick={applyCoupon}
-                className="cursor-pointer rounded-l-none rounded-r-lg bg-rose-600 text-white hover:bg-rose-700"
-              >
-                {promoCodeLoading ? (
-                  <VscLoading className="animate-spin text-xl" />
-                ) : couponApplied ? (
-                  "Applied"
-                ) : (
-                  "Apply"
-                )}
-              </Button>
+            <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
+              <label htmlFor="promo" className="text-sm font-medium">
+                Promo code
+              </label>
+              <div className="mt-2 flex">
+                <input
+                  id="promo"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  placeholder="Enter code"
+                  className="w-full rounded-l-lg border border-gray-200 px-3 py-2 text-sm"
+                  disabled={couponApplied}
+                />
+                <Button
+                  disabled={promoCodeLoading || couponApplied}
+                  onClick={applyCoupon}
+                  className="cursor-pointer rounded-l-none rounded-r-lg bg-rose-600 text-white hover:bg-rose-700"
+                >
+                  {promoCodeLoading ? (
+                    <VscLoading className="animate-spin text-xl" />
+                  ) : couponApplied ? (
+                    "Applied"
+                  ) : (
+                    "Apply"
+                  )}
+                </Button>
+              </div>
+              {promoCodeError && (
+                <p className="mt-2 text-xs text-red-500">{promoCodeError}</p>
+              )}
             </div>
-            {promoCodeError && (
-              <p className="mt-2 text-xs text-red-500">{promoCodeError}</p>
+
+            {orderError && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                {orderError}
+              </p>
             )}
+
+            <Button
+              disabled={placingOrder}
+              className="w-full cursor-pointer rounded-xl bg-rose-600 py-6 text-base font-semibold text-white shadow-md hover:bg-rose-700"
+              onClick={handleOrder}
+            >
+              {placingOrder ? (
+                <VscLoading className="animate-spin text-xl" />
+              ) : paymentMode === "cod" ? (
+                `Place Order · ₹${finalAmount.toFixed(2)}`
+              ) : (
+                `Pay Online · ₹${finalAmount.toFixed(2)}`
+              )}
+            </Button>
           </div>
-
-          {orderError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-              {orderError}
-            </p>
-          )}
-
-          <Button
-            disabled={placingOrder}
-            className="w-full cursor-pointer rounded-xl bg-rose-600 py-6 text-base font-semibold text-white shadow-md hover:bg-rose-700"
-            onClick={handleOrder}
-          >
-            {placingOrder ? (
-              <VscLoading className="animate-spin text-xl" />
-            ) : paymentMode === "cod" ? (
-              `Place Order · ₹${finalAmount.toFixed(2)}`
-            ) : (
-              `Pay Online · ₹${finalAmount.toFixed(2)}`
-            )}
-          </Button>
         </div>
-      </div>
       </div>
     </div>
   );

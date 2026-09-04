@@ -42,12 +42,30 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://girlyhub.in"),
   title: {
     default: "GirlyHub | Trendy Accessories, Scrunchies & Dresses",
     template: "%s | GirlyHub",
   },
   description:
     "GirlyHub is your go-to destination for high-quality accessories, scrunchies, earrings, jewellery, flats, and dresses. Shop our curated collection and express your style.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "GirlyHub",
+    title: "GirlyHub | Trendy Accessories, Scrunchies & Dresses",
+    description:
+      "Shop curated accessories, jewellery, scrunchies, flats, dresses, and more at GirlyHub.",
+    url: "https://girlyhub.in",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GirlyHub | Trendy Accessories, Scrunchies & Dresses",
+    description:
+      "Shop curated accessories, jewellery, scrunchies, flats, dresses, and more at GirlyHub.",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -73,6 +91,23 @@ export default function RootLayout({
 
         {children}
         <Footer />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "OnlineStore",
+              name: "GirlyHub",
+              url: "https://girlyhub.in",
+              description: metadata.description,
+              potentialAction: {
+                "@type": "SearchAction",
+                target: "https://girlyhub.in/search?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
         <Analytics />
         <SpeedInsights />
       </body>

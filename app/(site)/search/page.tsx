@@ -54,7 +54,7 @@ const Page = () => {
   );
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen w-full px-4 py-6 sm:px-6 lg:px-8">
       <div
         className={`flex flex-col items-center justify-center transition-all duration-300 ${
           query.length > 0 ? "" : "h-[50vh]"

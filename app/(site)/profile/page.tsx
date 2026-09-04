@@ -156,7 +156,10 @@ export default function ProfilePage() {
     zip: user?.zip,
   });
 
-  const cartCount = userCart?.products?.length || 0;
+  const validCartItems = (userCart?.products || []).filter(
+    (item) => item?.productId?._id,
+  );
+  const validCartCount = validCartItems.length;
   const wishlistCount = userWishlist?.products?.length || 0;
   const filteredOrders =
     orderFilter === "all"
@@ -407,7 +410,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
                   { label: "Orders", value: orders.length },
-                  { label: "Cart items", value: cartCount },
+                  { label: "Cart items", value: validCartCount },
                   { label: "Wishlist", value: wishlistCount },
                   {
                     label: "First order",
@@ -653,8 +656,9 @@ export default function ProfilePage() {
 
           {menu === "cart" &&
             (() => {
-              const cartTotalPages = Math.ceil(cartCount / itemsPerPage) || 1;
-              const paginatedCart = (userCart?.products || []).slice(
+              const cartTotalPages =
+                Math.ceil(validCartCount / itemsPerPage) || 1;
+              const paginatedCart = validCartItems.slice(
                 (cartPage - 1) * itemsPerPage,
                 cartPage * itemsPerPage,
               );
@@ -663,9 +667,9 @@ export default function ProfilePage() {
                 <div>
                   <div className="mb-4 flex items-center justify-between">
                     <h1 className="font-serif text-2xl text-rose-950">
-                      Cart ({cartCount})
+                      Cart ({validCartCount})
                     </h1>
-                    {cartCount > 0 && (
+                    {validCartCount > 0 && (
                       <button
                         type="button"
                         onClick={() => router.push("/cart")}
@@ -675,7 +679,7 @@ export default function ProfilePage() {
                       </button>
                     )}
                   </div>
-                  {cartCount === 0 ? (
+                  {validCartCount === 0 ? (
                     <p className="rounded-2xl border border-rose-100 bg-white p-8 text-sm text-rose-900/60">
                       Your cart is empty.
                     </p>
@@ -695,10 +699,10 @@ export default function ProfilePage() {
                         totalPages={cartTotalPages}
                         onPageChange={setCartPage}
                       />
-                      {cartCount > itemsPerPage && (
+                      {validCartCount > itemsPerPage && (
                         <p className="mt-3 text-center text-xs text-rose-900/50">
                           Showing page {cartPage} of {cartTotalPages} (
-                          {cartCount} items)
+                          {validCartCount} items)
                         </p>
                       )}
                     </>

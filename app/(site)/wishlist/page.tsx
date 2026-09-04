@@ -63,7 +63,7 @@ const WishlistPage = () => {
   }
 
   return (
-    <div className="min-h-[70vh] p-4">
+    <div className="min-h-[70vh] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
         <BreadcrumbHome /> /{" "}
         <span
