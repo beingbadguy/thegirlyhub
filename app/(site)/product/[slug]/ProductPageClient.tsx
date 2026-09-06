@@ -22,9 +22,10 @@ import {
   Check,
   MessageSquare,
   AlertCircle,
-  Share2
+  Share2,
 } from "lucide-react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { SiGooglepay, SiPaytm } from "react-icons/si";
 
 type ReviewType = {
   _id?: string;
@@ -73,26 +74,38 @@ interface ProductPageClientProps {
   slug: string;
 }
 
-const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: ProductPageClientProps) => {
+const getRandomViewerCount = () => Math.floor(Math.random() * 39) + 11;
+
+const ProductPageClient = ({
+  initialProduct,
+  initialRecommendations,
+  slug,
+}: ProductPageClientProps) => {
   const { addToWishlist, user, fetchUserCart } = useAuthStore();
   const router = useRouter();
 
   const [product, setProduct] = useState<Product>(initialProduct);
-  const [similarProducts, setSimilarProducts] = useState<Product[]>(initialRecommendations);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>(
+    initialRecommendations,
+  );
   const [addingCart, setAddingCart] = useState<boolean>(false);
 
   // Gallery states
   const [selectedImage, setSelectedImage] = useState<string>("");
-  const [zoomStyle, setZoomStyle] = useState<React.CSSProperties>({ display: "none" });
+  const [zoomStyle, setZoomStyle] = useState<React.CSSProperties>({
+    display: "none",
+  });
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isZooming, setIsZooming] = useState<boolean>(false);
   const [activeViewers, setActiveViewers] = useState<number>(12);
   const [showSizeGuide, setShowSizeGuide] = useState<boolean>(false);
-  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
-    desc: true,
-    details: false,
-    shipping: false
-  });
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
+    {
+      desc: true,
+      details: false,
+      shipping: false,
+    },
+  );
 
   // Custom variants states
   const [size, setSize] = useState("");
@@ -103,6 +116,16 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   // Sticky mobile CTA state
   const [showStickyBar, setShowStickyBar] = useState(false);
   const buySectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setActiveViewers(getRandomViewerCount());
+
+    const viewerTimer = window.setInterval(() => {
+      setActiveViewers(getRandomViewerCount());
+    }, 8000);
+
+    return () => window.clearInterval(viewerTimer);
+  }, []);
 
   // Review states
   const [reviewEligible, setReviewEligible] = useState<boolean>(false);
@@ -155,15 +178,20 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     month: "short",
   });
 
-  const checkEligibility = useCallback(async (productId: string) => {
-    if (!user) return;
-    try {
-      const response = await axios.get(`/api/products/${productId}/review-eligibility`);
-      setReviewEligible(response.data.eligible);
-    } catch (error) {
-      console.error("Error checking review eligibility:", error);
-    }
-  }, [user]);
+  const checkEligibility = useCallback(
+    async (productId: string) => {
+      if (!user) return;
+      try {
+        const response = await axios.get(
+          `/api/products/${productId}/review-eligibility`,
+        );
+        setReviewEligible(response.data.eligible);
+      } catch (error) {
+        console.error("Error checking review eligibility:", error);
+      }
+    },
+    [user],
+  );
 
   const addToCart = async (goDirectlyToCart = false) => {
     if (!product?._id || !inStock) {
@@ -202,7 +230,7 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       setReviewPhotos(newPhotos);
       setReviewError("");
 
-      const previews = files.map(file => URL.createObjectURL(file));
+      const previews = files.map((file) => URL.createObjectURL(file));
       setPhotoPreviews([...photoPreviews, ...previews]);
     }
   };
@@ -238,15 +266,19 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       formData.append("comment", reviewComment);
 
       const compressedPhotos = await Promise.all(
-        reviewPhotos.map(file => compressImage(file))
+        reviewPhotos.map((file) => compressImage(file)),
       );
-      compressedPhotos.forEach(file => {
+      compressedPhotos.forEach((file) => {
         formData.append("photos", file);
       });
 
-      const response = await axios.post(`/api/products/${product._id}/reviews`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      const response = await axios.post(
+        `/api/products/${product._id}/reviews`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
 
       if (response.data.success) {
         setReviewSuccess("Thank you! Your review has been posted.");
@@ -257,7 +289,9 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
         // Refresh product details locally
         try {
-          const refreshRes = await axios.get(`/api/product/${encodeURIComponent(slug)}`);
+          const refreshRes = await axios.get(
+            `/api/product/${encodeURIComponent(slug)}`,
+          );
           setProduct(refreshRes.data.product);
         } catch (err) {
           console.error("Failed to refresh product specs:", err);
@@ -266,7 +300,9 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     } catch (error: unknown) {
       console.error("Error submitting review:", error);
       if (error instanceof AxiosError) {
-        setReviewError(error.response?.data?.message || "Failed to submit review.");
+        setReviewError(
+          error.response?.data?.message || "Failed to submit review.",
+        );
       } else {
         setReviewError("Failed to submit review.");
       }
@@ -279,7 +315,8 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isMobile) return;
     setIsZooming(true);
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const { left, top, width, height } =
+      e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
     setZoomStyle({
@@ -338,12 +375,16 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     setSimilarProducts(initialRecommendations);
     window.scrollTo(0, 0);
 
-    const primaryImage = initialProduct.images && initialProduct.images.length > 0
-      ? initialProduct.images[0]
-      : initialProduct.image;
+    const primaryImage =
+      initialProduct.images && initialProduct.images.length > 0
+        ? initialProduct.images[0]
+        : initialProduct.image;
     setSelectedImage(primaryImage);
 
-    if (initialProduct.variants?.sizes && initialProduct.variants.sizes.length > 0) {
+    if (
+      initialProduct.variants?.sizes &&
+      initialProduct.variants.sizes.length > 0
+    ) {
       setSize(initialProduct.variants.sizes[0]);
     } else {
       const cat = initialProduct.category;
@@ -356,7 +397,10 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       }
     }
 
-    if (initialProduct.variants?.colors && initialProduct.variants.colors.length > 0) {
+    if (
+      initialProduct.variants?.colors &&
+      initialProduct.variants.colors.length > 0
+    ) {
       setColor(initialProduct.variants.colors[0]);
     } else {
       setColor("");
@@ -370,9 +414,10 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   // Auto-change image in a loop every 5 seconds
   useEffect(() => {
     if (!product) return;
-    const images = product.images && product.images.length > 0
-      ? product.images
-      : [product.image];
+    const images =
+      product.images && product.images.length > 0
+        ? product.images
+        : [product.image];
 
     if (images.length <= 1 || lightboxImage || isZooming) return;
 
@@ -404,19 +449,21 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
   const displayDiscountPrice = product.discountPrice ?? product.discountedPrice;
   const displayStock = product.stock ?? product.countInStock;
   const displayRatings = product.ratings ?? product.rating;
-  const displayImages = product.images && product.images.length > 0
-    ? product.images
-    : [product.image];
+  const displayImages =
+    product.images && product.images.length > 0
+      ? product.images
+      : [product.image];
 
-  const colorsList = product.variants?.colors && product.variants.colors.length > 0
-    ? product.variants.colors
-    : [];
+  const colorsList =
+    product.variants?.colors && product.variants.colors.length > 0
+      ? product.variants.colors
+      : [];
   const showColorSelector = colorsList.length > 0;
 
   // Calculate review distribution
   const totalReviewsCount = product.reviews?.length || 0;
   const ratingDistribution = [0, 0, 0, 0, 0]; // 5, 4, 3, 2, 1 stars
-  
+
   if (totalReviewsCount > 0 && product.reviews) {
     product.reviews.forEach((rev) => {
       const r = Math.round(rev.rating);
@@ -429,12 +476,11 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
     ratingDistribution[5 - roundedRating] = 3;
     if (roundedRating > 1) ratingDistribution[6 - roundedRating] = 1;
   }
-  
+
   const distributionSum = ratingDistribution.reduce((a, b) => a + b, 0) || 1;
 
   return (
     <div className="min-h-screen bg-[#FAF9F9] px-2 py-4 md:px-8 font-sans text-neutral-900">
-
       {/* Breadcrumbs */}
       <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
         <span
@@ -444,7 +490,12 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           Home
         </span>
         <span>/</span>
-        <span className="cursor-pointer transition-colors hover:text-neutral-800 capitalize" onClick={() => router.push(`/category/${encodeURIComponent(product.category)}`)}>
+        <span
+          className="cursor-pointer transition-colors hover:text-neutral-800 capitalize"
+          onClick={() =>
+            router.push(`/category/${encodeURIComponent(product.category)}`)
+          }
+        >
           {product.category}
         </span>
         <span>/</span>
@@ -453,7 +504,6 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
       {/* Main product display */}
       <div className="grid grid-cols-1 gap-6 lg:gap-12 lg:grid-cols-12  mx-auto bg-white  p-2 md:p-8 border border-neutral-100 ">
-
         {/* Left Section: Image Gallery */}
         <div className="lg:col-span-6 flex flex-col gap-4">
           {/* Main Display Image Container */}
@@ -466,7 +516,9 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
             {/* Wishlist floating heart */}
             <button
-              onClick={() => (user ? addToWishlist(product._id) : router.push("/login"))}
+              onClick={() =>
+                user ? addToWishlist(product._id) : router.push("/login")
+              }
               className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 border border-neutral-100 transition-all hover:bg-white active:scale-95 cursor-pointer"
             >
               {user && alreadyInWishlist(product._id) ? (
@@ -497,7 +549,8 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               className="relative w-full h-full cursor-zoom-in"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              onClick={() => setLightboxImage(selectedImage)}>
+              onClick={() => setLightboxImage(selectedImage)}
+            >
               <Image
                 src={selectedImage}
                 alt={product.title}
@@ -521,20 +574,29 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             {displayImages.map((img, idx) => (
               <button
                 key={idx}
-                className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] bg-neutral-50 transition-all duration-300 shrink-0 cursor-pointer ${selectedImage === img
-                  ? " border-2 border-neutral-900 opacity-100"
-                  : "border-2 border-neutral-200/40 opacity-60 hover:opacity-100"
-                  }`}
+                className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] bg-neutral-50 transition-all duration-300 shrink-0 cursor-pointer ${
+                  selectedImage === img
+                    ? " border-2 border-neutral-900 opacity-100"
+                    : "border-2 border-neutral-200/40 opacity-60 hover:opacity-100"
+                }`}
                 onClick={() => setSelectedImage(img)}
               >
-                <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-contain p-1" />
+                <Image
+                  src={img}
+                  alt={`Thumbnail ${idx + 1}`}
+                  fill
+                  className="object-contain p-1"
+                />
               </button>
             ))}
           </div>
         </div>
 
         {/* Right Section: Details & Purchase actions */}
-        <div ref={buySectionRef} className="lg:col-span-6 flex flex-col space-y-6 justify-start">
+        <div
+          ref={buySectionRef}
+          className="lg:col-span-6 flex flex-col space-y-6 justify-start"
+        >
           <div className="space-y-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-800 text-xs font-semibold uppercase tracking-wider">
               {product.category}
@@ -550,10 +612,11 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${i < Math.round(displayRatings)
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-neutral-200"
-                      }`}
+                    className={`w-4 h-4 ${
+                      i < Math.round(displayRatings)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-neutral-200"
+                    }`}
                   />
                 ))}
               </div>
@@ -561,10 +624,13 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                 {displayRatings.toFixed(1)} / 5
               </span>
               <span className="text-xs text-neutral-300">|</span>
-              <span className="text-xs text-neutral-500 font-medium cursor-pointer hover:underline" onClick={() => {
-                const el = document.getElementById("reviews-section");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}>
+              <span
+                className="text-xs text-neutral-500 font-medium cursor-pointer hover:underline"
+                onClick={() => {
+                  const el = document.getElementById("reviews-section");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
                 {product.reviews?.length || 0} reviews
               </span>
             </div>
@@ -581,12 +647,16 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                       ₹{displayPrice.toLocaleString()}
                     </span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5">
-                      Save ₹{(displayPrice - displayDiscountPrice).toLocaleString()} ({Math.floor(product.discountPercentage)}% OFF)
+                      Save ₹
+                      {(displayPrice - displayDiscountPrice).toLocaleString()} (
+                      {Math.floor(product.discountPercentage)}% OFF)
                     </span>
                   </>
                 )}
               </div>
-              <p className="text-[11px] text-neutral-400 font-medium">Inclusive of all taxes</p>
+              <p className="text-[11px] text-neutral-400 font-medium">
+                Inclusive of all taxes
+              </p>
             </div>
 
             {/* Conversion Boosters: Active Viewers & Stock Urgency */}
@@ -644,10 +714,11 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                     <button
                       key={s}
                       onClick={() => setSize(s)}
-                      className={`min-w-[45px] h-[40px] px-3 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${s === size
-                        ? "bg-neutral-900 text-white border-transparent shadow-sm"
-                        : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-400"
-                        }`}
+                      className={`min-w-[45px] h-[40px] px-3 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${
+                        s === size
+                          ? "bg-neutral-900 text-white border-transparent shadow-sm"
+                          : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-400"
+                      }`}
                     >
                       {s}
                     </button>
@@ -670,16 +741,19 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                         key={colName}
                         onClick={() => setColor(colName)}
                         title={colName}
-                        className={`relative w-8 h-8 rounded-full border-2 transition-all p-0.5 ${colName === color
-                          ? "border-neutral-950 scale-110 shadow-sm"
-                          : "border-transparent hover:scale-105"
-                          }`}
+                        className={`relative w-8 h-8 rounded-full border-2 transition-all p-0.5 ${
+                          colName === color
+                            ? "border-neutral-950 scale-110 shadow-sm"
+                            : "border-transparent hover:scale-105"
+                        }`}
                       >
                         <div
                           style={{ backgroundColor: cleanColor }}
                           className="w-full h-full rounded-full shadow-inner border border-black/5 flex items-center justify-center"
                         >
-                          {colName === color && <Check className="w-3 h-3 text-white mix-blend-difference" />}
+                          {colName === color && (
+                            <Check className="w-3 h-3 text-white mix-blend-difference" />
+                          )}
                         </div>
                       </button>
                     );
@@ -691,7 +765,6 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
           {/* Action buttons */}
           <div className="space-y-4 pt-4">
-
             {/* Delivery estimate */}
             <div className="flex items-center gap-3 border border-neutral-200 bg-neutral-50 px-4 py-3.5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-white border border-neutral-200 text-neutral-700">
@@ -699,7 +772,10 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-neutral-800">
-                  Order today, get it by <span className="text-neutral-950">{formattedDeliveryDate}</span>
+                  Order today, get it by{" "}
+                  <span className="text-neutral-950">
+                    {formattedDeliveryDate}
+                  </span>
                 </p>
                 <p className="text-[11px] text-neutral-400 font-medium">
                   Estimated 5-day delivery to your address
@@ -739,18 +815,35 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                 <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                   100% Secure Checkout
                 </span>
-                <div className="flex items-center justify-center gap-4 opacity-50">
-                  {/* Visa SVG */}
-                  <svg className="h-3 w-auto" viewBox="0 0 24 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8.7 13.5l1.6-9.6H13l-1.6 9.6H8.7zm7.2-9.2c-.3-.4-.9-.6-1.7-.6-1.5 0-2.8.8-2.9 2.2-.1.9.8 1.4 1.4 1.7.6.3.8.5.8.8 0 .5-.6.7-1.1.7-.8 0-1.2-.2-1.6-.4l-.2-.1-.2 1.4c.4.2 1.1.4 1.9.4 1.7 0 2.8-.8 2.8-2.1.1-.7-.4-1.3-1.4-1.7-.6-.3-1-.5-1-.9 0-.3.3-.6.9-.6.5 0 .9.1 1.2.3l.1.1.2-1.3zM22 8.7c0-.2-.1-.4-.3-.5l-1.4-6.3h-1.6c-.3 0-.6.2-.7.5l-2.4 5.9V8.7c.4.1.8.1 1.2.1H22v-.1zm-17-.3L3.4 3.9H1.1L1 4.5c1.4.4 2.6 1 3.4 1.5l1.6 6.5h1.7l2.6-9.6H8.7L5 8.4z" fill="#1A1919"/>
-                  </svg>
+                <div className="flex flex-wrap items-center justify-center gap-3 opacity-50">
                   {/* Mastercard SVG */}
-                  <svg className="h-4.5 w-auto" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="7.5" cy="9" r="6" fill="#F97316"/>
-                    <circle cx="16.5" cy="9" r="6" fill="#EF4444"/>
+                  <svg
+                    className="h-4.5 w-auto"
+                    viewBox="0 0 24 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="7.5" cy="9" r="6" fill="#F97316" />
+                    <circle cx="16.5" cy="9" r="6" fill="#EF4444" />
                   </svg>
-                  <span className="text-[9px] font-extrabold text-neutral-800 border border-neutral-300 px-1 py-0.2 tracking-wider">RUPAY</span>
-                  <span className="text-[9px] font-extrabold text-neutral-800 border border-neutral-300 px-1 py-0.2 tracking-wider">COD</span>
+                  <span className="text-[9px] font-extrabold text-neutral-800 border border-neutral-300 px-1 py-0.2 tracking-wider">
+                    RUPAY
+                  </span>
+                  <span
+                    aria-label="UPI"
+                    title="UPI"
+                    className="inline-flex items-center justify-center border border-neutral-300 p-1 text-neutral-800"
+                  >
+                    <SiGooglepay className="h-3.5 w-7" aria-hidden="true" />
+                  </span>
+                  <span
+                    aria-label="Paytm"
+                    title="Paytm"
+                    className="inline-flex items-center justify-center border border-[#b7d7ff] p-1 text-[#007bff]"
+                  >
+                    <SiPaytm className="h-3.5 w-8" aria-hidden="true" />
+                  </span>
+                  {/* <span className="text-[9px] font-extrabold text-neutral-800 border border-neutral-300 px-1 py-0.2 tracking-wider">COD</span> */}
                 </div>
               </div>
             )}
@@ -775,8 +868,12 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             <Truck className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-neutral-800">Free Shipping</h4>
-            <p className="text-xs text-neutral-400 font-medium">On all orders above ₹499</p>
+            <h4 className="font-bold text-sm text-neutral-800">
+              Free Shipping
+            </h4>
+            <p className="text-xs text-neutral-400 font-medium">
+              On all orders above ₹499
+            </p>
           </div>
         </div>
 
@@ -786,7 +883,9 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           </div>
           <div>
             <h4 className="font-bold text-sm text-neutral-800">Easy Returns</h4>
-            <p className="text-xs text-neutral-400 font-medium">7-day replacement guarantee</p>
+            <p className="text-xs text-neutral-400 font-medium">
+              7-day replacement guarantee
+            </p>
           </div>
         </div>
 
@@ -795,8 +894,12 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-neutral-800">Secure Checkout</h4>
-            <p className="text-xs text-neutral-400 font-medium">100% protected safe payments</p>
+            <h4 className="font-bold text-sm text-neutral-800">
+              Secure Checkout
+            </h4>
+            <p className="text-xs text-neutral-400 font-medium">
+              100% protected safe payments
+            </p>
           </div>
         </div>
       </div>
@@ -807,11 +910,15 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           {/* Description Accordion */}
           <div className="pb-4">
             <button
-              onClick={() => setOpenAccordions(prev => ({ ...prev, desc: !prev.desc }))}
+              onClick={() =>
+                setOpenAccordions((prev) => ({ ...prev, desc: !prev.desc }))
+              }
               className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-neutral-800 focus:outline-none cursor-pointer"
             >
               <span>Description</span>
-              <span className="text-neutral-500 font-bold text-sm">{openAccordions.desc ? "–" : "+"}</span>
+              <span className="text-neutral-500 font-bold text-sm">
+                {openAccordions.desc ? "–" : "+"}
+              </span>
             </button>
             {openAccordions.desc && (
               <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans">
@@ -825,37 +932,60 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           {/* Specifications Accordion */}
           <div className="py-4">
             <button
-              onClick={() => setOpenAccordions(prev => ({ ...prev, details: !prev.details }))}
+              onClick={() =>
+                setOpenAccordions((prev) => ({
+                  ...prev,
+                  details: !prev.details,
+                }))
+              }
               className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-neutral-800 focus:outline-none cursor-pointer"
             >
               <span>Specifications & Details</span>
-              <span className="text-neutral-500 font-bold text-sm">{openAccordions.details ? "–" : "+"}</span>
+              <span className="text-neutral-500 font-bold text-sm">
+                {openAccordions.details ? "–" : "+"}
+              </span>
             </button>
             {openAccordions.details && (
               <div className="pt-4 text-xs md:text-sm text-neutral-600">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 font-sans">
                   <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">Category</span>
+                    <span className="font-semibold text-neutral-400">
+                      Category
+                    </span>
                     <span className="text-neutral-800">{product.category}</span>
                   </div>
                   <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">Stock Status</span>
-                    <span className={displayStock > 0 ? "text-emerald-700 font-semibold" : "text-rose-700 font-semibold"}>
-                      {displayStock > 0 ? `In Stock (${displayStock} units)` : "Out of Stock"}
+                    <span className="font-semibold text-neutral-400">
+                      Stock Status
+                    </span>
+                    <span
+                      className={
+                        displayStock > 0
+                          ? "text-emerald-700 font-semibold"
+                          : "text-rose-700 font-semibold"
+                      }
+                    >
+                      {displayStock > 0
+                        ? `In Stock (${displayStock} units)`
+                        : "Out of Stock"}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">Weight</span>
-                    <span className="text-neutral-800">{product.weight ? `${product.weight} kg` : "N/A"}</span>
+                    <span className="font-semibold text-neutral-400">
+                      Weight
+                    </span>
+                    <span className="text-neutral-800">
+                      {product.weight ? `${product.weight} kg` : "N/A"}
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">Dimensions</span>
+                    <span className="font-semibold text-neutral-400">
+                      Dimensions
+                    </span>
                     <span className="text-neutral-800">
-                      {product.length || product.breadth || product.height ? (
-                        `${product.length || "-"} x ${product.breadth || "-"} x ${product.height || "-"} cm`
-                      ) : (
-                        "N/A"
-                      )}
+                      {product.length || product.breadth || product.height
+                        ? `${product.length || "-"} x ${product.breadth || "-"} x ${product.height || "-"} cm`
+                        : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -866,17 +996,36 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           {/* Shipping & Returns Accordion */}
           <div className="pt-4">
             <button
-              onClick={() => setOpenAccordions(prev => ({ ...prev, shipping: !prev.shipping }))}
+              onClick={() =>
+                setOpenAccordions((prev) => ({
+                  ...prev,
+                  shipping: !prev.shipping,
+                }))
+              }
               className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-neutral-800 focus:outline-none cursor-pointer"
             >
               <span>Shipping & Return Policies</span>
-              <span className="text-neutral-500 font-bold text-sm">{openAccordions.shipping ? "–" : "+"}</span>
+              <span className="text-neutral-500 font-bold text-sm">
+                {openAccordions.shipping ? "–" : "+"}
+              </span>
             </button>
             {openAccordions.shipping && (
               <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans space-y-2">
-                <p>📦 <strong>Free Shipping:</strong> Enjoy free standard shipping on all orders above ₹499. Orders are shipped within 24-48 hours.</p>
-                <p>🔄 <strong>7-Day Returns:</strong> If you are not completely satisfied, return or replace your product within 7 days of delivery. Terms & conditions apply.</p>
-                <p>🛡️ <strong>Secure Checkout:</strong> All transactions are encrypted and processed securely. We accept COD, UPI, Cards, and NetBanking.</p>
+                <p>
+                  📦 <strong>Free Shipping:</strong> Enjoy free standard
+                  shipping on all orders above ₹499. Orders are shipped within
+                  24-48 hours.
+                </p>
+                <p>
+                  🔄 <strong>7-Day Returns:</strong> If you are not completely
+                  satisfied, return or replace your product within 7 days of
+                  delivery. Terms & conditions apply.
+                </p>
+                <p>
+                  🛡️ <strong>Secure Checkout:</strong> All transactions are
+                  encrypted and processed securely. We accept COD, UPI, Cards,
+                  and NetBanking.
+                </p>
               </div>
             )}
           </div>
@@ -884,8 +1033,10 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       </div>
 
       {/* REVIEWS SECTION */}
-      <div id="reviews-section" className=" mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-
+      <div
+        id="reviews-section"
+        className=" mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12"
+      >
         {/* Write a Review Block */}
         <div className="lg:col-span-4 bg-white p-6 border border-neutral-100 flex flex-col justify-start">
           <h2 className="text-lg font-bold text-neutral-800 mb-3 flex items-center gap-2">
@@ -901,14 +1052,17 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${i < Math.round(displayRatings)
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-neutral-200"
-                      }`}
+                    className={`w-4 h-4 ${
+                      i < Math.round(displayRatings)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-neutral-200"
+                    }`}
                   />
                 ))}
               </div>
-              <p className="text-[11px] font-semibold text-neutral-400">Based on {product.reviews?.length || 0} reviews</p>
+              <p className="text-[11px] font-semibold text-neutral-400">
+                Based on {product.reviews?.length || 0} reviews
+              </p>
             </div>
           </div>
 
@@ -919,14 +1073,18 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               const percentage = Math.round((count / distributionSum) * 100);
               return (
                 <div key={stars} className="flex items-center gap-3 text-xs">
-                  <span className="w-8 text-neutral-500 font-semibold">{stars} ★</span>
+                  <span className="w-8 text-neutral-500 font-semibold">
+                    {stars} ★
+                  </span>
                   <div className="flex-1 h-2 bg-neutral-100 overflow-hidden">
                     <div
                       style={{ width: `${percentage}%` }}
                       className="h-full bg-neutral-900 transition-all duration-500"
                     />
                   </div>
-                  <span className="w-8 text-right text-neutral-400 font-semibold">{percentage}%</span>
+                  <span className="w-8 text-right text-neutral-400 font-semibold">
+                    {percentage}%
+                  </span>
                 </div>
               );
             })}
@@ -941,7 +1099,9 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
                 {/* Stars selector */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Star Rating</label>
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                    Star Rating
+                  </label>
                   <div className="flex items-center gap-1.5">
                     {Array.from({ length: 5 }, (_, i) => {
                       const starVal = i + 1;
@@ -953,10 +1113,11 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                           className="focus:outline-none transition-transform active:scale-95"
                         >
                           <Star
-                            className={`w-7 h-7 ${starVal <= reviewRating
-                              ? "fill-amber-400 text-amber-400 scale-105"
-                              : "text-neutral-200 hover:text-amber-200"
-                              }`}
+                            className={`w-7 h-7 ${
+                              starVal <= reviewRating
+                                ? "fill-amber-400 text-amber-400 scale-105"
+                                : "text-neutral-200 hover:text-amber-200"
+                            }`}
                           />
                         </button>
                       );
@@ -966,7 +1127,9 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
                 {/* Comment Text */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Your Comments</label>
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                    Your Comments
+                  </label>
                   <textarea
                     rows={3}
                     placeholder="Provide your experience with this product..."
@@ -984,8 +1147,16 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
                   <div className="flex flex-wrap gap-2">
                     {photoPreviews.map((url, idx) => (
-                      <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50">
-                        <Image src={url} alt="Review Preview" fill className="object-cover" />
+                      <div
+                        key={idx}
+                        className="relative w-16 h-16 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50"
+                      >
+                        <Image
+                          src={url}
+                          alt="Review Preview"
+                          fill
+                          className="object-cover"
+                        />
                         <button
                           type="button"
                           onClick={() => removePhoto(idx)}
@@ -999,7 +1170,9 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                     {reviewPhotos.length < 4 && (
                       <label className="w-16 h-16 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-neutral-200 hover:border-neutral-400 bg-neutral-50 cursor-pointer transition-colors">
                         <Upload className="w-4 h-4 text-neutral-400" />
-                        <span className="text-[9px] font-semibold text-neutral-400 mt-1">Add Photo</span>
+                        <span className="text-[9px] font-semibold text-neutral-400 mt-1">
+                          Add Photo
+                        </span>
                         <input
                           type="file"
                           accept="image/*"
@@ -1014,7 +1187,8 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
 
                 {reviewError && (
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 bg-rose-50 p-2 rounded-lg">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {reviewError}
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />{" "}
+                    {reviewError}
                   </div>
                 )}
                 {reviewSuccess && (
@@ -1039,7 +1213,8 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               <div className="text-center py-6 px-4 bg-neutral-50 border border-neutral-100 rounded-2xl space-y-2">
                 <MessageSquare className="w-6 h-6 text-neutral-400 mx-auto" />
                 <p className="text-xs font-semibold text-neutral-500 leading-relaxed">
-                  Only customers who have purchased and received this product are verified to write reviews.
+                  Only customers who have purchased and received this product
+                  are verified to write reviews.
                 </p>
               </div>
             )}
@@ -1055,22 +1230,28 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-none">
             {product.reviews && product.reviews.length > 0 ? (
               product.reviews.map((rev, idx) => (
-                <div key={idx} className="border-b border-neutral-100 pb-6 last:border-b-0 space-y-3">
+                <div
+                  key={idx}
+                  className="border-b border-neutral-100 pb-6 last:border-b-0 space-y-3"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-neutral-100 text-neutral-700 flex items-center justify-center font-bold text-xs uppercase border border-neutral-200">
                         {rev.username.charAt(0)}
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-neutral-800">{rev.username}</h4>
+                        <h4 className="text-sm font-semibold text-neutral-800">
+                          {rev.username}
+                        </h4>
                         <div className="flex items-center gap-0.5 mt-0.5">
                           {Array.from({ length: 5 }, (_, i) => (
                             <Star
                               key={i}
-                              className={`w-3 h-3 ${i < rev.rating
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-neutral-200"
-                                }`}
+                              className={`w-3 h-3 ${
+                                i < rev.rating
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-neutral-200"
+                              }`}
                             />
                           ))}
                         </div>
@@ -1098,7 +1279,12 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
                           onClick={() => setLightboxImage(photoUrl)}
                           className="relative w-14 h-14 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 hover:opacity-90 active:scale-95 transition-all shadow-sm"
                         >
-                          <Image src={photoUrl} alt="Customer Photo" fill className="object-cover" />
+                          <Image
+                            src={photoUrl}
+                            alt="Customer Photo"
+                            fill
+                            className="object-cover"
+                          />
                         </button>
                       ))}
                     </div>
@@ -1108,8 +1294,12 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
             ) : (
               <div className="text-center py-12 space-y-2">
                 <MessageSquare className="w-8 h-8 text-neutral-300 mx-auto" />
-                <p className="text-xs font-semibold text-neutral-400">No reviews yet for this product.</p>
-                <p className="text-[10px] text-neutral-300">Be the first to purchase and review!</p>
+                <p className="text-xs font-semibold text-neutral-400">
+                  No reviews yet for this product.
+                </p>
+                <p className="text-[10px] text-neutral-300">
+                  Be the first to purchase and review!
+                </p>
               </div>
             )}
           </div>
@@ -1119,13 +1309,12 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
       {/* Similar products section */}
       <div className=" mx-auto my-12">
         <h2 className="text-lg md:text-xl font-bold text-neutral-800 mb-6 flex items-center gap-2">
-          You May Also Like <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
+          You May Also Like{" "}
+          <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
         </h2>
         <div className="my-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {similarProducts.length > 0 ? (
-            similarProducts.map((p) => (
-              <ProductCard key={p._id} product={p} />
-            ))
+            similarProducts.map((p) => <ProductCard key={p._id} product={p} />)
           ) : (
             <p className="col-span-full text-center text-neutral-400 py-6 text-xs">
               No related products found.
@@ -1187,12 +1376,13 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               >
                 <X className="w-5 h-5" />
               </button>
-              
+
               <h3 className="text-md font-bold text-neutral-900 uppercase tracking-wider mb-2 font-sans">
                 Size Guide
               </h3>
               <p className="text-xs text-neutral-400 mb-6">
-                Standard measurements. Fit may vary depending on style and fabric.
+                Standard measurements. Fit may vary depending on style and
+                fabric.
               </p>
 
               <div className="overflow-x-auto border border-neutral-200">
@@ -1249,7 +1439,8 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
               <div className="mt-5 flex gap-2.5 text-[11px] text-neutral-500 bg-neutral-50 p-3 border border-neutral-100">
                 <AlertCircle className="w-4 h-4 text-neutral-500 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  <strong>Fit Guide:</strong> If you prefer a loose fit, or are between sizes, we recommend selecting one size larger.
+                  <strong>Fit Guide:</strong> If you prefer a loose fit, or are
+                  between sizes, we recommend selecting one size larger.
                 </p>
               </div>
             </motion.div>
@@ -1268,11 +1459,20 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           >
             <div className="flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 shrink-0">
-                <Image src={selectedImage} alt={product.title} fill className="object-contain p-1" />
+                <Image
+                  src={selectedImage}
+                  alt={product.title}
+                  fill
+                  className="object-contain p-1"
+                />
               </div>
               <div className="space-y-0.5">
-                <h4 className="text-xs font-bold text-neutral-800 truncate max-w-[120px]">{product.title}</h4>
-                <p className="text-sm font-bold text-rose-600">₹{displayDiscountPrice.toLocaleString()}</p>
+                <h4 className="text-xs font-bold text-neutral-800 truncate max-w-[120px]">
+                  {product.title}
+                </h4>
+                <p className="text-sm font-bold text-rose-600">
+                  ₹{displayDiscountPrice.toLocaleString()}
+                </p>
               </div>
             </div>
 
@@ -1295,7 +1495,6 @@ const ProductPageClient = ({ initialProduct, initialRecommendations, slug }: Pro
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 };

@@ -16,11 +16,11 @@ const features = [
     title: "100+",
     subtitle: "HAPPY CUSTOMERS",
   },
-  {
-    icon: Truck,
-    title: "EXPRESS SHIPPING",
-    subtitle: "AVAILABLE",
-  },
+  // {
+  //   icon: Truck,
+  //   title: "EXPRESS SHIPPING",
+  //   subtitle: "AVAILABLE",
+  // },
   {
     icon: Heart,
     title: "HANDMADE",
@@ -52,8 +52,8 @@ const features = [
 
 const TrustStrip = () => {
   return (
-    <section className="bg-[#fdf7f9] py-10">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+    <section className="bg-[#fdf7f9] py-10 ">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-10 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 ">
         {features.map((item, index) => {
           const Icon = item.icon;
           return (

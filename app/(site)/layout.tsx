@@ -10,7 +10,7 @@ import "./globals.css";
 import HeaderSection from "@/components/HeaderSection";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
-import ScrollToTop from "@/components/ScrollToTop";
+import SmoothScroll from "@/components/SmoothScroll";
 import AnnouncementBand from "@/components/AnnouncementBand";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -85,7 +85,7 @@ export default function RootLayout({
         className={`${poppins.variable} ${bodoniModa.variable} ${prata.variable} ${instrumentSerif.variable} antialiased custom-scrollbar `}
       >
         <AnnouncementBand />
-        <ScrollToTop />
+        <SmoothScroll />
         {/* <Header /> */}
         <HeaderSection />
 

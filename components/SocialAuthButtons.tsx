@@ -56,6 +56,8 @@ export default function SocialAuthButtons({
 
   useEffect(() => {
     if (!googleClientId) return;
+    let removeResizeListener = () => {};
+
     loadScript("https://accounts.google.com/gsi/client", "google-gsi")
       .then(() => {
         if (!window.google || !googleBtnRef.current) return;
@@ -79,15 +81,26 @@ export default function SocialAuthButtons({
             }
           },
         });
-        googleBtnRef.current.innerHTML = "";
-        window.google.accounts.id.renderButton(googleBtnRef.current, {
-          theme: "outline",
-          size: "large",
-          width: 360,
-          text: "continue_with",
-        });
+        const renderGoogleButton = () => {
+          if (!googleBtnRef.current) return;
+          googleBtnRef.current.innerHTML = "";
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: "outline",
+            size: "large",
+            width: window.innerWidth < 640 ? 280 : 360,
+            text: "continue_with",
+          });
+        };
+
+        renderGoogleButton();
+        const mediaQuery = window.matchMedia("(max-width: 639px)");
+        mediaQuery.addEventListener("change", renderGoogleButton);
+        removeResizeListener = () =>
+          mediaQuery.removeEventListener("change", renderGoogleButton);
       })
       .catch(() => setError("Could not load Google login."));
+
+    return () => removeResizeListener();
   }, [googleClientId]);
 
   const facebookLogin = async () => {
@@ -206,7 +219,7 @@ export default function SocialAuthButtons({
         <div className="flex justify-center">
           <div
             ref={googleBtnRef}
-            className="min-h-[40px] w-full max-w-[360px]"
+            className="min-h-10 w-full max-w-70 sm:max-w-90"
           />
         </div>
       )}

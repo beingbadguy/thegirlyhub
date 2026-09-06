@@ -9,6 +9,8 @@ import HeroBannerSlider from "@/components/HeroBannerSlider";
 import StaggeringCategories from "@/components/StaggeringCategories";
 import TrustStrip from "@/components/TrustStrip";
 import SummerSaleBanner from "@/components/SummerSaleBanner";
+import HomeReviews from "@/components/HomeReviews";
+import OfferBanner from "@/components/OfferBanner";
 
 export default function Home() {
   return (
@@ -18,8 +20,10 @@ export default function Home() {
         <HeroBannerSlider />
         <ShopByCategory limit={12} showSeeMore />
         <HomeAdSlots />
+        <OfferBanner />
         <NewArrivals limit={12} showSeeMore />
         <TrustStrip />
+        <HomeReviews />
         {/* <SummerSaleBanner/> */}
         <Newsletter />
         <Faqs />
