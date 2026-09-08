@@ -2,6 +2,28 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+@font-face {
+  font-family: "highCruiser";
+  src: url("/highCruiser.otf") format("opentype");
+  font-display: swap;
+}
+
+.brand-logo {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+  font-family: "highCruiser";
+  /* font-size: clamp(1.7rem, 4vw, 2.35rem); */
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.brand-logo-hub {
+  color: #f05ab8;
+}
+
 * {
   user-select: none;
 }

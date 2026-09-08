@@ -38,6 +38,13 @@ type Products = {
   isActive: boolean;
 };
 
+const LogoMark = () => (
+  <span className="brand-logo" aria-label="GirlyHub">
+    <span>Girly</span>
+    <span className="brand-logo-hub">Hub</span>
+  </span>
+);
+
 const HeaderSection = () => {
   const { user, fetchUser, userCart } = useAuthStore();
 
@@ -128,21 +135,18 @@ const HeaderSection = () => {
         </AnimatePresence>
       </div> */}
       <nav className="flex items-center justify-between p-4 border-b  border-rose-100 shadow-xs ">
-        <div className="font-bold ">
+        <div className=" hidden md:block font-bold">
           <Link href={"/"}>
-            <span className="relative block h-12 w-36 overflow-hidden">
-              <img
-                src="/girly3.png"
-                alt="GirlyHub"
-                className="h-[55px] ml-[-36px]  w-full object-cover"
-              />
+            <span className="relative flex h-12 w-36 items-center overflow-hidden">
+              <LogoMark />
             </span>
           </Link>
         </div>
+
         <div
           className={` ${
             menu ? "translate-x-0" : "-translate-x-[100%]"
-          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[999] font-instrument`}
+          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[9999] font-instrument`}
         >
           <p
             className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"
@@ -153,12 +157,8 @@ const HeaderSection = () => {
             <X className="w-6 h-6" />
           </p>
           <div className="flex items-center justify-start  lg:hidden ">
-            <span className="relative block h-12 w-36 overflow-hidden">
-              <img
-                src="/girly3.png"
-                alt="GirlyHub"
-                className="h-[55px] ml-[-36px] w-full object-cover"
-              />
+            <span className="relative flex h-12 w-36 items-center overflow-hidden">
+              <LogoMark />
             </span>
           </div>
           <Separator className="bg-gray-100 h-0.5 w-full lg:hidden" />
@@ -286,15 +286,34 @@ const HeaderSection = () => {
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-center gap-5">
+
+        <div className="flex w-full gap-4 items-center md:hidden">
           <Search
-            className="cursor-pointer"
+            className="cursor-pointer md:hidden"
             onClick={() => {
               setSearchOpen(true);
             }}
           />
+
+          <div className="absolute left-1/2 -translate-x-1/2 md:hidden mt-2">
+            <Link href={"/"}>
+              <span className="flex h-24 w-28 items-center justify-center">
+                <LogoMark />
+              </span>
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-5">
+          <Search
+            className="cursor-pointer hidden md:block"
+            onClick={() => {
+              setSearchOpen(true);
+            }}
+          />
+
           <Heart
-            className="cursor-pointer"
+            className="hidden cursor-pointer md:block"
             onClick={() => {
               router.push("/wishlist");
             }}
@@ -313,7 +332,7 @@ const HeaderSection = () => {
           </div>
 
           <UserRound
-            className="cursor-pointer"
+            className="hidden cursor-pointer md:block"
             onClick={() => {
               router.push("/profile");
             }}

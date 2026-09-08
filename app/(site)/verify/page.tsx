@@ -165,7 +165,7 @@ function VerifyForm() {
           </button>
         </div>
         <Link
-          href={next === "/dashboard" ? "/admin/admin" : "/login"}
+          href="/login"
           className="mt-6 flex items-center justify-center gap-2 text-xs text-black/40 hover:text-black"
         >
           <ArrowLeft className="size-3" /> Back to sign in

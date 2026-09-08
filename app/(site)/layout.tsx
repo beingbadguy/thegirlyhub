@@ -13,6 +13,7 @@ import { Analytics } from "@vercel/analytics/react";
 import SmoothScroll from "@/components/SmoothScroll";
 import AnnouncementBand from "@/components/AnnouncementBand";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import StickyMenuBar from "@/components/StickyMenuBar";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -88,6 +89,7 @@ export default function RootLayout({
         <SmoothScroll />
         {/* <Header /> */}
         <HeaderSection />
+        <StickyMenuBar />
 
         {children}
         <Footer />

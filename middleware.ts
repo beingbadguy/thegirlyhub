@@ -61,40 +61,13 @@ export async function middleware(request: NextRequest) {
     "/reset",
   ];
 
-  const onlyForAdmins = [
-    "/dashboard",
-    "/orders",
-    "/customers",
-    "/settings",
-    "/support",
-    "/faqs",
-    "/products",
-    "/categories",
-    "/addproduct",
-    "/addcategory",
-    "/editproduct",
-    "/editcategory",
-    "/others",
-  ];
   const protectedRoutes = ["/orders"];
-  const isAdminRoute =
-    path === "/admin" ||
-    path.startsWith("/admin/") ||
-    onlyForAdmins.some(
-      (route) => path === route || path.startsWith(`${route}/`),
-    );
-  const isAdminLogin = path === "/admin/admin";
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => path === route || path.startsWith(`${route}/`),
+  );
 
   if (!token) {
-    if (protectedRoutes.includes(path) || (isAdminRoute && !isAdminLogin)) {
-      return NextResponse.redirect(
-        new URL(isAdminRoute ? "/admin/admin" : "/login", request.url),
-      );
-    }
-    if (isAdminLogin) {
-      return NextResponse.next();
-    }
-    if (protectedRoutes.some((route) => path.startsWith(`${route}/`))) {
+    if (isProtectedRoute) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     return NextResponse.next();
@@ -104,9 +77,8 @@ export async function middleware(request: NextRequest) {
   const decoded = await verifyJWT(token);
 
   if (!decoded) {
-    // Let public user pages render their own unauthenticated state.
-    const response = isAdminRoute
-      ? NextResponse.redirect(new URL("/admin/admin", request.url))
+    const response = isProtectedRoute
+      ? NextResponse.redirect(new URL("/login", request.url))
       : NextResponse.next();
     response.cookies.delete("basics");
     return response;
@@ -116,16 +88,6 @@ export async function middleware(request: NextRequest) {
   if (restrictedForLoggedIn.includes(path)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
-  const isAdmin = decoded.role === "admin";
-
-  if (isAdminRoute && !isAdminLogin && !isAdmin) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  if (isAdminLogin && isAdmin) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
   return NextResponse.next();
 }
 
@@ -147,20 +109,8 @@ export const config = {
     "/forget",
     "/reset",
     "/verify",
-    "/dashboard",
     "/orders",
-    "/customers",
-    "/settings",
-    "/products",
-    "/categories",
-    "/addproduct",
-    "/addcategory",
-    "/editproduct/:id",
-    "/editcategory/:id",
     "/product/:slug",
     "/category/:id",
-    "/support",
-    "/admin",
-    "/admin/admin",
   ],
 };

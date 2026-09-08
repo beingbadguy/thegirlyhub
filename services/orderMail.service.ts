@@ -21,7 +21,7 @@ interface ShippedEmailPayload {
  * Sends the "Your order has been shipped" email to the customer.
  */
 export async function sendOrderShippedEmail(
-  payload: ShippedEmailPayload
+  payload: ShippedEmailPayload,
 ): Promise<void> {
   const {
     to,
@@ -41,7 +41,7 @@ export async function sendOrderShippedEmail(
           <td style="padding: 10px 12px; border-bottom: 1px solid #f3e8f0; text-align: center;">${p.size || "-"}</td>
           <td style="padding: 10px 12px; border-bottom: 1px solid #f3e8f0; text-align: center;">${p.quantity ?? 1}</td>
           <td style="padding: 10px 12px; border-bottom: 1px solid #f3e8f0; text-align: right;">₹${p.price ?? 0}</td>
-        </tr>`
+        </tr>`,
     )
     .join("");
 

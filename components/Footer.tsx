@@ -34,8 +34,9 @@ const Footer = () => {
         <div>
           <h2 className="mb-4 text-lg font-semibold">GirlyHub</h2>
           <p className="text-sm leading-6 text-pink-100/75">
-            Your go-to store for minimal, high-quality essentials. We bring
-            style & simplicity together.
+            GirlyHub is your go-to destination for high-quality accessories,
+            scrunchies, earrings, jewellery, flats, and dresses. Shop our
+            curated collection and express your style.
           </p>
 
           <div className="mt-5 space-y-2.5 text-sm text-pink-100/70">
@@ -59,19 +60,41 @@ const Footer = () => {
           <h3 className="mb-4 text-base font-medium">Quick Links</h3>
           <ul className="space-y-2 text-sm text-pink-100/75">
             <li>
-              <Link href="/" className="transition-colors hover:text-pink-200">Home</Link>
+              <Link href="/" className="transition-colors hover:text-pink-200">
+                Home
+              </Link>
             </li>
             <li>
-              <Link href="/product" className="transition-colors hover:text-pink-200">Shop</Link>
+              <Link
+                href="/product"
+                className="transition-colors hover:text-pink-200"
+              >
+                Shop
+              </Link>
             </li>
             <li>
-              <Link href="/about" className="transition-colors hover:text-pink-200">About Us</Link>
+              <Link
+                href="/about"
+                className="transition-colors hover:text-pink-200"
+              >
+                About Us
+              </Link>
             </li>
             <li>
-              <Link href="/contact" className="transition-colors hover:text-pink-200">Contact</Link>
+              <Link
+                href="/contact"
+                className="transition-colors hover:text-pink-200"
+              >
+                Contact
+              </Link>
             </li>
             <li>
-              <Link href="/track" className="transition-colors hover:text-pink-200">Track Order</Link>
+              <Link
+                href="/track"
+                className="transition-colors hover:text-pink-200"
+              >
+                Track Order
+              </Link>
             </li>
           </ul>
         </div>
@@ -81,22 +104,34 @@ const Footer = () => {
           <h3 className="mb-4 text-base font-medium">Policies</h3>
           <ul className="space-y-2 text-sm text-pink-100/75">
             <li>
-              <Link href="/policies/terms-of-service" className="transition-colors hover:text-pink-200">
+              <Link
+                href="/policies/terms-of-service"
+                className="transition-colors hover:text-pink-200"
+              >
                 Terms of Service
               </Link>
             </li>
             <li>
-              <Link href="/policies/privacy-policy" className="transition-colors hover:text-pink-200">
+              <Link
+                href="/policies/privacy-policy"
+                className="transition-colors hover:text-pink-200"
+              >
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link href="/policies/refund-policy" className="transition-colors hover:text-pink-200">
+              <Link
+                href="/policies/refund-policy"
+                className="transition-colors hover:text-pink-200"
+              >
                 Return & Refund Policy
               </Link>
             </li>
             <li>
-              <Link href="/policies/shipping-policy" className="transition-colors hover:text-pink-200">
+              <Link
+                href="/policies/shipping-policy"
+                className="transition-colors hover:text-pink-200"
+              >
                 Shipping Policy
               </Link>
             </li>
@@ -107,14 +142,16 @@ const Footer = () => {
         <div>
           <h3 className="mb-4 text-base font-medium">Stay Connected</h3>
           <p className="text-sm leading-6 text-pink-100/70">
-            Follow us on social media for latest drops, offers & behind the scenes.
+            Follow us on social media for latest drops, offers & behind the
+            scenes.
           </p>
           <div className="mt-5 flex gap-3">
             {[
-              { icon: FaInstagram, href: "#", label: "Instagram" },
-              { icon: FaFacebookF, href: "#", label: "Facebook" },
-              { icon: FaTwitter, href: "#", label: "Twitter" },
-              { icon: FaLinkedinIn, href: "#", label: "LinkedIn" },
+              {
+                icon: FaInstagram,
+                href: "https://www.instagram.com/officialgirlyhub",
+                label: "Instagram",
+              },
             ].map(({ icon: Icon, href, label }) => (
               <a
                 key={label}
