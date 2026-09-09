@@ -3,7 +3,7 @@
 import PaginationControls from "@/components/PaginationControls";
 import ProductCard, { ProductCardProduct } from "@/components/ProductCard";
 import axios from "axios";
-import { LoaderCircle, Search, X } from "lucide-react";
+import { Heart, LoaderCircle, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type SearchDrawerProps = {
@@ -91,9 +91,10 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
       >
         <div className="flex items-center justify-between border-b border-rose-100 px-5 py-2 sm:px-8">
           <div>
-            <p className="font-instrument text-2xl text-rose-950">Search</p>
+            <p className="font-instrument text-2xl text-rose-600">Search</p>
             <p className="mt-1 text-xs text-neutral-500">
-              Find something you love
+              <Heart className="inline size-4 mr-1 text-rose-600" />
+              Find something you love{" "}
             </p>
           </div>
           <button
@@ -153,6 +154,7 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
                     key={product._id}
                     product={product}
                     showActions={false}
+                    onProductClick={onClose}
                     className="rounded-none border-0 p-0 "
                   />
                 ))}

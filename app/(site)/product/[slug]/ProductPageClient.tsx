@@ -23,6 +23,7 @@ import {
   MessageSquare,
   AlertCircle,
   Share2,
+  TrendingDown,
 } from "lucide-react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { SiGooglepay, SiPaytm } from "react-icons/si";
@@ -89,6 +90,7 @@ const ProductPageClient = ({
     initialRecommendations,
   );
   const [addingCart, setAddingCart] = useState<boolean>(false);
+  const [quantity, setQuantity] = useState(1);
 
   // Gallery states
   const [selectedImage, setSelectedImage] = useState<string>("");
@@ -201,7 +203,9 @@ const ProductPageClient = ({
     setAddingCart(true);
     setCartError("");
     try {
-      await useAuthStore.getState().addToCart(product._id, size);
+      for (let index = 0; index < quantity; index += 1) {
+        await useAuthStore.getState().addToCart(product._id, size);
+      }
       if (goDirectlyToCart) {
         router.push("/checkout");
       } else {
@@ -635,23 +639,58 @@ const ProductPageClient = ({
             </div>
 
             {/* Price display */}
-            <div className="flex flex-col gap-1 py-3 border-y border-neutral-100/80">
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-extrabold text-neutral-900 tracking-tight">
-                  ₹{displayDiscountPrice.toLocaleString()}
-                </span>
-                {displayPrice > displayDiscountPrice && (
-                  <>
-                    <span className="text-lg text-neutral-400 line-through font-medium">
-                      ₹{displayPrice.toLocaleString()}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5">
-                      Save ₹
-                      {(displayPrice - displayDiscountPrice).toLocaleString()} (
-                      {Math.floor(product.discountPercentage)}% OFF)
-                    </span>
-                  </>
-                )}
+            <div className="flex flex-col gap-3 py-3 border-y border-neutral-100/80">
+              <div className="flex items-center gap-3 rounded-none bg-emerald-100 px-3 py-3 text-sm font-medium text-emerald-950">
+                <TrendingDown className="h-5 w-5 shrink-0 text-emerald-600" />
+                <span>Lowest price in last 30 days</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex min-w-0 items-baseline gap-3">
+                  <span className="text-3xl font-extrabold text-neutral-900 tracking-tight">
+                    ₹{displayDiscountPrice.toLocaleString()}
+                  </span>
+                  {displayPrice > displayDiscountPrice && (
+                    <>
+                      <span className="text-lg text-neutral-400 line-through font-medium">
+                        ₹{displayPrice.toLocaleString()}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5">
+                        Save ₹
+                        {(displayPrice - displayDiscountPrice).toLocaleString()}{" "}
+                        ({Math.floor(product.discountPercentage)}% OFF)
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="flex h-12 shrink-0 items-center overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
+                  <button
+                    type="button"
+                    aria-label="Decrease quantity"
+                    disabled={quantity <= 1}
+                    onClick={() =>
+                      setQuantity((current) => Math.max(1, current - 1))
+                    }
+                    className="flex h-full w-11 items-center justify-center text-lg text-neutral-700 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300"
+                  >
+                    −
+                  </button>
+                  <span className="flex h-full w-10 items-center justify-center text-sm font-medium text-neutral-900">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Increase quantity"
+                    disabled={quantity >= displayStock}
+                    onClick={() =>
+                      setQuantity((current) =>
+                        Math.min(displayStock, current + 1),
+                      )
+                    }
+                    className="flex h-full w-11 items-center justify-center text-lg text-neutral-700 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
               <p className="text-[11px] text-neutral-400 font-medium">
                 Inclusive of all taxes
@@ -969,46 +1008,48 @@ const ProductPageClient = ({
                 >
                   <div className="pt-4 text-xs md:text-sm text-neutral-600">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 font-sans">
-                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">
-                      Category
-                    </span>
-                    <span className="text-neutral-800">{product.category}</span>
-                  </div>
-                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">
-                      Stock Status
-                    </span>
-                    <span
-                      className={
-                        displayStock > 0
-                          ? "text-emerald-700 font-semibold"
-                          : "text-rose-700 font-semibold"
-                      }
-                    >
-                      {displayStock > 0
-                        ? `In Stock (${displayStock} units)`
-                        : "Out of Stock"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">
-                      Weight
-                    </span>
-                    <span className="text-neutral-800">
-                      {product.weight ? `${product.weight} kg` : "N/A"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-400">
-                      Dimensions
-                    </span>
-                    <span className="text-neutral-800">
-                      {product.length || product.breadth || product.height
-                        ? `${product.length || "-"} x ${product.breadth || "-"} x ${product.height || "-"} cm`
-                        : "N/A"}
-                    </span>
-                  </div>
+                      <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                        <span className="font-semibold text-neutral-400">
+                          Category
+                        </span>
+                        <span className="text-neutral-800">
+                          {product.category}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                        <span className="font-semibold text-neutral-400">
+                          Stock Status
+                        </span>
+                        <span
+                          className={
+                            displayStock > 0
+                              ? "text-emerald-700 font-semibold"
+                              : "text-rose-700 font-semibold"
+                          }
+                        >
+                          {displayStock > 0
+                            ? `In Stock (${displayStock} units)`
+                            : "Out of Stock"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                        <span className="font-semibold text-neutral-400">
+                          Weight
+                        </span>
+                        <span className="text-neutral-800">
+                          {product.weight ? `${product.weight} kg` : "N/A"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                        <span className="font-semibold text-neutral-400">
+                          Dimensions
+                        </span>
+                        <span className="text-neutral-800">
+                          {product.length || product.breadth || product.height
+                            ? `${product.length || "-"} x ${product.breadth || "-"} x ${product.height || "-"} cm`
+                            : "N/A"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -1042,21 +1083,21 @@ const ProductPageClient = ({
                   className="overflow-hidden"
                 >
                   <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans space-y-2">
-                <p>
-                  📦 <strong>Free Shipping:</strong> Enjoy free standard
-                  shipping on all orders above ₹499. Orders are shipped within
-                  24-48 hours.
-                </p>
-                <p>
-                  🔄 <strong>7-Day Returns:</strong> If you are not completely
-                  satisfied, return or replace your product within 7 days of
-                  delivery. Terms & conditions apply.
-                </p>
-                <p>
-                  🛡️ <strong>Secure Checkout:</strong> All transactions are
-                  encrypted and processed securely. We accept COD, UPI, Cards,
-                  and NetBanking.
-                </p>
+                    <p>
+                      📦 <strong>Free Shipping:</strong> Enjoy free standard
+                      shipping on all orders above ₹499. Orders are shipped
+                      within 24-48 hours.
+                    </p>
+                    <p>
+                      🔄 <strong>7-Day Returns:</strong> If you are not
+                      completely satisfied, return or replace your product
+                      within 7 days of delivery. Terms & conditions apply.
+                    </p>
+                    <p>
+                      🛡️ <strong>Secure Checkout:</strong> All transactions are
+                      encrypted and processed securely. We accept COD, UPI,
+                      Cards, and NetBanking.
+                    </p>
                   </div>
                 </motion.div>
               )}

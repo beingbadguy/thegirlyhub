@@ -29,6 +29,7 @@ type ProductCardProps = {
   showActions?: boolean;
   showStock?: boolean;
   onRemove?: () => void;
+  onProductClick?: () => void;
   className?: string;
 };
 
@@ -41,6 +42,7 @@ export default function ProductCard({
   showActions = true,
   showStock = false,
   onRemove,
+  onProductClick,
   className = "",
 }: ProductCardProps) {
   const { addToWishlist, user, fetchUserCart } = useAuthStore();
@@ -110,8 +112,10 @@ export default function ProductCard({
     },
   );
 
-  const goToProduct = () =>
+  const goToProduct = () => {
+    onProductClick?.();
     router.push(productUrl(product.title, product._id, product.slug));
+  };
 
   return (
     <div

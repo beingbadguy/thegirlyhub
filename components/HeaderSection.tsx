@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BiHomeAlt2 } from "react-icons/bi";
 import { MdOutlineCategory } from "react-icons/md";
 import { IoPhonePortraitOutline } from "react-icons/io5";
@@ -53,6 +53,8 @@ const HeaderSection = () => {
   const [menu, setMenu] = useState<boolean>(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [products, setProducts] = useState<Products[]>([]);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
   const router = useRouter();
 
   if (userCart) {
@@ -112,8 +114,30 @@ const HeaderSection = () => {
     }
   }, []);
 
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY.current;
+
+      if (menu || currentScrollY <= 8) {
+        setIsHeaderVisible(true);
+      } else if (scrollDelta > 8) {
+        setIsHeaderVisible(false);
+      } else if (scrollDelta < -8) {
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [menu]);
+
   return (
-    <div className="">
+    <div className="sticky top-0 z-[998]">
       {/* <div className="text-[10px] bg-pink-800 text-white w-full text-center sm:text-[12px] py-2 ">
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
@@ -128,7 +152,9 @@ const HeaderSection = () => {
           </motion.span>
         </AnimatePresence>
       </div> */}
-      <nav className="flex items-center justify-between p-4 border-b  border-rose-100 shadow-xs ">
+      <nav
+        className={`flex items-center justify-between border-b border-rose-100 bg-white p-4 shadow-xs transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
+      >
         <div className=" hidden md:block font-bold">
           <Link href={"/"}>
             <span className="relative flex h-12 w-44 items-center overflow-visible">
@@ -140,7 +166,7 @@ const HeaderSection = () => {
         <div
           className={` ${
             menu ? "translate-x-0" : "-translate-x-[100%]"
-          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-4 md:mt-0 flex-col w-full h-screen bg-white gap-2 p-4  lg:p-0  flex lg:static lg:bg-transparent  lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[9999] font-instrument`}
+          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-6 md:mt-0 flex-col w-full h-screen bg-white gap-3 p-4 text-[17px] lg:p-0 lg:text-base flex lg:static lg:bg-transparent lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[9999] `}
         >
           <p
             className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"

@@ -10,6 +10,7 @@ import { AxiosError } from "axios";
 import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
+import FreeShippingBar from "@/components/FreeShippingBar";
 
 const CartPage = () => {
   const { user, userCart, updateCartQuantity, removeFromCart } = useAuthStore();
@@ -263,7 +264,7 @@ const CartPage = () => {
 
           <div className="border border-pink-100 bg-white p-5 rounded-2xl shadow-sm space-y-4 h-fit text-sm">
             {/* Free Shipping Progress Indicator */}
-            <div className="space-y-2 p-3 bg-pink-50/55 rounded-xl border border-pink-100/50">
+            {/* <div className="space-y-2 p-3 bg-pink-50/55 rounded-xl border border-pink-100/50">
               <div className="flex justify-between text-xs font-semibold">
                 <span
                   className={
@@ -300,7 +301,14 @@ const CartPage = () => {
                   You saved ₹49 on shipping 🎉
                 </div>
               )}
-            </div>
+            </div> */}
+
+            <FreeShippingBar
+              isFreeShipping={isFreeShipping}
+              remainingForFreeShipping={remainingForFreeShipping}
+              subtotal={subtotal}
+              freeShippingProgress={freeShippingProgress}
+            />
 
             <h2 className="text-lg font-bold text-gray-900">Product Summary</h2>
             <hr className="w-full border-gray-100" />
