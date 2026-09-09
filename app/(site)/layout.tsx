@@ -77,7 +77,7 @@ export const metadata: Metadata = {
       "Shop curated accessories, jewellery, scrunchies, flats, dresses, and more at GirlyHub.",
   },
   icons: {
-    icon: [{ url: "/girlyhub-favicon.png", type: "image/png" }],
+    icon: [{ url: "/girlyhub-favicon.png?v=2", type: "image/png" }],
   },
 };
 
