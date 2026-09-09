@@ -250,8 +250,12 @@ export default function ProductCard({
             <button
               type="button"
               onClick={handleCardBuyNow}
-              className="w-full rounded-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-300"
+              className="relative w-full overflow-hidden rounded-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-300"
             >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent [animation:button-shine_1.8s_ease-in-out_infinite]"
+              />
               Buy Now
             </button>
           </div>

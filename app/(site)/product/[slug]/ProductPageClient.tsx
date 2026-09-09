@@ -114,7 +114,7 @@ const ProductPageClient = ({
   const [expandDesc, setExpandDesc] = useState(false);
 
   // Sticky mobile CTA state
-  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(true);
   const buySectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -351,8 +351,7 @@ const ProductPageClient = ({
   useEffect(() => {
     const handleScroll = () => {
       if (buySectionRef.current) {
-        const rect = buySectionRef.current.getBoundingClientRect();
-        setShowStickyBar(rect.bottom < 0);
+        setShowStickyBar(window.scrollY <= 80);
       }
     };
 
@@ -482,7 +481,7 @@ const ProductPageClient = ({
   return (
     <div className="min-h-screen bg-[#FAF9F9] px-2 py-4 md:px-8 font-sans text-neutral-900">
       {/* Breadcrumbs */}
-      <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
+      <div className="mb-6 hidden flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400 md:flex">
         <span
           className="cursor-pointer transition-colors hover:text-neutral-800 flex items-center gap-1"
           onClick={() => router.push("/")}
@@ -507,7 +506,7 @@ const ProductPageClient = ({
         {/* Left Section: Image Gallery */}
         <div className="lg:col-span-6 flex flex-col gap-4">
           {/* Main Display Image Container */}
-          <div className="relative w-full aspect-square bg-neutral-50 p-1 md:p-4">
+          <div className="relative w-full aspect-square bg-transparent p-0 md:bg-neutral-50 md:p-4">
             {product.discountPercentage > 0 && (
               <span className="absolute left-4 top-4 z-10 bg-neutral-900 px-3 py-1 text-[10px] font-bold text-white tracking-wider uppercase">
                 {Math.floor(product.discountPercentage)}% Off
@@ -556,7 +555,7 @@ const ProductPageClient = ({
                 alt={product.title}
                 fill
                 priority
-                className="object-contain p-1 md:p-4"
+                className="object-contain p-0 md:p-4"
               />
 
               {/* Magnifier Lens Container (Desktop only) */}
@@ -795,8 +794,12 @@ const ProductPageClient = ({
                 <button
                   disabled={addingCart}
                   onClick={() => addToCart(true)}
-                  className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 bg-rose-600 text-white font-bold text-xs tracking-wider uppercase hover:bg-rose-700 transition-all disabled:opacity-50 cursor-pointer"
+                  className="relative w-full sm:flex-1 h-12 overflow-hidden flex items-center justify-center gap-2 bg-rose-600 text-white font-bold text-xs tracking-wider uppercase hover:bg-rose-700 transition-all disabled:opacity-50 cursor-pointer"
                 >
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent [animation:button-shine_1.8s_ease-in-out_infinite]"
+                  />
                   Buy Now
                 </button>
                 <button
@@ -920,13 +923,23 @@ const ProductPageClient = ({
                 {openAccordions.desc ? "–" : "+"}
               </span>
             </button>
-            {openAccordions.desc && (
-              <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans">
-                <pre className="overflow-auto whitespace-pre-wrap break-words font-sans">
-                  {product.info || product.description}
-                </pre>
-              </div>
-            )}
+            <AnimatePresence initial={false}>
+              {openAccordions.desc && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans">
+                    <pre className="overflow-auto whitespace-pre-wrap break-words font-sans">
+                      {product.info || product.description}
+                    </pre>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Specifications Accordion */}
@@ -945,9 +958,17 @@ const ProductPageClient = ({
                 {openAccordions.details ? "–" : "+"}
               </span>
             </button>
-            {openAccordions.details && (
-              <div className="pt-4 text-xs md:text-sm text-neutral-600">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 font-sans">
+            <AnimatePresence initial={false}>
+              {openAccordions.details && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-4 text-xs md:text-sm text-neutral-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 font-sans">
                   <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
                     <span className="font-semibold text-neutral-400">
                       Category
@@ -988,9 +1009,11 @@ const ProductPageClient = ({
                         : "N/A"}
                     </span>
                   </div>
-                </div>
-              </div>
-            )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Shipping & Returns Accordion */}
@@ -1009,8 +1032,16 @@ const ProductPageClient = ({
                 {openAccordions.shipping ? "–" : "+"}
               </span>
             </button>
-            {openAccordions.shipping && (
-              <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans space-y-2">
+            <AnimatePresence initial={false}>
+              {openAccordions.shipping && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans space-y-2">
                 <p>
                   📦 <strong>Free Shipping:</strong> Enjoy free standard
                   shipping on all orders above ₹499. Orders are shipped within
@@ -1026,8 +1057,10 @@ const ProductPageClient = ({
                   encrypted and processed securely. We accept COD, UPI, Cards,
                   and NetBanking.
                 </p>
-              </div>
-            )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -1455,43 +1488,19 @@ const ProductPageClient = ({
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 border-t border-neutral-200 p-4 shadow-2xl flex items-center justify-between gap-4"
+            className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 border-t border-neutral-200 p-4 shadow-2xl"
           >
-            <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 shrink-0">
-                <Image
-                  src={selectedImage}
-                  alt={product.title}
-                  fill
-                  className="object-contain p-1"
-                />
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="text-xs font-bold text-neutral-800 truncate max-w-[120px]">
-                  {product.title}
-                </h4>
-                <p className="text-sm font-bold text-rose-600">
-                  ₹{displayDiscountPrice.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2 shrink-0">
-              <button
-                disabled={addingCart}
-                onClick={() => addToCart(false)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-400 to-rose-500 text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 active:scale-95"
-              >
-                + Bag
-              </button>
-              <button
-                disabled={addingCart}
-                onClick={() => addToCart(true)}
-                className="px-5 py-2.5 rounded-xl bg-rose-950 text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 active:scale-95"
-              >
-                Buy Now
-              </button>
-            </div>
+            <button
+              disabled={addingCart}
+              onClick={() => addToCart(false)}
+              className="relative w-full overflow-hidden rounded-xl bg-rose-500 px-5 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-rose-600 disabled:opacity-50 active:scale-[0.99]"
+            >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent [animation:button-shine_1.8s_ease-in-out_infinite]"
+              />
+              {addingCart ? "Adding..." : "Add to Cart"}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

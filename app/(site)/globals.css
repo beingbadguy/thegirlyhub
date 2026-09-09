@@ -31,6 +31,15 @@
   margin-left: 0.02em;
 }
 
+@keyframes button-shine {
+  from {
+    transform: translateX(-180%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(360%) skewX(-18deg);
+  }
+}
+
 * {
   user-select: none;
 }
