@@ -7,6 +7,7 @@ import {
   FaLinkedinIn,
 } from "react-icons/fa";
 import { Mail, MapPin, Phone } from "lucide-react";
+import LogoMark from "@/components/LogoMark";
 
 const Footer = () => {
   return (
@@ -32,7 +33,9 @@ const Footer = () => {
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-10 border-b border-pink-300/25 pb-10 sm:grid-cols-2 lg:grid-cols-4">
         {/* About */}
         <div>
-          <h2 className="mb-4 text-lg font-semibold">GirlyHub</h2>
+          <div className="mb-4">
+            <LogoMark />
+          </div>
           <p className="text-sm leading-6 text-pink-100/75">
             GirlyHub is your go-to destination for high-quality accessories,
             scrunchies, earrings, jewellery, flats, and dresses. Shop our

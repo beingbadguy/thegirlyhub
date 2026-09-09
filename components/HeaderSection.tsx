@@ -22,6 +22,7 @@ import { Separator } from "@radix-ui/react-select";
 import { AnimatePresence, motion } from "framer-motion";
 import axios, { AxiosError } from "axios";
 import SearchDrawer from "@/components/SearchDrawer";
+import LogoMark from "@/components/LogoMark";
 
 type Products = {
   _id: string;
@@ -37,13 +38,6 @@ type Products = {
   discountPercentage: number;
   isActive: boolean;
 };
-
-const LogoMark = () => (
-  <span className="brand-logo" aria-label="GirlyHub">
-    <span>Girly</span>
-    <span className="brand-logo-hub">Hub</span>
-  </span>
-);
 
 const HeaderSection = () => {
   const { user, fetchUser, userCart } = useAuthStore();
@@ -137,7 +131,7 @@ const HeaderSection = () => {
       <nav className="flex items-center justify-between p-4 border-b  border-rose-100 shadow-xs ">
         <div className=" hidden md:block font-bold">
           <Link href={"/"}>
-            <span className="relative flex h-12 w-36 items-center overflow-hidden">
+            <span className="relative flex h-12 w-44 items-center overflow-visible">
               <LogoMark />
             </span>
           </Link>
@@ -157,7 +151,7 @@ const HeaderSection = () => {
             <X className="w-6 h-6" />
           </p>
           <div className="flex items-center justify-start  lg:hidden ">
-            <span className="relative flex h-12 w-36 items-center overflow-hidden">
+            <span className="relative flex h-12 w-44 items-center overflow-visible">
               <LogoMark />
             </span>
           </div>
@@ -297,7 +291,7 @@ const HeaderSection = () => {
 
           <div className="absolute left-1/2 -translate-x-1/2 md:hidden mt-2">
             <Link href={"/"}>
-              <span className="flex h-24 w-28 items-center justify-center">
+              <span className="flex h-24 w-44 items-center justify-center">
                 <LogoMark />
               </span>
             </Link>

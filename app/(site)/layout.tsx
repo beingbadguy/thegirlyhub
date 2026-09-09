@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+  Darker_Grotesque,
   Instrument_Serif,
   Poppins,
   Bodoni_Moda,
@@ -40,6 +41,13 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
   display: "swap",
+});
+
+const darkerGrotesque = Darker_Grotesque({
+  variable: "--font-darker-grotesque",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -83,7 +91,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${prata.variable} ${instrumentSerif.variable} antialiased custom-scrollbar `}
+        className={`${poppins.variable} ${bodoniModa.variable} ${prata.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar `}
       >
         <AnnouncementBand />
         <SmoothScroll />
