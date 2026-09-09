@@ -15,6 +15,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import AnnouncementBand from "@/components/AnnouncementBand";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import StickyMenuBar from "@/components/StickyMenuBar";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -76,10 +77,7 @@ export const metadata: Metadata = {
       "Shop curated accessories, jewellery, scrunchies, flats, dresses, and more at GirlyHub.",
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
+    icon: [{ url: "/girlyhub-favicon.png", type: "image/png" }],
   },
 };
 
@@ -98,6 +96,7 @@ export default function RootLayout({
         {/* <Header /> */}
         <HeaderSection />
         <StickyMenuBar />
+        <FloatingWhatsApp />
 
         {children}
         <Footer />
