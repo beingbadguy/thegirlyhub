@@ -8,7 +8,7 @@ import { useAuthStore } from "@/store/store";
 import { Copy } from "lucide-react";
 import confetti from "canvas-confetti";
 
-export default function Page() {
+export default function Page() {  
   const { user, fetchUser } = useAuthStore();
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;

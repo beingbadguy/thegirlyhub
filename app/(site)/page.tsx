@@ -18,7 +18,7 @@ export default function Home() {
       <div>
         <StaggeringCategories />
         <HeroBannerSlider />
-        <ShopByCategory limit={12} showSeeMore />
+        {/* <ShopByCategory limit={12} showSeeMore /> */}
         <HomeAdSlots />
         <OfferBanner />
         <NewArrivals limit={12} showSeeMore />

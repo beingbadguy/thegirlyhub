@@ -71,8 +71,10 @@ export async function GET(request: NextRequest) {
     const { page, limit, skip } = getPagination(request, 12);
     const isAdmin = (await fetchTokenDetails(request))?.role === "admin";
     const deleted = request.nextUrl.searchParams.get("deleted") === "true";
+    const includeProductImages =
+      request.nextUrl.searchParams.get("includeProductImages") === "true";
 
-    let filter: any = {};
+    let filter: Record<string, unknown> = {};
     if (isAdmin) {
       filter = deleted ? { isDeleted: true } : { isDeleted: { $ne: true } };
     } else {
@@ -83,16 +85,39 @@ export async function GET(request: NextRequest) {
       Category.countDocuments(filter),
     ]);
     const categoryNames = categories.map((category) => category.name);
-    const productCounts = await Product.aggregate([
+    const productData = await Product.aggregate([
       { $match: { category: { $in: categoryNames } } },
-      { $group: { _id: "$category", productCount: { $sum: 1 } } },
+      {
+        $project: {
+          category: 1,
+          image: 1,
+        },
+      },
+      {
+        $group: {
+          _id: "$category",
+          productCount: { $sum: 1 },
+          ...(includeProductImages
+            ? { productImages: { $push: "$image" } }
+            : {}),
+        },
+      },
     ]);
     const counts = new Map(
-      productCounts.map((item) => [item._id, item.productCount]),
+      productData.map((item) => [
+        item._id,
+        {
+          productCount: item.productCount,
+          productImages: item.productImages,
+        },
+      ]),
     );
     const categoriesWithCounts = categories.map((category) => ({
       ...category.toObject(),
-      productCount: counts.get(category.name) || 0,
+      productCount: counts.get(category.name)?.productCount || 0,
+      ...(includeProductImages
+        ? { productImages: counts.get(category.name)?.productImages || [] }
+        : {}),
     }));
 
     return NextResponse.json(
