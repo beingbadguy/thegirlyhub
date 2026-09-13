@@ -79,57 +79,62 @@ export default function HomeReviews() {
         </div>
       ) : (
         <Stagger className="grid min-w-0 gap-4 md:grid-cols-3">
-          {reviews.slice(0, 6).map((review, index) => (
-            <StaggerItem
+          {reviews.slice(0, 6).map((review) => (
+            <div
               key={review._id}
-              className={`relative flex min-h-56 min-w-0 flex-col justify-between rounded-2xl border-2 bg-white p-6 shadow-[0_10px_30px_rgba(244,114,182,0.07)] ${borderColors[index % borderColors.length]}`}
+              className="flex flex-col justify-between rounded-xl border bg-white p-4"
             >
-              <Quote className="absolute right-5 top-5 size-7 text-pink-100" />
-              {review.image ? (
-                <div className="mb-5 h-32 overflow-hidden rounded-xl ">
+              {/* Image */}
+              {review.image && (
+                <div className="mb-3 h-24 overflow-hidden rounded-md">
                   <img
                     src={review.image}
                     alt={review.product.title}
-                    className="h-full w-full object-contain rounded-xl"
+                    className="h-full w-full object-contain"
                     loading="lazy"
                   />
                 </div>
-              ) : null}
-              <div>
-                <div
-                  className="mb-1 flex gap-1"
-                  aria-label={`${review.rating} out of 5 stars`}
-                >
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`size-4 ${star <= review.rating ? "fill-amber-300 text-amber-300" : "text-rose-100"}`}
-                    />
-                  ))}
-                </div>
-                <p className="line-clamp-4 wrap-break-word text-[15px] leading-7 text-gray-700">
-                  &ldquo;{review.comment}&rdquo;
-                </p>
+              )}
+
+              {/* Rating */}
+              <div className="mb-1 flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`size-3 ${
+                      star <= review.rating
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-neutral-200"
+                    }`}
+                  />
+                ))}
               </div>
-              <div className="mt-6 flex min-w-0 flex-wrap items-center gap-3 border-t border-rose-50 pt-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-rose-100 to-violet-100 text-xs font-semibold text-rose-700">
-                  {review.username.slice(0, 1).toUpperCase()}
+
+              {/* Comment */}
+              <p className="line-clamp-3 text-xs text-neutral-700">
+                "{review.comment}"
+              </p>
+
+              {/* Footer */}
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex size-7 items-center justify-center rounded-full bg-rose-100 text-[10px] font-semibold text-rose-600">
+                  {review.username[0].toUpperCase()}
                 </div>
+
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-rose-950">
+                  <p className="truncate text-xs font-semibold text-neutral-900">
                     {review.username}
                   </p>
-                  <p className="truncate text-xs text-gray-500">
-                    Loved their {review.product.title}
+                  <p className="truncate text-[10px] text-neutral-500">
+                    {review.product.title}
                   </p>
                 </div>
-                <span
-                  className={`ml-auto shrink-0 whitespace-nowrap text-[10px] font-medium tracking-wider ${review.isFeatured ? "text-fuchsia-600" : "text-emerald-600"}`}
-                >
-                  {review.isFeatured ? "FEATURED" : "VERIFIED"}
+
+                <span className="ml-auto text-[9px] text-green-600 font-medium">
+                  Verified
                 </span>
               </div>
-            </StaggerItem>
+            </div>
           ))}
         </Stagger>
       )}

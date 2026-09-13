@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import {
   Darker_Grotesque,
   Instrument_Serif,
-  Poppins,
   Bodoni_Moda,
-  Prata,
+  Poppins,
 } from "next/font/google";
 // import "../globals.css";
 import "./globals.css";
@@ -16,6 +15,7 @@ import AnnouncementBand from "@/components/AnnouncementBand";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import StickyMenuBar from "@/components/StickyMenuBar";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import CartDrawer from "@/components/CartDrawer";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -26,13 +26,6 @@ const poppins = Poppins({
 
 const bodoniModa = Bodoni_Moda({
   variable: "--font-bodoni-moda",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const prata = Prata({
-  variable: "--font-prata",
-  weight: "400",
   subsets: ["latin"],
   display: "swap",
 });
@@ -89,7 +82,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${prata.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar `}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar `}
       >
         <AnnouncementBand />
         <SmoothScroll />
@@ -97,6 +90,7 @@ export default function RootLayout({
         <HeaderSection />
         <StickyMenuBar />
         <FloatingWhatsApp />
+        <CartDrawer />
 
         {children}
         <Footer />

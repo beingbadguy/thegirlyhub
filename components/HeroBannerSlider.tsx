@@ -30,7 +30,7 @@ export default function HeroBannerSlider() {
         setBanners(data.banners);
         setActiveIndex(0);
       })
-      .catch(() => { });
+      .catch(() => {});
 
     return () => {
       mounted = false;
@@ -50,15 +50,13 @@ export default function HeroBannerSlider() {
   const banner = banners[activeIndex];
 
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden">
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden ">
       <div className="relative w-full">
-
         {/* LOADING */}
         {!banner ? (
           <div className="w-full h-[200px] md:h-[320px] animate-pulse bg-gray-200" />
         ) : (
-          <div className="relative w-full h-[200px] sm:h-[260px] md:h-[340px] lg:h-[420px]">
-
+          <div className="relative w-full h-[300px] sm:h-[260px] md:h-[340px] lg:h-[420px]">
             {/* MOBILE */}
             <div className="block sm:hidden absolute inset-0">
               <Image
@@ -138,10 +136,11 @@ export default function HeroBannerSlider() {
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
-              className={`h-1.5 rounded-full transition-all ${index === activeIndex
+              className={`h-1.5 rounded-full transition-all ${
+                index === activeIndex
                   ? "w-7 bg-[#33272d]"
                   : "w-1.5 bg-[#d9cbd1]"
-                }`}
+              }`}
             />
           ))}
         </div>

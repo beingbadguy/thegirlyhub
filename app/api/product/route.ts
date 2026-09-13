@@ -5,6 +5,10 @@ import { cloudinaryConnection } from "@/config/cloudinaryConnection";
 import cloudinary from "cloudinary";
 import { getPagination, paginationResult } from "@/lib/pagination";
 import { buildProductSlug } from "@/lib/slug";
+import {
+  normalizeProductPayload,
+  productInputFromFormData,
+} from "@/lib/productPayload";
 
 export async function GET(request: NextRequest) {
   await databaseConnection();
@@ -74,27 +78,47 @@ export async function POST(request: NextRequest) {
   await databaseConnection();
   cloudinaryConnection();
   try {
+    const contentType = request.headers.get("content-type") || "";
+    if (!contentType.includes("multipart/form-data")) {
+      const body = await request.json();
+      const product = new Product(normalizeProductPayload(body));
+      await product.save();
+      if (!product.slug) {
+        product.slug = buildProductSlug(
+          product.name || product.title || "product",
+          product._id.toString(),
+        );
+        await product.save();
+      }
+      return NextResponse.json(
+        { message: "Product created successfully", success: true, product },
+        { status: 201 },
+      );
+    }
     const formData = await request.formData();
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
+    const formInput = productInputFromFormData(formData);
+    const title = (formInput.name || formInput.title) as string;
+    const description = (formInput.longDescription ||
+      formInput.description ||
+      formInput.shortDescription) as string;
     const price = formData.get("price") as string;
-    const category = formData.get("category") as string;
-    const countInStock = formData.get("countInStock") as string;
-    const discountedPrice = formData.get("discountedPrice") as string;
-    const info = formData.get("info") as string;
+    const category = formInput.category as string;
+    const countInStock = (formInput.totalStock ??
+      formInput.stock ??
+      formInput.countInStock) as string;
+    const discountedPrice = (formInput.sellingPrice ??
+      formInput.discountPrice ??
+      formInput.discountedPrice) as string;
+    const info = (formInput.info || description) as string;
 
-    const weight = formData.get("weight")
-      ? Number(formData.get("weight"))
-      : undefined;
-    const length = formData.get("length")
-      ? Number(formData.get("length"))
-      : undefined;
-    const breadth = formData.get("breadth")
-      ? Number(formData.get("breadth"))
-      : undefined;
-    const height = formData.get("height")
-      ? Number(formData.get("height"))
-      : undefined;
+    const weight =
+      formInput.weight !== undefined ? Number(formInput.weight) : undefined;
+    const length =
+      formInput.length !== undefined ? Number(formInput.length) : undefined;
+    const breadth =
+      formInput.breadth !== undefined ? Number(formInput.breadth) : undefined;
+    const height =
+      formInput.height !== undefined ? Number(formInput.height) : undefined;
 
     // Retrieve files from 'images' or 'image' field(s)
     let imageFiles = formData.getAll("images") as File[];
@@ -115,8 +139,10 @@ export async function POST(request: NextRequest) {
       !price ||
       imageFiles.length === 0 ||
       !category ||
-      !countInStock ||
-      !discountedPrice ||
+      countInStock === null ||
+      countInStock === undefined ||
+      discountedPrice === null ||
+      discountedPrice === undefined ||
       !info?.trim()
     ) {
       return NextResponse.json(
@@ -141,23 +167,29 @@ export async function POST(request: NextRequest) {
 
     const uploadedUrls = await Promise.all(uploadPromises);
 
-    const product = new Product({
-      title,
-      description,
-      price,
-      image: uploadedUrls[0] || "",
-      images: uploadedUrls,
-      category,
-      countInStock,
-      discountedPrice,
-      discountPercentage,
-      isActive: true,
-      info,
-      weight,
-      length,
-      breadth,
-      height,
-    });
+    const product = new Product(
+      normalizeProductPayload({
+        ...formInput,
+        title,
+        description,
+        price,
+        image: uploadedUrls[0] || "",
+        images: uploadedUrls,
+        category,
+        countInStock,
+        discountedPrice,
+        discountPercentage,
+        isActive: true,
+        info,
+        weight,
+        length,
+        breadth,
+        height,
+        status:
+          formInput.status ??
+          (formInput.isActive === false ? "draft" : "active"),
+      }),
+    );
 
     await product.save();
 

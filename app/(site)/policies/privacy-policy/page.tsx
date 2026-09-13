@@ -9,7 +9,6 @@ export default function PrivacyPolicy() {
       </p>
 
       <div className="space-y-8 text-gray-700 leading-7">
-
         <p>
           At <span className="font-semibold">GirlyHub</span>, we value your
           privacy and are committed to protecting your personal information.
@@ -35,7 +34,9 @@ export default function PrivacyPolicy() {
             <li>To process and deliver your orders</li>
             <li>To provide customer support</li>
             <li>To improve our products and services</li>
-            <li>To send updates, offers, and promotions (only if you opt-in)</li>
+            <li>
+              To send updates, offers, and promotions (only if you opt-in)
+            </li>
           </ul>
         </div>
 
@@ -51,7 +52,8 @@ export default function PrivacyPolicy() {
             <li>Payment gateways for secure transactions</li>
           </ul>
           <p className="mt-2">
-            We do not sell, rent, or trade your personal data to any third party.
+            We do not sell, rent, or trade your personal data to any third
+            party.
           </p>
         </div>
 
@@ -96,11 +98,10 @@ export default function PrivacyPolicy() {
               officialgirlyhub@gmail.com
             </span>
             <span className="font-medium text-gray-900 block">
-              Phone: 96675549765
+              Phone: +91 836 842 2490
             </span>
           </p>
         </div>
-
       </div>
     </div>
   );

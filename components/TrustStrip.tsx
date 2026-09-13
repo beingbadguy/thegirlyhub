@@ -1,84 +1,139 @@
 "use client";
-
+import { useEffect, useRef, useState } from "react";
 import {
-  Truck,
-  Heart,
-  Package,
-  Repeat,
-  Users,
-  Gift,
+  BadgeCheck,
+  Gem,
+  HeartHandshake,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
 const features = [
-  {
-    icon: Users,
-    title: "100+",
-    subtitle: "HAPPY CUSTOMERS",
-  },
-  // {
-  //   icon: Truck,
-  //   title: "EXPRESS SHIPPING",
-  //   subtitle: "AVAILABLE",
-  // },
-  {
-    icon: Heart,
-    title: "HANDMADE",
-    subtitle: "IN INDIA",
-  },
-  {
-    icon: Gift,
-    title: "BEAUTIFUL",
-    subtitle: "PACKAGING",
-  },
-  {
-    icon: Sparkles,
-    title: "MADE WITH",
-    subtitle: "LOTS OF LOVE",
-  },
-  {
-    icon: Repeat,
-    title: "EASY EXCHANGE",
-    subtitle: "& RETURNS",
-  },
-  {
-    icon: Package,
-    title: "EMPOWERING",
-    subtitle: "ARTISANS",
-  },
+  { icon: Sparkles, title: "Trending Styles" },
+  { icon: BadgeCheck, title: "Loved by 1K+ Customers", badge: "Real" },
+  { icon: ShieldCheck, title: "Skin Friendly" },
+  { icon: Gem, title: "Premium Finish" },
+  { icon: HeartHandshake, title: "Trusted Support" },
 ];
+export default function TrustStrip() {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
 
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
 
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.unobserve(node);
+        }
+      },
+      { threshold: 0.3 },
+    );
 
-const TrustStrip = () => {
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="bg-[#fdf7f9] py-10 ">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-10 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 ">
-        {features.map((item, index) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={index}
-              className="flex font-instrument flex-col items-center text-center group cursor-default"
-            >
-              {/* ICON WRAPPER */}
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-rose-100/70 transition-all duration-300 group-hover:scale-105 group-hover:bg-rose-200">
-                <Icon className="h-9 w-9 text-rose-700" strokeWidth={1.5} />
-              </div>
+    <section ref={ref} className="bg-white px-4 py-10 sm:px-6 lg:py-12">
+      <div className="mx-auto max-w-4xl text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#b28a50]">
+          Quality
+        </p>
 
-              {/* TEXT */}
-              <h3 className="text-sm font-semibold font-instrument tracking-wide text-gray-800">
-                {item.title}
-              </h3>
-              <p className="text-xs tracking-widest text-gray-500">
-                {item.subtitle}
-              </p>
-            </div>
-          );
-        })}
+        <h2 className="mt-2 text-2xl font-semibold text-[#5b102d] sm:text-3xl">
+          GirlyHub Promise
+        </h2>
+
+        {/* Desktop */}
+        <div className="relative mt-10 hidden sm:block">
+          <div
+            className="absolute left-[12%] right-[12%] top-5 h-px origin-left bg-gradient-to-r from-[#e8c99a] via-[#b28a50] to-[#e8c99a] transition-transform duration-700"
+            style={{
+              transform: inView ? "scaleX(1)" : "scaleX(0)",
+            }}
+          />
+
+          <div className="grid grid-cols-5">
+            {features.map((item, i) => (
+              <Feature key={i} item={item} i={i} inView={inView} />
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile */}
+        <div className="relative mt-8 space-y-5 sm:hidden">
+          <div
+            className="absolute left-6 top-1 bottom-1 w-px origin-top bg-gradient-to-b from-[#e8c99a] via-[#b28a50] to-[#e8c99a] transition-transform duration-700"
+            style={{
+              transform: inView ? "scaleY(1)" : "scaleY(0)",
+            }}
+          />
+
+          {features.map((item, i) => (
+            <FeatureMobile key={i} item={item} i={i} inView={inView} />
+          ))}
+        </div>
+
+        <p className="mt-8 text-xs text-[#8a6b70]">
+          Crafted with care — modern design meets timeless elegance.
+        </p>
       </div>
     </section>
   );
-};
+}
 
-export default TrustStrip;
+function Feature({ item, i, inView }: any) {
+  const Icon = item.icon;
+
+  return (
+    <div
+      className="flex flex-col items-center transition duration-500"
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? "translateY(0)" : "translateY(8px)",
+        transitionDelay: `${i * 80}ms`,
+      }}
+    >
+      <div className="relative">
+        <div className="flex size-12 items-center justify-center rounded-full border border-[#e8759b] bg-[#fcebf1] text-[#c63268]">
+          <Icon className="size-5" />
+        </div>
+
+        {item.badge && (
+          <span className="absolute -top-1 -right-2 text-[8px] px-1.5 py-[1px] rounded-full bg-[#c63268] text-white">
+            {item.badge}
+          </span>
+        )}
+      </div>
+
+      <p className="mt-2 text-[11px] text-[#5b102d] font-medium text-center">
+        {item.title}
+      </p>
+    </div>
+  );
+}
+
+function FeatureMobile({ item, i, inView }: any) {
+  const Icon = item.icon;
+
+  return (
+    <div
+      className="flex items-center gap-3 transition duration-500"
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? "translateX(0)" : "translateX(-8px)",
+        transitionDelay: `${i * 80}ms`,
+      }}
+    >
+      <div className="relative flex size-10 items-center justify-center rounded-full border border-[#e8759b] bg-[#fcebf1] text-[#c63268]">
+        <Icon className="size-4" />
+      </div>
+
+      <p className="text-xs font-medium text-[#5b102d]">{item.title}</p>
+    </div>
+  );
+}

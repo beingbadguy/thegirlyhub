@@ -1,125 +1,221 @@
 import mongoose from "mongoose";
 
-const reviewEmbedSchema = new mongoose.Schema(
+const reviewSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    username: {
-      type: String,
-      required: true,
-    },
-    rating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5,
-    },
-    comment: {
-      type: String,
-      required: true,
-    },
-    photos: {
-      type: [String],
-      default: [],
-    },
+    username: { type: String, required: true, trim: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, required: true, trim: true, maxlength: 2_000 },
+    photos: { type: [String], default: [] },
   },
-  { timestamps: true }
+  { timestamps: true },
+);
+
+const variantSchema = new mongoose.Schema(
+  {
+    sku: { type: String, required: true, trim: true, uppercase: true },
+    attributes: {
+      color: { type: String, trim: true },
+      size: { type: String, trim: true },
+    },
+    price: { type: Number, required: true, min: 0 },
+    discountedPrice: { type: Number, required: true, min: 0 },
+    stock: { type: Number, required: true, min: 0, default: 0 },
+    images: { type: [String], default: [] },
+    weight: { type: Number, min: 0 },
+  },
+  { _id: false },
 );
 
 const productSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    slug: { type: String, unique: true, sparse: true },
-    description: { type: String, required: true },
-    image: { type: String, required: true }, // Legacy main image
-    images: { type: [String], default: [] }, // New array of images
-    category: { type: String, required: true }, // jewellery, earrings, scrunchies, shoes, flats, dresses, suits
-    price: { type: Number, required: true },
-    discountedPrice: { type: Number, required: true }, // Legacy
-    discountPrice: { type: Number, required: true }, // New
-    discountPercentage: { type: Number, required: true },
-    countInStock: { type: Number, required: true }, // Legacy
-    stock: { type: Number, required: true }, // New
-    sold: { type: Number, default: 0 },
-    rating: { type: Number, default: 0 }, // Legacy ratings
-    ratings: { type: Number, default: 0 }, // New ratings
-    numReviews: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isFeatured: { type: Boolean, default: false },
-    variants: {
-      sizes: { type: [String], default: [] },
-      colors: { type: [String], default: [] },
+    name: { type: String, trim: true },
+    slug: { type: String, trim: true, lowercase: true },
+    shortDescription: { type: String, trim: true, maxlength: 320 },
+    longDescription: { type: String, trim: true },
+    category: { type: String, required: true, trim: true, lowercase: true },
+    subCategory: { type: String, trim: true, lowercase: true },
+    brand: { type: String, trim: true, default: "GirlyHub" },
+    tags: { type: [String], default: [] },
+
+    material: {
+      type: String,
+      enum: [
+        "alloy",
+        "silver",
+        "gold-plated",
+        "stainless-steel",
+        "gold",
+        "other",
+      ],
+      lowercase: true,
     },
-    weight: { type: Number },
-    length: { type: Number },
-    breadth: { type: Number },
-    height: { type: Number },
-    reviews: [reviewEmbedSchema],
+    plating: {
+      type: String,
+      enum: ["gold", "rose-gold", "oxidised", "silver", "none"],
+      lowercase: true,
+    },
+    stoneType: {
+      type: String,
+      enum: ["zircon", "pearl", "kundan", "none", "other"],
+      lowercase: true,
+      default: "none",
+    },
+    color: {
+      type: String,
+      enum: ["gold", "silver", "rose-gold", "multi", "other"],
+    },
+    occasion: {
+      type: String,
+      enum: ["party", "daily-wear", "wedding", "festive", "other"],
+    },
+    style: {
+      type: String,
+      enum: ["trendy", "traditional", "korean", "minimal", "other"],
+    },
+    gender: {
+      type: String,
+      enum: ["women", "girls", "unisex"],
+      default: "women",
+    },
+    setType: {
+      type: String,
+      enum: ["single", "pair", "combo-set"],
+      default: "single",
+    },
+
+    variants: { type: [variantSchema], default: [] },
+    costPrice: { type: Number, min: 0 },
+    sellingPrice: { type: Number, min: 0 },
+    discountPercentage: { type: Number, min: 0, default: 0 },
+    currency: { type: String, enum: ["INR"], default: "INR" },
+    mainImage: { type: String, trim: true },
+    images: { type: [String], default: [] },
+    video: { type: String, trim: true },
+
+    totalStock: { type: Number, min: 0, default: 0 },
+    lowStockThreshold: { type: Number, min: 0, default: 5 },
+    trackInventory: { type: Boolean, default: true },
+    weight: { type: Number, min: 0 },
+    dimensions: {
+      length: { type: Number, min: 0 },
+      breadth: { type: Number, min: 0 },
+      height: { type: Number, min: 0 },
+    },
+
+    metaTitle: { type: String, trim: true, maxlength: 60 },
+    metaDescription: { type: String, trim: true, maxlength: 160 },
+    averageRating: { type: Number, min: 0, max: 5, default: 0 },
+    totalReviews: { type: Number, min: 0, default: 0 },
+    status: {
+      type: String,
+      enum: ["draft", "active", "out_of_stock", "archived"],
+      default: "draft",
+      index: true,
+    },
+    isFeatured: { type: Boolean, default: false },
+    isNewArrival: { type: Boolean, default: false },
+    reviews: { type: [reviewSchema], default: [] },
+
+    // Legacy fields retained so cart, checkout, and existing admin screens continue to work.
+    title: { type: String, trim: true },
+    description: { type: String, trim: true },
+    image: { type: String, trim: true },
+    price: { type: Number, min: 0 },
+    discountedPrice: { type: Number, min: 0 },
+    discountPrice: { type: Number, min: 0 },
+    countInStock: { type: Number, min: 0, default: 0 },
+    stock: { type: Number, min: 0, default: 0 },
+    sold: { type: Number, min: 0, default: 0 },
+    rating: { type: Number, min: 0, max: 5, default: 0 },
+    ratings: { type: Number, min: 0, max: 5, default: 0 },
+    numReviews: { type: Number, min: 0, default: 0 },
+    isActive: { type: Boolean, default: true },
+    length: { type: Number, min: 0 },
+    breadth: { type: Number, min: 0 },
+    height: { type: Number, min: 0 },
     info: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true, minimize: true },
 );
 
-// Mongoose Pre-validate hook to sync legacy and new fields
-productSchema.pre("validate", function (next) {
-  // 1. Sync stock & countInStock
-  if (this.stock !== undefined) {
-    this.countInStock = this.stock;
-  } else if (this.countInStock !== undefined) {
-    this.stock = this.countInStock;
-  } else {
-    this.stock = 0;
-    this.countInStock = 0;
+productSchema.pre("validate", function syncProductFields(next) {
+  this.name = this.name || this.title;
+  this.title = this.title || this.name;
+  this.mainImage = this.mainImage || this.image || this.images[0];
+  this.image = this.image || this.mainImage;
+  if (!this.images.length && this.mainImage) this.images = [this.mainImage];
+
+  this.shortDescription = this.shortDescription || this.description;
+  this.description = this.description || this.shortDescription;
+  this.longDescription = this.longDescription || this.description;
+
+  this.sellingPrice ??=
+    this.discountPrice ?? this.discountedPrice ?? this.price;
+  this.price ??= this.sellingPrice;
+  this.discountPrice ??= this.sellingPrice;
+  this.discountedPrice ??= this.sellingPrice;
+  this.discountPercentage =
+    this.price && this.sellingPrice
+      ? Math.max(0, ((this.price - this.sellingPrice) / this.price) * 100)
+      : 0;
+
+  const variantStock = this.variants.reduce(
+    (total, variant) => total + variant.stock,
+    0,
+  );
+  if (this.variants.length > 0) {
+    this.totalStock = variantStock;
+  } else if (this.isModified("stock") || this.isModified("countInStock")) {
+    this.totalStock = this.stock ?? this.countInStock ?? 0;
+  }
+  this.stock = this.totalStock ?? this.stock ?? this.countInStock ?? 0;
+  this.countInStock = this.stock;
+
+  this.averageRating = this.averageRating ?? this.ratings ?? this.rating ?? 0;
+  this.ratings = this.averageRating;
+  this.rating = this.averageRating;
+  this.totalReviews = this.totalReviews ?? this.numReviews ?? 0;
+  this.numReviews = this.totalReviews;
+
+  // Legacy records have no status. Treat an active legacy record as publishable.
+  if (this.status === "draft" && this.isActive && !this.isModified("status")) {
+    this.status = "active";
   }
 
-  // 2. Sync discountPrice & discountedPrice
-  if (this.discountPrice !== undefined) {
-    this.discountedPrice = this.discountPrice;
-  } else if (this.discountedPrice !== undefined) {
-    this.discountPrice = this.discountedPrice;
-  } else {
-    this.discountPrice = this.price || 0;
-    this.discountedPrice = this.price || 0;
+  if (
+    this.status === "active" &&
+    this.trackInventory &&
+    this.totalStock === 0
+  ) {
+    this.status = "out_of_stock";
   }
+  this.isActive = this.status === "active" || this.status === "out_of_stock";
 
-  // 3. Sync rating & ratings
-  if (this.ratings !== undefined) {
-    this.rating = this.ratings;
-  } else if (this.rating !== undefined) {
-    this.ratings = this.rating;
+  const skus = this.variants.map((variant) => variant.sku);
+  if (new Set(skus).size !== skus.length) {
+    return next(new Error("Variant SKUs must be unique within a product."));
   }
-
-  // 4. Sync image & images
-  if (this.images && this.images.length > 0) {
-    this.image = this.images[0];
-  } else if (this.image) {
-    this.images = [this.image];
-  } else {
-    this.image = "";
-    this.images = [];
-  }
-
-  // 5. Calculate discountPercentage
-  if (this.price && this.discountPrice !== undefined) {
-    const diff = this.price - this.discountPrice;
-    this.discountPercentage = this.price > 0 ? (diff / this.price) * 100 : 0;
-  } else {
-    this.discountPercentage = 0;
-  }
-
   next();
 });
 
-// Indexes for high performance / scalability
-productSchema.index({ title: "text", description: "text" });
-productSchema.index({ category: 1 });
-productSchema.index({ isFeatured: 1 });
-productSchema.index({ price: 1 });
-productSchema.index({ ratings: -1 });
+productSchema.index({ slug: 1 }, { unique: true, sparse: true });
+productSchema.index({ "variants.sku": 1 }, { unique: true, sparse: true });
+productSchema.index({ category: 1, status: 1, createdAt: -1 });
+productSchema.index({ tags: 1 });
+productSchema.index({ isFeatured: 1, isNewArrival: 1, status: 1 });
+productSchema.index({ averageRating: -1, status: 1 });
+productSchema.index({
+  name: "text",
+  tags: "text",
+  shortDescription: "text",
+});
 
 const Product =
   mongoose.models.Product || mongoose.model("Product", productSchema);
 export default Product;
+export { productSchema, variantSchema };

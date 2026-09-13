@@ -6,6 +6,10 @@ import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { cloudinaryConnection } from "@/config/cloudinaryConnection";
 import cloudinary from "cloudinary";
+import {
+  normalizeProductPayload,
+  productInputFromFormData,
+} from "@/lib/productPayload";
 
 async function findProductBySlugOrId(identifier: string) {
   const decoded = decodeURIComponent(identifier);
@@ -151,6 +155,16 @@ export async function PUT(
     }
 
     const contentType = request.headers.get("content-type") || "";
+    if (!contentType.includes("multipart/form-data")) {
+      const body = await request.json();
+      Object.assign(product, normalizeProductPayload(body, product.toObject()));
+      await product.save();
+      return NextResponse.json(
+        { product, success: true, message: "Product updated successfully" },
+        { status: 200 },
+      );
+    }
+
     let title = product.title;
     let description = product.description;
     let price = product.price;
@@ -160,17 +174,28 @@ export async function PUT(
     let info = product.info;
     let weight = product.weight;
     let imagesToSave = product.images;
+    let formInput: Record<string, any> = {};
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
-      title = (formData.get("title") as string) || title;
-      description = (formData.get("description") as string) || description;
+      formInput = productInputFromFormData(formData);
+      title =
+        (formInput.name as string) || (formInput.title as string) || title;
+      description =
+        (formInput.longDescription as string) ||
+        (formInput.description as string) ||
+        description;
       price = formData.get("price") ? Number(formData.get("price")) : price;
       category = (formData.get("category") as string) || category;
-      countInStock = formData.get("countInStock") ? Number(formData.get("countInStock")) : countInStock;
-      discountedPrice = formData.get("discountedPrice") ? Number(formData.get("discountedPrice")) : discountedPrice;
+      countInStock = formData.get("countInStock")
+        ? Number(formData.get("countInStock"))
+        : countInStock;
+      discountedPrice = formData.get("discountedPrice")
+        ? Number(formData.get("discountedPrice"))
+        : discountedPrice;
       info = (formData.get("info") as string) || info;
-      weight = formData.get("weight") ? Number(formData.get("weight")) : weight;
+      weight =
+        formInput.weight !== undefined ? Number(formInput.weight) : weight;
 
       // Extract new image files and existing image URLs
       const imagesField = formData.getAll("images");
@@ -220,21 +245,30 @@ export async function PUT(
 
       // Merge existing and new URLs
       const finalImages = [...existingUrls, ...newUploadedUrls];
-      
+
       const hasImageFields =
-        formData.has("images") || formData.has("image") || formData.has("existingImages");
-      
+        formData.has("images") ||
+        formData.has("image") ||
+        formData.has("existingImages");
+
       if (hasImageFields) {
         imagesToSave = finalImages;
       }
     } else {
       const body = await request.json();
       title = body.title !== undefined ? body.title : title;
-      description = body.description !== undefined ? body.description : description;
+      description =
+        body.description !== undefined ? body.description : description;
       price = body.price !== undefined ? Number(body.price) : price;
       category = body.category !== undefined ? body.category : category;
-      countInStock = body.countInStock !== undefined ? Number(body.countInStock) : countInStock;
-      discountedPrice = body.discountedPrice !== undefined ? Number(body.discountedPrice) : discountedPrice;
+      countInStock =
+        body.countInStock !== undefined
+          ? Number(body.countInStock)
+          : countInStock;
+      discountedPrice =
+        body.discountedPrice !== undefined
+          ? Number(body.discountedPrice)
+          : discountedPrice;
       info = body.info !== undefined ? body.info : info;
       weight = body.weight !== undefined ? Number(body.weight) : weight;
 
@@ -248,19 +282,27 @@ export async function PUT(
     const discountPercentage =
       ((Number(price) - Number(discountedPrice)) / Number(price)) * 100;
 
-    // Apply values to product model (updating both legacy and new properties to sync correctly)
-    product.title = title;
-    product.description = description;
-    product.price = price;
-    product.category = category;
-    product.countInStock = countInStock;
-    product.stock = countInStock;
-    product.discountedPrice = discountedPrice;
-    product.discountPrice = discountedPrice;
-    product.discountPercentage = discountPercentage;
-    product.info = info;
-    product.weight = weight;
-    product.images = imagesToSave;
+    Object.assign(
+      product,
+      normalizeProductPayload(
+        {
+          ...formInput,
+          title,
+          description,
+          price,
+          category,
+          countInStock,
+          stock: countInStock,
+          discountedPrice,
+          discountPrice: discountedPrice,
+          discountPercentage,
+          info,
+          weight,
+          images: imagesToSave,
+        },
+        product.toObject(),
+      ),
+    );
 
     product.slug = buildProductSlug(title, product._id.toString());
 

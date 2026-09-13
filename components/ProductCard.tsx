@@ -90,6 +90,7 @@ export default function ProductCard({
       }
 
       await useAuthStore.getState().addToCart(product._id, defaultSize);
+      useAuthStore.getState().openCart();
       setAddedText(true);
       setTimeout(() => setAddedText(false), 2000);
     } catch (err: unknown) {
@@ -97,9 +98,14 @@ export default function ProductCard({
     }
   };
 
-  const handleCardBuyNow = (e: React.MouseEvent) => {
+  const handleCardBuyNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    goToProduct();
+    try {
+      await useAuthStore.getState().addToCart(product._id, "One Size");
+      router.push("/checkout");
+    } catch (error) {
+      console.error("Failed to buy product:", error);
+    }
   };
 
   const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];

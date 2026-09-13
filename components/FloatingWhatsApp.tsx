@@ -4,7 +4,7 @@ const whatsappMessage =
   "Hello GirlyHub team, I would like to know more about your products and available collections. Please assist me. Thank you!";
 
 const FloatingWhatsApp = () => {
-  const whatsappUrl = `https://wa.me/919667549765?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = `https://wa.me/918368422490?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <a

@@ -38,8 +38,19 @@ type ReviewType = {
   createdAt: string;
 };
 
+type ProductVariant = {
+  sku: string;
+  attributes?: { color?: string; size?: string };
+  price: number;
+  discountedPrice: number;
+  stock: number;
+  images?: string[];
+  weight?: number;
+};
+
 type Product = {
   _id: string;
+  name?: string;
   title: string;
   slug?: string;
   description: string;
@@ -58,16 +69,53 @@ type Product = {
   discountPercentage: number;
   info?: string;
   category: string;
-  variants?: {
-    sizes: string[];
-    colors: string[];
-  };
+  subCategory?: string;
+  brand?: string;
+  material?: string;
+  plating?: string;
+  stoneType?: string;
+  color?: string;
+  occasion?: string;
+  style?: string;
+  gender?: string;
+  setType?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  status?: string;
+  isNewArrival?: boolean;
+  totalStock?: number;
+  lowStockThreshold?: number;
+  trackInventory?: boolean;
+  totalReviews?: number;
+  metaTitle?: string;
+  metaDescription?: string;
+  dimensions?: { length?: number; breadth?: number; height?: number };
+  variants?: ProductVariant[] | { sizes: string[]; colors: string[] };
   reviews?: ReviewType[];
   weight?: number;
   length?: number;
   breadth?: number;
   height?: number;
 };
+
+function getVariantOptions(variants: Product["variants"]) {
+  if (!variants) return { sizes: [], colors: [] };
+  if (Array.isArray(variants)) {
+    return {
+      sizes: [
+        ...new Set(
+          variants.map((variant) => variant.attributes?.size).filter(Boolean),
+        ),
+      ] as string[],
+      colors: [
+        ...new Set(
+          variants.map((variant) => variant.attributes?.color).filter(Boolean),
+        ),
+      ] as string[],
+    };
+  }
+  return variants;
+}
 
 interface ProductPageClientProps {
   initialProduct: Product;
@@ -82,7 +130,7 @@ const ProductPageClient = ({
   initialRecommendations,
   slug,
 }: ProductPageClientProps) => {
-  const { addToWishlist, user, fetchUserCart } = useAuthStore();
+  const { addToWishlist, user, fetchUserCart, openCart } = useAuthStore();
   const router = useRouter();
 
   const [product, setProduct] = useState<Product>(initialProduct);
@@ -209,6 +257,7 @@ const ProductPageClient = ({
       if (goDirectlyToCart) {
         router.push("/checkout");
       } else {
+        openCart();
         setCartError("Added to bag!");
         setTimeout(() => setCartError(""), 3000);
       }
@@ -384,11 +433,9 @@ const ProductPageClient = ({
         : initialProduct.image;
     setSelectedImage(primaryImage);
 
-    if (
-      initialProduct.variants?.sizes &&
-      initialProduct.variants.sizes.length > 0
-    ) {
-      setSize(initialProduct.variants.sizes[0]);
+    const initialVariantOptions = getVariantOptions(initialProduct.variants);
+    if (initialVariantOptions.sizes.length > 0) {
+      setSize(initialVariantOptions.sizes[0]);
     } else {
       const cat = initialProduct.category;
       if (["Lowers", "Jeans", "Shirts", "dresses", "suits"].includes(cat)) {
@@ -400,11 +447,8 @@ const ProductPageClient = ({
       }
     }
 
-    if (
-      initialProduct.variants?.colors &&
-      initialProduct.variants.colors.length > 0
-    ) {
-      setColor(initialProduct.variants.colors[0]);
+    if (initialVariantOptions.colors.length > 0) {
+      setColor(initialVariantOptions.colors[0]);
     } else {
       setColor("");
     }
@@ -457,10 +501,9 @@ const ProductPageClient = ({
       ? product.images
       : [product.image];
 
-  const colorsList =
-    product.variants?.colors && product.variants.colors.length > 0
-      ? product.variants.colors
-      : [];
+  const variantOptions = getVariantOptions(product.variants);
+  const sizesList = variantOptions.sizes;
+  const colorsList = variantOptions.colors;
   const showColorSelector = colorsList.length > 0;
 
   // Calculate review distribution
@@ -729,11 +772,11 @@ const ProductPageClient = ({
             </div>
 
             <p className="text-sm leading-relaxed text-neutral-600">
-              {product.description}
+              {product.longDescription || product.description}
             </p>
 
             {/* Sizes variants */}
-            {product.variants?.sizes && product.variants.sizes.length > 0 && (
+            {sizesList.length > 0 && (
               <div className="space-y-2 py-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
@@ -748,7 +791,7 @@ const ProductPageClient = ({
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {product.variants.sizes.map((s) => (
+                  {sizesList.map((s) => (
                     <button
                       key={s}
                       onClick={() => setSize(s)}

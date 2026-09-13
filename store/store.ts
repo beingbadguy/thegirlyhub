@@ -29,6 +29,9 @@ interface AuthState {
   } | null;
   isLoggingOut: boolean;
   userCart: PopulatedCartProduct | null;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
   userWishlist: PopulatedWishlist | null;
   fetchUser: () => Promise<void>;
   logout: () => void;
@@ -95,9 +98,12 @@ async function hydrateGuestCart() {
 export const useAuthStore = create<AuthState>((set, get) => ({
   userWishlist: null,
   userCart: null,
+  isCartOpen: false,
   user: null,
   isLoggingOut: false,
   setUser: (user) => set({ user }),
+  openCart: () => set({ isCartOpen: true }),
+  closeCart: () => set({ isCartOpen: false }),
 
   fetchUser: async () => {
     try {

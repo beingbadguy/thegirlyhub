@@ -117,7 +117,7 @@ export default function RefundPolicy() {
             <p className="font-medium text-gray-900">
               officialgirlyhub@gmail.com
             </p>
-            <p className="font-medium text-gray-900">Phone: 96675549765</p>
+            <p className="font-medium text-gray-900">Phone: +91 836 842 2490</p>
           </div>
         </div>
       </div>

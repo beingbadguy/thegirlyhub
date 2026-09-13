@@ -9,11 +9,10 @@ export default function TermsOfService() {
       </p>
 
       <div className="space-y-8 text-gray-700 leading-7">
-
         <p>
-          Welcome to <span className="font-semibold">GirlyHub</span>. By accessing
-          or using our website, you agree to comply with and be bound by the
-          following terms and conditions.
+          Welcome to <span className="font-semibold">GirlyHub</span>. By
+          accessing or using our website, you agree to comply with and be bound
+          by the following terms and conditions.
         </p>
 
         {/* SECTION */}
@@ -22,8 +21,8 @@ export default function TermsOfService() {
             1. General
           </h2>
           <p>
-            By using this website, you confirm that you are at least 18 years old
-            or accessing it under parental supervision.
+            By using this website, you confirm that you are at least 18 years
+            old or accessing it under parental supervision.
           </p>
         </div>
 
@@ -32,8 +31,9 @@ export default function TermsOfService() {
             2. Products & Pricing
           </h2>
           <p>
-            All products are subject to availability. GirlyHub reserves the right
-            to modify or discontinue any product or pricing without prior notice.
+            All products are subject to availability. GirlyHub reserves the
+            right to modify or discontinue any product or pricing without prior
+            notice.
           </p>
         </div>
 
@@ -93,8 +93,8 @@ export default function TermsOfService() {
             8. Limitation of Liability
           </h2>
           <p>
-            GirlyHub is not liable for any indirect or incidental damages arising
-            from the use of our website or products.
+            GirlyHub is not liable for any indirect or incidental damages
+            arising from the use of our website or products.
           </p>
         </div>
 
@@ -115,11 +115,10 @@ export default function TermsOfService() {
               officialgirlyhub@gmail.com
             </span>
             <span className="font-medium text-gray-900 block">
-              Phone: 96675549765
+              Phone: +91 836 842 2490
             </span>
           </p>
         </div>
-
       </div>
     </div>
   );

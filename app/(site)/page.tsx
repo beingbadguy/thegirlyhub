@@ -11,6 +11,7 @@ import TrustStrip from "@/components/TrustStrip";
 import SummerSaleBanner from "@/components/SummerSaleBanner";
 import HomeReviews from "@/components/HomeReviews";
 import OfferBanner from "@/components/OfferBanner";
+import HomeConnect from "@/components/HomeConnect";
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
         <NewArrivals limit={12} showSeeMore />
         <TrustStrip />
         <HomeReviews />
+        <HomeConnect />
         {/* <SummerSaleBanner/> */}
         <Newsletter />
         <Faqs />

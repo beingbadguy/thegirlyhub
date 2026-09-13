@@ -29,7 +29,7 @@ const ContactUs = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
@@ -49,12 +49,18 @@ const ContactUs = () => {
       return;
     }
 
-    if (data.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+    if (
+      data.email.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())
+    ) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    if (data.phone.trim() && !/^\+?[0-9\s\-()]{8,16}$/.test(data.phone.trim())) {
+    if (
+      data.phone.trim() &&
+      !/^\+?[0-9\s\-()]{8,16}$/.test(data.phone.trim())
+    ) {
       setError("Please enter a valid phone number.");
       return;
     }
@@ -86,12 +92,10 @@ const ContactUs = () => {
     <div className="min-h-screen  px-4 py-10">
       {/* Breadcrumb */}
       <div className=" mx-auto text-sm text-gray-500 mb-6 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome />{" "}
-        / <span className="text-gray-800">Contact</span>
+        <BreadcrumbHome /> / <span className="text-gray-800">Contact</span>
       </div>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-
         {/* LEFT SIDE */}
         <div className="flex flex-col justify-center space-y-6">
           <div>
@@ -99,12 +103,12 @@ const ContactUs = () => {
               Let’s Connect 💌
             </h2>
             <p className="text-gray-600 text-base leading-relaxed">
-              We’re here to help you with anything. Reach out and we’ll respond as soon as possible.
+              We’re here to help you with anything. Reach out and we’ll respond
+              as soon as possible.
             </p>
           </div>
 
           <div className="space-y-4 text-gray-700 text-sm">
-
             {/* Email */}
             <div className="flex items-center gap-3">
               <FaEnvelope className="text-pink-500 text-base" />
@@ -120,10 +124,10 @@ const ContactUs = () => {
             <div className="flex items-center gap-3">
               <FaPhoneAlt className="text-pink-500 text-base" />
               <a
-                href="tel:+9196675549765"
+                href="tel:+918368422490"
                 className="hover:text-pink-600 transition"
               >
-                +91 96675 549765
+                +91 836 842 2490
               </a>
             </div>
 
@@ -147,14 +151,12 @@ const ContactUs = () => {
                 @officialgirlyhub
               </a>
             </div>
-
           </div>
         </div>
 
         {/* RIGHT SIDE FORM */}
         <div className="bg-white  rounded-3xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
-
             <input
               type="text"
               name="name"
