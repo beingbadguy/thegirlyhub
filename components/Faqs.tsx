@@ -9,6 +9,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import JsonLd from "@/components/seo/JsonLd";
+import { generateFaqSchema } from "@/lib/seo/schema";
 
 const Faqs = () => {
   const [faqs, setFaqs] = useState<
@@ -26,8 +28,11 @@ const Faqs = () => {
 
   if (loaded && faqs.length === 0) return null;
 
+  const faqSchema = generateFaqSchema(faqs);
+
   return (
     <section className="mx-auto py-10 md:py-14">
+      {faqSchema && <JsonLd data={faqSchema} />}
       <div className="relative overflow-hidden rounded-3xl border border-rose-100/60 bg-[#FFF9FA] px-6 py-12  sm:px-10 md:grid md:grid-cols-2 md:gap-16 md:px-16 md:py-16">
         {/* Very subtle background hearts */}
         <img
@@ -87,3 +92,4 @@ const Faqs = () => {
 };
 
 export default Faqs;
+

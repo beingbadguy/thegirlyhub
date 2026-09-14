@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
+import { SITE_CONFIG } from "@/lib/seo/config";
+
+export const metadata: Metadata = {
+  title: "Shipping & Delivery Policy",
+  description: "Learn about GirlyHub's shipping timelines, delivery costs, Cash on Delivery (COD), and order tracking across India.",
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/policies/shipping-policy`,
+  },
+};
+
 export default function ShippingPolicy() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 md:py-16 min-h-[60vh]">
-      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900">
-        Shipping Policy
+      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900 font-serif">
+        Shipping & Delivery Policy
       </h1>
       <p className="mb-10 text-sm text-gray-500">
         Last updated: 29 August 2026
@@ -10,8 +21,7 @@ export default function ShippingPolicy() {
 
       <div className="space-y-8 text-gray-700 leading-7">
         <p>
-          At <span className="font-semibold">Loopsie</span>, operated by{" "}
-          <span className="font-semibold">MALIQ ENTERPRISES</span>, we ensure
+          At <span className="font-semibold text-gray-900">GirlyHub</span>, we ensure
           fast, secure, and hassle-free delivery for all orders. Below are the
           details regarding our shipping timelines, costs, and processes.
         </p>
@@ -24,7 +34,7 @@ export default function ShippingPolicy() {
           <ul className="list-disc pl-5 space-y-1.5">
             <li>
               <span className="font-medium">Processing Time:</span> Orders are
-              processed within 24-48 hours after payment confirmation.
+              processed within 24-48 hours after order placement.
             </li>
             <li>
               <span className="font-medium">
@@ -78,14 +88,8 @@ export default function ShippingPolicy() {
               </tbody>
             </table>
           </div>
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
-            <span className="font-medium">💡 Note:</span> Currently, we do not
-            ship to Jammu & Kashmir and Northeast India due to logistical
-            constraints. We hope to expand to these regions soon.
-          </div>
           <p className="mt-3 text-sm text-gray-500">
-            Delivery times may vary due to unforeseen delays such as weather
-            conditions, courier issues, or high demand.
+            Delivery times may vary slightly due to weather conditions, festivals, or courier logistics.
           </p>
         </div>
 
@@ -104,68 +108,10 @@ export default function ShippingPolicy() {
               <span className="font-medium">₹49</span> applies.
             </li>
             <li>
-              <span className="font-medium text-amber-700">
+              <span className="font-medium text-pink-700">
                 Cash on Delivery (COD)
               </span>{" "}
-              has no extra COD fee. Only the applicable delivery charge is
-              added.
-            </li>
-          </ul>
-        </div>
-
-        {/* SECTION */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            🛒 Cash on Delivery (COD) Order Confirmation
-          </h2>
-          <p>
-            Please note that we process COD orders{" "}
-            <span className="font-semibold">
-              only after verification and confirmation
-            </span>{" "}
-            from the customer via phone call or WhatsApp. If we are unable to
-            reach you or receive confirmation within 24 hours, your order may be
-            cancelled.
-          </p>
-        </div>
-
-        {/* SECTION */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            🌍 International Shipping
-          </h2>
-          <p>
-            We currently do not ship internationally, but we plan to expand our
-            services soon. Stay tuned!
-          </p>
-        </div>
-
-        {/* SECTION */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            📦 Order Tracking
-          </h2>
-          <p>
-            Once your order is shipped, you will receive an email and SMS with a
-            tracking link. You can also track your order anytime directly on our
-            website under Order Status.
-          </p>
-        </div>
-
-        {/* SECTION */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            🛑 Shipping Restrictions & Important Notes
-          </h2>
-          <ul className="list-disc pl-5 space-y-1.5">
-            <li>COD is available only for orders up to ₹2000.</li>
-            <li>
-              If a package is undelivered due to incorrect address or refusal to
-              accept, we reserve the right to charge a re-shipping fee.
-            </li>
-            <li>
-              During sales, festive seasons, or peak periods, processing and
-              delivery times may be longer than usual.
+              is available across India.
             </li>
           </ul>
         </div>
@@ -183,10 +129,10 @@ export default function ShippingPolicy() {
             <p>
               📧{" "}
               <a
-                href="mailto:support@itsloopsie.com"
-                className="text-pink-600 hover:underline"
+                href="mailto:support@girlyhub.in"
+                className="text-pink-600 hover:underline font-medium"
               >
-                support@itsloopsie.com
+                support@girlyhub.in
               </a>
             </p>
             <p>

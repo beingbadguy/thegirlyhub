@@ -1,12 +1,24 @@
+import type { Metadata } from "next";
+import { SITE_CONFIG } from "@/lib/seo/config";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "Learn how GirlyHub collects, protects, and uses your personal data securely.",
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/policies/privacy-policy`,
+  },
+};
+
 export default function PrivacyPolicy() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 md:py-16 min-h-[60vh]">
-      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900">
+      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900 font-serif">
         Privacy Policy
       </h1>
       <p className="mb-10 text-sm text-gray-500">
         Last updated: 29 August 2026
       </p>
+
 
       <div className="space-y-8 text-gray-700 leading-7">
         <p>

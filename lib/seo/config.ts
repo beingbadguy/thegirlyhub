@@ -1,0 +1,40 @@
+export const SITE_CONFIG = {
+  name: "GirlyHub",
+  legalName: "GirlyHub Retail Private Limited",
+  domain: "girlyhub.in",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://girlyhub.in",
+  tagline: "Trendy Jewellery, Hair Accessories & Scrunchies",
+  defaultTitle: "GirlyHub | Trendy Jewellery, Hair Accessories & Scrunchies",
+  defaultDescription:
+    "Shop premium hair accessories, Korean hair claws, scrunchies, aesthetic jewellery, earrings, and lifestyle essentials at GirlyHub with COD and fast delivery across India.",
+  defaultKeywords: [
+    "GirlyHub",
+    "hair accessories",
+    "hair claws online",
+    "aesthetic jewellery",
+    "scrunchies combo",
+    "korean hair clips",
+    "earrings online india",
+    "trendy accessories for girls",
+    "cute lifestyle products",
+    "affordable jewellery store",
+  ],
+  logo: "https://girlyhub.in/girlyhub_logo_flower_transparent.png",
+  ogImage: "https://girlyhub.in/girlyhub_logo_flower_transparent.png",
+  socials: {
+    instagram: "https://www.instagram.com/officialgirlyhub",
+    facebook: "https://www.facebook.com/officialgirlyhub",
+    pinterest: "https://www.pinterest.com/officialgirlyhub",
+  },
+  contact: {
+    email: "officialgirlyhub@gmail.com",
+    phone: "+918368422490",
+    address: {
+      streetAddress: "Jwala Nagar Shahdara",
+      addressLocality: "Delhi",
+      addressRegion: "Delhi",
+      postalCode: "110032",
+      addressCountry: "IN",
+    },
+  },
+};

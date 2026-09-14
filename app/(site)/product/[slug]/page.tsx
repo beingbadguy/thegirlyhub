@@ -4,6 +4,73 @@ import Product from "@/models/product.model";
 import mongoose from "mongoose";
 import ProductPageClient from "./ProductPageClient";
 import type { Metadata } from "next";
+import JsonLd from "@/components/seo/JsonLd";
+import { SITE_CONFIG } from "@/lib/seo/config";
+import {
+  generateBreadcrumbSchema,
+  generateProductSchema,
+} from "@/lib/seo/schema";
+
+interface LeanProduct {
+  _id: mongoose.Types.ObjectId | string;
+  title: string;
+  name?: string;
+  slug?: string;
+  category: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  shortDescription?: string;
+  description?: string;
+  price?: number;
+  sellingPrice?: number;
+  discountPrice?: number;
+  images?: string[];
+  image?: string;
+  mainImage?: string;
+  brand?: string;
+  material?: string;
+  rating?: number;
+  ratings?: number;
+  averageRating?: number;
+  numReviews?: number;
+  totalReviews?: number;
+  totalStock?: number;
+  stock?: number;
+  countInStock?: number;
+  isActive?: boolean;
+  status?: string;
+  reviews?: any[];
+  updatedAt?: string | Date;
+}
+
+async function findProductBySlugOrId(identifier: string) {
+  const decoded = decodeURIComponent(identifier);
+
+  if (mongoose.Types.ObjectId.isValid(decoded)) {
+    const byId = await Product.findById(decoded).lean();
+    if (byId) return byId as unknown as LeanProduct;
+  }
+
+  const bySlug = await Product.findOne({ slug: decoded }).lean();
+  if (bySlug) return bySlug as unknown as LeanProduct;
+
+  const idFromSlug = extractIdFromSlug(decoded);
+  if (idFromSlug) {
+    const byPartialId = await Product.findById(idFromSlug).lean();
+    if (byPartialId) return byPartialId as unknown as LeanProduct;
+  }
+
+  const baseSlug = decoded.replace(/-[a-f0-9]{6}$/i, "");
+  const products = (await Product.find({}).lean()) as unknown as LeanProduct[];
+  return (
+    products.find(
+      (p) =>
+        p.slug === decoded ||
+        slugify(p.title || p.name || "") === baseSlug ||
+        buildProductSlug(p.title || p.name || "", p._id.toString()) === decoded,
+    ) ?? null
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -13,61 +80,71 @@ export async function generateMetadata({
   await databaseConnection();
   const { slug } = await params;
   const product = await findProductBySlugOrId(slug);
+
   if (!product) {
     return {
-      title: "Product Not Found",
+      title: "Product Not Found | GirlyHub",
+      description: "The requested product is not available.",
+      robots: { index: false, follow: true },
     };
   }
-  const rawTitle = (product as any).metaTitle || (product as any).title;
+
+  const titleText = product.metaTitle || product.title || product.name || "Product";
+  const price =
+    product.sellingPrice || product.discountPrice || product.price || 0;
+  const canonicalUrl = `${SITE_CONFIG.url}/product/${encodeURIComponent(slug)}`;
+
   const rawDescription =
-    (product as any).metaDescription ||
-    (product as any).shortDescription ||
-    (product as any).description;
+    product.metaDescription ||
+    product.shortDescription ||
+    product.description ||
+    `Shop ${titleText} online at GirlyHub. Explore premium hair accessories and jewellery with fast shipping and Cash on Delivery.`;
 
   const cleanDescription = rawDescription
-    ? rawDescription.replace(/<[^>]*>/g, "").slice(0, 160)
-    : `Buy ${(product as any).title} online at GirlyHub.`;
+    .replace(/<[^>]*>/g, "")
+    .trim()
+    .slice(0, 160);
+
+  const images: string[] = [];
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    product.images.forEach((img) => {
+      if (img) images.push(img.startsWith("http") ? img : `${SITE_CONFIG.url}${img.startsWith("/") ? "" : "/"}${img}`);
+    });
+  }
+  if (images.length === 0 && (product.mainImage || product.image)) {
+    const single = product.mainImage || product.image || "";
+    if (single) images.push(single.startsWith("http") ? single : `${SITE_CONFIG.url}${single.startsWith("/") ? "" : "/"}${single}`);
+  }
+  if (images.length === 0) {
+    images.push(SITE_CONFIG.ogImage);
+  }
 
   return {
-    title: rawTitle,
+    title: `${titleText} | Buy Online at ₹${price} | ${SITE_CONFIG.name}`,
     description: cleanDescription,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${titleText} | ${SITE_CONFIG.name}`,
+      description: cleanDescription,
+      url: canonicalUrl,
+      siteName: SITE_CONFIG.name,
+      type: "website",
+      images: images.map((url) => ({
+        url,
+        width: 800,
+        height: 800,
+        alt: titleText,
+      })),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${titleText} | ${SITE_CONFIG.name}`,
+      description: cleanDescription,
+      images,
+    },
   };
-}
-
-interface LeanProduct {
-  _id: mongoose.Types.ObjectId | string;
-  title: string;
-  slug?: string;
-  category: string;
-}
-
-async function findProductBySlugOrId(identifier: string) {
-  const decoded = decodeURIComponent(identifier);
-
-  if (mongoose.Types.ObjectId.isValid(decoded)) {
-    const byId = await Product.findById(decoded).lean();
-    if (byId) return byId;
-  }
-
-  const bySlug = await Product.findOne({ slug: decoded }).lean();
-  if (bySlug) return bySlug;
-
-  const idFromSlug = extractIdFromSlug(decoded);
-  if (idFromSlug) {
-    const byPartialId = await Product.findById(idFromSlug).lean();
-    if (byPartialId) return byPartialId;
-  }
-
-  const baseSlug = decoded.replace(/-[a-f0-9]{6}$/i, "");
-  const products = (await Product.find({}).lean()) as unknown as LeanProduct[];
-  return (
-    products.find(
-      (p) =>
-        p.slug === decoded ||
-        slugify(p.title) === baseSlug ||
-        buildProductSlug(p.title, p._id.toString()) === decoded,
-    ) ?? null
-  );
 }
 
 async function getRecommendations(category: string, excludeId: string) {
@@ -108,15 +185,34 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
 
   // Serialize to avoid Next.js serialization warnings
   const plainProduct = JSON.parse(JSON.stringify(product));
+  const canonicalUrl = `${SITE_CONFIG.url}/product/${encodeURIComponent(slug)}`;
 
   const recommendations = await getRecommendations(plainProduct.category, plainProduct._id);
   const plainRecommendations = JSON.parse(JSON.stringify(recommendations));
 
+  const productSchema = generateProductSchema(plainProduct, canonicalUrl);
+  const breadcrumbsSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Categories", url: "/category" },
+    {
+      name: plainProduct.category || "Jewellery",
+      url: `/category/${encodeURIComponent(plainProduct.category || "jewellery")}`,
+    },
+    {
+      name: plainProduct.title || plainProduct.name || "Product",
+      url: `/product/${encodeURIComponent(slug)}`,
+    },
+  ]);
+
   return (
-    <ProductPageClient
-      initialProduct={plainProduct}
-      initialRecommendations={plainRecommendations}
-      slug={slug}
-    />
+    <>
+      <JsonLd data={productSchema} />
+      <JsonLd data={breadcrumbsSchema} />
+      <ProductPageClient
+        initialProduct={plainProduct}
+        initialRecommendations={plainRecommendations}
+        slug={slug}
+      />
+    </>
   );
 }

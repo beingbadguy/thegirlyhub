@@ -1,13 +1,25 @@
+import type { Metadata } from "next";
+import { SITE_CONFIG } from "@/lib/seo/config";
+
+export const metadata: Metadata = {
+  title: "Return & Refund Policy",
+  description: "Read the GirlyHub return, refund, and exchange policy for accessories and jewellery orders.",
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/policies/refund-policy`,
+  },
+};
+
 export default function RefundPolicy() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 md:py-16 min-h-[60vh] font-instrument">
+    <div className="mx-auto max-w-3xl px-4 py-12 md:py-16 min-h-[60vh]">
       {/* Heading */}
-      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900 tracking-tight font-serif">
         Return & Refund Policy
       </h1>
       <p className="mb-10 text-sm text-gray-500">
         Last updated: 29 August 2026
       </p>
+
 
       <div className="space-y-8 text-gray-700 leading-7 text-[15px]">
         {/* Intro */}

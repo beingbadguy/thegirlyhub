@@ -1,12 +1,24 @@
+import type { Metadata } from "next";
+import { SITE_CONFIG } from "@/lib/seo/config";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "Read GirlyHub's terms of service, customer agreement, and legal policies for online shopping.",
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/policies/terms-of-service`,
+  },
+};
+
 export default function TermsOfService() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 md:py-16 min-h-[60vh]">
-      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900">
+      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900 font-serif">
         Terms of Service
       </h1>
       <p className="mb-10 text-sm text-gray-500">
         Last updated: 29 August 2026
       </p>
+
 
       <div className="space-y-8 text-gray-700 leading-7">
         <p>

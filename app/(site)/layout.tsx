@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Darker_Grotesque,
   Instrument_Serif,
   Bodoni_Moda,
   Poppins,
 } from "next/font/google";
-// import "../globals.css";
 import "./globals.css";
 import HeaderSection from "@/components/HeaderSection";
 import Footer from "@/components/Footer";
@@ -16,6 +15,12 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import StickyMenuBar from "@/components/StickyMenuBar";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import CartDrawer from "@/components/CartDrawer";
+import JsonLd from "@/components/seo/JsonLd";
+import { SITE_CONFIG } from "@/lib/seo/config";
+import {
+  generateOrganizationSchema,
+  generateWebSiteSchema,
+} from "@/lib/seo/schema";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -44,33 +49,75 @@ const darkerGrotesque = Darker_Grotesque({
   weight: ["400", "500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#ffe4e6",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://girlyhub.in"),
+  metadataBase: new URL(SITE_CONFIG.url),
   title: {
-    default: "GirlyHub | Trendy Accessories, Scrunchies & Dresses",
-    template: "%s | GirlyHub",
+    default: SITE_CONFIG.defaultTitle,
+    template: `%s | ${SITE_CONFIG.name}`,
   },
-  description:
-    "GirlyHub is your go-to destination for high-quality accessories, scrunchies, earrings, jewellery, flats, and dresses. Shop our curated collection and express your style.",
+  description: SITE_CONFIG.defaultDescription,
+  keywords: SITE_CONFIG.defaultKeywords,
+  authors: [{ name: SITE_CONFIG.name, url: SITE_CONFIG.url }],
+  creator: SITE_CONFIG.name,
+  publisher: SITE_CONFIG.name,
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
-    siteName: "GirlyHub",
-    title: "GirlyHub | Trendy Accessories, Scrunchies & Dresses",
-    description:
-      "Shop curated accessories, jewellery, scrunchies, flats, dresses, and more at GirlyHub.",
-    url: "https://girlyhub.in",
+    locale: "en_IN",
+    url: SITE_CONFIG.url,
+    siteName: SITE_CONFIG.name,
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    images: [
+      {
+        url: "/girlyhub_logo_flower_transparent.png",
+        width: 1200,
+        height: 630,
+        alt: `${SITE_CONFIG.name} - Trendy Jewellery & Accessories`,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GirlyHub | Trendy Accessories, Scrunchies & Dresses",
-    description:
-      "Shop curated accessories, jewellery, scrunchies, flats, dresses, and more at GirlyHub.",
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    images: ["/girlyhub_logo_flower_transparent.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
   },
   icons: {
-    icon: [{ url: "/favicon.png?v=4", type: "image/png" }],
+    icon: [
+      { url: "/favicon.png?v=4", type: "image/png" },
+      { url: "/girlyhub-favicon.png", type: "image/png" },
+    ],
+    apple: [{ url: "/girlyhub-favicon.png" }],
   },
 };
 
@@ -79,14 +126,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationSchema = generateOrganizationSchema();
+  const webSiteSchema = generateWebSiteSchema();
+
   return (
     <html lang="en">
+      <head>
+        <JsonLd data={organizationSchema} />
+        <JsonLd data={webSiteSchema} />
+      </head>
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar `}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar`}
       >
         <AnnouncementBand />
         <SmoothScroll />
-        {/* <Header /> */}
         <HeaderSection />
         <StickyMenuBar />
         <FloatingWhatsApp />
@@ -94,26 +147,10 @@ export default function RootLayout({
 
         {children}
         <Footer />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "OnlineStore",
-              name: "GirlyHub",
-              url: "https://girlyhub.in",
-              description: metadata.description,
-              potentialAction: {
-                "@type": "SearchAction",
-                target: "https://girlyhub.in/search?q={search_term_string}",
-                "query-input": "required name=search_term_string",
-              },
-            }),
-          }}
-        />
         <Analytics />
         <SpeedInsights />
       </body>
     </html>
   );
 }
+
