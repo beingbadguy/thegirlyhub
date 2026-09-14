@@ -113,7 +113,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { fetchUserCart, fetchUserWishlist, syncCartAfterAuth } = get();
       await syncCartAfterAuth();
       fetchUserWishlist();
-      fetchUserCart();
+      await fetchUserCart();
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         if (error.response?.status !== 401) {

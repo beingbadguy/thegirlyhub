@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
+import Link from "next/link";
 import { FaSearch } from "react-icons/fa";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { MdErrorOutline } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
 import { Check, X, Clock, MapPin, Truck, CreditCard, Tag, Copy, CheckCheck, PackageCheck } from "lucide-react";
+import { productUrl } from "@/lib/slug";
 
 type OrderStatus =
   | "processing"
@@ -314,26 +316,47 @@ export default function TrackOrderPage() {
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Items Purchased</p>
               <div className="space-y-3">
-                {order.products.map((item, idx) => (
-                  <div key={idx} className="flex gap-3 items-start p-3 bg-gray-50/50 border border-gray-100 rounded-xl">
-                    <img
-                      src={getProductImage(item)}
-                      alt={getProductTitle(item)}
-                      className="w-14 h-16 object-cover rounded-lg bg-gray-100 shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 line-clamp-1">{getProductTitle(item)}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        ₹{getProductPrice(item)} × {item.quantity}
-                        {item.size && (
-                          <span className="ml-2 bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
-                            {item.size}
-                          </span>
+                {order.products.map((item, idx) => {
+                  const productId = typeof item.productId === "object" ? item.productId?._id : item.productId;
+                  const itemUrl = productId ? productUrl(getProductTitle(item), productId, (item.productId as any)?.slug) : null;
+
+                  return (
+                    <div key={idx} className="flex gap-3 items-start p-3 bg-gray-50/50 border border-gray-100 rounded-xl">
+                      {itemUrl ? (
+                        <Link href={itemUrl} className="w-14 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0 transition hover:opacity-80">
+                          <img
+                            src={getProductImage(item)}
+                            alt={getProductTitle(item)}
+                            className="w-full h-full object-cover"
+                          />
+                        </Link>
+                      ) : (
+                        <img
+                          src={getProductImage(item)}
+                          alt={getProductTitle(item)}
+                          className="w-14 h-16 object-cover rounded-lg bg-gray-100 shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        {itemUrl ? (
+                          <Link href={itemUrl} className="text-sm font-semibold text-gray-800 line-clamp-1 hover:text-pink-600 transition">
+                            {getProductTitle(item)}
+                          </Link>
+                        ) : (
+                          <p className="text-sm font-semibold text-gray-800 line-clamp-1">{getProductTitle(item)}</p>
                         )}
-                      </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          ₹{getProductPrice(item)} × {item.quantity}
+                          {item.size && (
+                            <span className="ml-2 bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                              {item.size}
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

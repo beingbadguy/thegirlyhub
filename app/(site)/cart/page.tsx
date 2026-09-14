@@ -6,11 +6,13 @@ import { useEffect, useState, useRef } from "react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { Minus, Plus, Trash2, Sparkles } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { AxiosError } from "axios";
 import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 import FreeShippingBar from "@/components/FreeShippingBar";
+import { productUrl } from "@/lib/slug";
 
 const CartPage = () => {
   const { user, userCart, updateCartQuantity, removeFromCart } = useAuthStore();
@@ -68,10 +70,17 @@ const CartPage = () => {
     (item) => !isProductInStock(item.productId),
   );
 
-  const subtotal = availableItems.reduce(
-    (acc, item) => acc + item.productId.discountedPrice * item.quantity,
-    0,
-  );
+  const subtotal = availableItems.reduce((acc, item) => {
+    const p = item.productId;
+    const price = Number(
+      p.discountedPrice ||
+        p.price ||
+        (p as any).sellingPrice ||
+        (p as any).discountPrice ||
+        0,
+    );
+    return acc + price * item.quantity;
+  }, 0);
 
   // Dynamic shipping calculation
   const shippingResult = calculateShipping(subtotal, "online");
@@ -123,25 +132,47 @@ const CartPage = () => {
       {cartItems.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2 space-y-6">
-            {availableItems.map((item) => (
-              <div
-                key={item.productId._id}
-                className="flex gap-4 border-b pb-4"
-              >
-                <Image
-                  src={item.productId.image}
-                  alt={item.productId.title}
-                  width={100}
-                  height={100}
-                  className="object-contain rounded bg-[#fffafc] p-1"
-                />
-                <div className="flex-1">
-                  <h2 className="font-semibold text-lg">
-                    {item.productId.title}
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Category: {item.productId.category}
-                  </p>
+            {availableItems.map((item) => {
+              const itemUrl = productUrl(
+                item.productId.title,
+                item.productId._id,
+                (item.productId as any).slug,
+              );
+              const unitPrice = Number(
+                item.productId.discountedPrice ||
+                  item.productId.price ||
+                  (item.productId as any).sellingPrice ||
+                  (item.productId as any).discountPrice ||
+                  0,
+              );
+
+              return (
+                <div
+                  key={item.productId._id}
+                  className="flex gap-4 border-b pb-4"
+                >
+                  <Link
+                    href={itemUrl}
+                    className="shrink-0 transition hover:opacity-80"
+                  >
+                    <Image
+                      src={item.productId.image}
+                      alt={item.productId.title}
+                      width={100}
+                      height={100}
+                      className="object-contain rounded bg-[#fffafc] p-1"
+                    />
+                  </Link>
+                  <div className="flex-1">
+                    <Link
+                      href={itemUrl}
+                      className="font-semibold text-lg hover:text-pink-700 transition line-clamp-2"
+                    >
+                      {item.productId.title}
+                    </Link>
+                    <p className="text-sm text-gray-600">
+                      Category: {item.productId.category}
+                    </p>
                   {/* <p className="text-sm text-gray-600">
                     Color: {item.productId.color}
                   </p> */}
@@ -215,11 +246,12 @@ const CartPage = () => {
                   )}
 
                   <div className="mt-2 text-pink-500 text-sm font-semibold ">
-                    ₹{item.productId.discountedPrice || item.productId.price}
+                    ₹{unitPrice.toLocaleString("en-IN")}
                   </div>
                 </div>
               </div>
-            ))}
+            );
+          })}
 
             {unavailableItems.length > 0 && (
               <div className="rounded-lg border border-red-100 bg-red-50/50 p-4">
@@ -227,36 +259,51 @@ const CartPage = () => {
                   Out of stock — not included in total
                 </h3>
                 <div className="space-y-4">
-                  {unavailableItems.map((item) => (
-                    <div
-                      key={item.productId._id}
-                      className="flex gap-4 opacity-70"
-                    >
-                      <Image
-                        src={item.productId.image}
-                        alt={item.productId.title}
-                        width={80}
-                        height={80}
-                        className="rounded bg-white object-contain p-1 grayscale"
-                      />
-                      <div className="flex flex-1 items-start justify-between">
-                        <div>
-                          <h2 className="font-semibold text-gray-700 line-through">
-                            {item.productId.title}
-                          </h2>
-                          <p className="mt-1 text-xs font-medium text-red-600">
-                            Out of stock
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleDelete(item.productId._id)}
-                          className="text-red-600 hover:text-red-800"
+                  {unavailableItems.map((item) => {
+                    const itemUrl = productUrl(
+                      item.productId.title,
+                      item.productId._id,
+                      (item.productId as any).slug,
+                    );
+                    return (
+                      <div
+                        key={item.productId._id}
+                        className="flex gap-4 opacity-70"
+                      >
+                        <Link
+                          href={itemUrl}
+                          className="shrink-0 transition hover:opacity-80"
                         >
-                          <Trash2 size={18} />
-                        </button>
+                          <Image
+                            src={item.productId.image}
+                            alt={item.productId.title}
+                            width={80}
+                            height={80}
+                            className="rounded bg-white object-contain p-1 grayscale"
+                          />
+                        </Link>
+                        <div className="flex flex-1 items-start justify-between">
+                          <div>
+                            <Link
+                              href={itemUrl}
+                              className="font-semibold text-gray-700 line-through hover:text-pink-700 transition"
+                            >
+                              {item.productId.title}
+                            </Link>
+                            <p className="mt-1 text-xs font-medium text-red-600">
+                              Out of stock
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleDelete(item.productId._id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

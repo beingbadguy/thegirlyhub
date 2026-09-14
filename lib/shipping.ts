@@ -41,6 +41,17 @@ export function calculateShipping(
   subtotal: number,
   paymentMethod: "cod" | "online" = "online",
 ): ShippingResult {
+  if (subtotal <= 0) {
+    return {
+      shippingCharge: 0,
+      codFee: 0,
+      totalShipping: 0,
+      remainingForFreeShipping: FREE_SHIPPING_THRESHOLD,
+      isFreeShipping: false,
+      freeShippingProgress: 0,
+    };
+  }
+
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const shippingCharge = isFreeShipping ? 0 : SHIPPING_CHARGE;
   const codFee = 0;

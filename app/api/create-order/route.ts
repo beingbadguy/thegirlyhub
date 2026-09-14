@@ -27,12 +27,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
     if (!keyId || !keySecret) {
       return NextResponse.json(
-        { success: false, message: "Razorpay is not configured." },
+        { success: false, message: "Razorpay is not configured on the server. Please check environment variables." },
         { status: 500 },
       );
     }
@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
+        key: keyId,
         order_id: order.id,
         amount: order.amount,
         currency: order.currency,

@@ -1,8 +1,10 @@
 "use client";
 import axios, { AxiosError } from "axios";
+import Link from "next/link";
 import { Copy, Check, MapPin, Phone, Truck, CreditCard, Package, ChevronDown, ChevronUp, ExternalLink, Clock, X, Tag } from "lucide-react";
 import { useState } from "react";
 import { VscLoading } from "react-icons/vsc";
+import { productUrl } from "@/lib/slug";
 
 /* ─── Types ────────────────────────────────────────────────────── */
 type OrderStatus =
@@ -511,36 +513,57 @@ export default function OrderDetailsCard({
                   <Package className="w-3.5 h-3.5" /> Items ({order.products.length})
                 </h4>
                 <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                  {order.products.map((item, i) => (
-                    <li key={i} className="flex gap-3 items-start p-3 rounded-xl bg-gray-50/80 border border-gray-100">
-                      <div className="w-14 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                        <img
-                          src={getProductImage(item)}
-                          alt={getProductTitle(item)}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 line-clamp-2">
-                          {getProductTitle(item)}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                          <span className="text-xs text-pink-600 font-semibold">
-                            ₹{getProductPrice(item).toFixed(2)}
-                          </span>
-                          <span className="text-xs text-gray-400">×{item.quantity ?? 1}</span>
-                          {item.size && item.size.toLowerCase() !== "one size" && (
-                            <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-                              {item.size}
-                            </span>
+                  {order.products.map((item, i) => {
+                    const productId = typeof item.productId === "object" ? item.productId?._id : item.productId;
+                    const itemUrl = productId ? productUrl(getProductTitle(item), productId, (item.productId as any)?.slug) : null;
+
+                    return (
+                      <li key={i} className="flex gap-3 items-start p-3 rounded-xl bg-gray-50/80 border border-gray-100">
+                        {itemUrl ? (
+                          <Link href={itemUrl} className="w-14 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 hover:opacity-80 transition">
+                            <img
+                              src={getProductImage(item)}
+                              alt={getProductTitle(item)}
+                              className="w-full h-full object-cover"
+                            />
+                          </Link>
+                        ) : (
+                          <div className="w-14 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                            <img
+                              src={getProductImage(item)}
+                              alt={getProductTitle(item)}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          {itemUrl ? (
+                            <Link href={itemUrl} className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-pink-700 transition">
+                              {getProductTitle(item)}
+                            </Link>
+                          ) : (
+                            <p className="text-sm font-medium text-gray-800 line-clamp-2">
+                              {getProductTitle(item)}
+                            </p>
                           )}
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                            <span className="text-xs text-pink-600 font-semibold">
+                              ₹{getProductPrice(item).toFixed(2)}
+                            </span>
+                            <span className="text-xs text-gray-400">×{item.quantity ?? 1}</span>
+                            {item.size && item.size.toLowerCase() !== "one size" && (
+                              <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                                {item.size}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5 font-medium">
+                            Subtotal: ₹{(getProductPrice(item) * (item.quantity ?? 1)).toFixed(2)}
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-400 mt-0.5 font-medium">
-                          Subtotal: ₹{(getProductPrice(item) * (item.quantity ?? 1)).toFixed(2)}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
 

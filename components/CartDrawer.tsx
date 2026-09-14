@@ -5,6 +5,7 @@ import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { calculateShipping } from "@/lib/shipping";
+import { productUrl } from "@/lib/slug";
 
 export default function CartDrawer() {
   const {
@@ -18,7 +19,14 @@ export default function CartDrawer() {
   const subtotal = items.reduce(
     (total, item) =>
       total +
-      (item.productId.discountedPrice || item.productId.price) * item.quantity,
+      Number(
+        item.productId.discountedPrice ||
+          item.productId.price ||
+          (item.productId as any).sellingPrice ||
+          (item.productId as any).discountPrice ||
+          0,
+      ) *
+        item.quantity,
     0,
   );
   const shipping = calculateShipping(subtotal, "online");
@@ -73,12 +81,24 @@ export default function CartDrawer() {
               {items.map((item) => {
                 const product = item.productId;
                 const image = product.image || "/placeholder.png";
+                const itemHref = productUrl(product.title, product._id, (product as any).slug);
+                const unitPrice = Number(
+                  product.discountedPrice ||
+                    product.price ||
+                    (product as any).sellingPrice ||
+                    (product as any).discountPrice ||
+                    0,
+                );
                 return (
                   <div
                     key={product._id}
                     className="flex gap-4 border-b border-neutral-100 pb-5"
                   >
-                    <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-neutral-100">
+                    <Link
+                      href={itemHref}
+                      onClick={closeCart}
+                      className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-neutral-100 transition hover:opacity-80"
+                    >
                       <Image
                         src={image}
                         alt={product.title}
@@ -86,12 +106,16 @@ export default function CartDrawer() {
                         sizes="80px"
                         className="object-cover"
                       />
-                    </div>
+                    </Link>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
-                        <h3 className="line-clamp-2 text-sm font-semibold text-neutral-900">
+                        <Link
+                          href={itemHref}
+                          onClick={closeCart}
+                          className="line-clamp-2 text-sm font-semibold text-neutral-900 transition hover:text-rose-600"
+                        >
                           {product.title}
-                        </h3>
+                        </Link>
                         <button
                           type="button"
                           aria-label={`Remove ${product.title}`}
@@ -102,10 +126,7 @@ export default function CartDrawer() {
                         </button>
                       </div>
                       <p className="mt-1 text-sm font-bold text-neutral-900">
-                        ₹
-                        {(
-                          product.discountedPrice || product.price
-                        ).toLocaleString("en-IN")}
+                        ₹{unitPrice.toLocaleString("en-IN")}
                       </p>
                       <div className="mt-3 flex items-center gap-3">
                         <button
@@ -146,58 +167,68 @@ export default function CartDrawer() {
         </div>
 
         <footer className="border-t border-neutral-100 bg-white px-6 py-5">
-          {items.length > 0 && (
-            <div className="mb-5 rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900">
-                    {shipping.isFreeShipping
-                      ? "Free delivery unlocked"
-                      : `Add ₹${shipping.remainingForFreeShipping.toLocaleString("en-IN")} more`}
-                  </p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    {shipping.isFreeShipping
-                      ? "Your order qualifies for complimentary delivery."
-                      : "Shop a little more to unlock free delivery."}
-                  </p>
+          {items.length === 0 ? (
+            <button
+              type="button"
+              onClick={closeCart}
+              className="w-full rounded-full bg-rose-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-rose-600 active:scale-[0.99]"
+            >
+              Start Shopping
+            </button>
+          ) : (
+            <>
+              <div className="mb-5 rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-900">
+                      {shipping.isFreeShipping
+                        ? "Free delivery unlocked"
+                        : `Add ₹${shipping.remainingForFreeShipping.toLocaleString("en-IN")} more`}
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      {shipping.isFreeShipping
+                        ? "Your order qualifies for complimentary delivery."
+                        : "Shop a little more to unlock free delivery."}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-semibold text-rose-600">
+                    ₹{Math.min(subtotal, 499).toLocaleString("en-IN")} / ₹499
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs font-semibold text-rose-600">
-                  ₹{Math.min(subtotal, 499).toLocaleString("en-IN")} / ₹499
-                </span>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${shipping.isFreeShipping ? "bg-emerald-500" : "bg-rose-500"}`}
+                    style={{ width: `${shipping.freeShippingProgress}%` }}
+                  />
+                </div>
+                {shipping.isFreeShipping && (
+                  <p className="mt-2 text-xs font-medium text-emerald-600">
+                    You saved ₹49 on delivery
+                  </p>
+                )}
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${shipping.isFreeShipping ? "bg-emerald-500" : "bg-rose-500"}`}
-                  style={{ width: `${shipping.freeShippingProgress}%` }}
-                />
+              <div className="mb-4 flex items-center justify-between text-base font-semibold">
+                <span>Total</span>
+                <span>₹{subtotal.toLocaleString("en-IN")}</span>
               </div>
-              {shipping.isFreeShipping && (
-                <p className="mt-2 text-xs font-medium text-emerald-600">
-                  You saved ₹49 on delivery
-                </p>
-              )}
-            </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href="/cart"
+                  onClick={closeCart}
+                  className="rounded-full border border-neutral-200 py-3 text-center text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+                >
+                  View cart
+                </Link>
+                <Link
+                  href="/checkout"
+                  onClick={closeCart}
+                  className="rounded-full bg-rose-500 py-3 text-center text-sm font-semibold text-white hover:bg-rose-600"
+                >
+                  Buy now
+                </Link>
+              </div>
+            </>
           )}
-          <div className="mb-4 flex items-center justify-between text-base font-semibold">
-            <span>Total</span>
-            <span>₹{subtotal.toLocaleString("en-IN")}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/cart"
-              onClick={closeCart}
-              className="rounded-full border border-neutral-200 py-3 text-center text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
-            >
-              View cart
-            </Link>
-            <Link
-              href="/checkout"
-              onClick={closeCart}
-              className="rounded-full bg-rose-500 py-3 text-center text-sm font-semibold text-white hover:bg-rose-600"
-            >
-              Buy now
-            </Link>
-          </div>
         </footer>
       </aside>
     </>

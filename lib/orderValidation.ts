@@ -142,7 +142,8 @@ export function getOrderFieldErrors(
     fieldErrors.products = "Your cart is empty.";
   }
 
-  if (typeof data.totalAmount !== "number" || data.totalAmount <= 0) {
+  const total = Number(data.totalAmount);
+  if (data.totalAmount !== undefined && (isNaN(total) || total <= 0)) {
     fieldErrors.totalAmount = "Order total must be greater than zero.";
   }
 
@@ -158,13 +159,14 @@ export function validateOrderInput(data: Partial<OrderInput>): ValidationResult 
       if (!item.productId) {
         errors.push(`Product ${index + 1}: missing product ID.`);
       }
-      if (!item.quantity || item.quantity < 1) {
+      if (!item.quantity || Number(item.quantity) < 1) {
         errors.push(`Product ${index + 1}: quantity must be at least 1.`);
       }
       if (!item.title?.trim()) {
         errors.push(`Product ${index + 1}: title is required.`);
       }
-      if (typeof item.price !== "number" || item.price <= 0) {
+      const p = Number(item.price);
+      if (isNaN(p) || p <= 0) {
         errors.push(`Product ${index + 1}: invalid price.`);
       }
     });

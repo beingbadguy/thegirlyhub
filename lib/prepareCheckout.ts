@@ -128,13 +128,22 @@ export async function prepareCheckout(
       };
     }
 
-    subtotal += dbProduct.discountedPrice * item.quantity;
+    const productPrice = Number(
+      dbProduct.discountedPrice ||
+        (dbProduct as any).sellingPrice ||
+        dbProduct.price ||
+        (dbProduct as any).discountPrice ||
+        item.price ||
+        0,
+    );
+
+    subtotal += productPrice * item.quantity;
     verifiedProducts.push({
       productId: dbProduct._id,
       quantity: item.quantity,
-      title: dbProduct.title,
-      price: dbProduct.discountedPrice,
-      image: dbProduct.image,
+      title: dbProduct.title || (dbProduct as any).name || item.title || "Product",
+      price: productPrice,
+      image: dbProduct.image || (dbProduct as any).mainImage || item.image || "",
       size: item.size || "",
     });
   }

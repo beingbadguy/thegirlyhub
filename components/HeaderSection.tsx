@@ -23,6 +23,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import axios, { AxiosError } from "axios";
 import SearchDrawer from "@/components/SearchDrawer";
 import LogoMark from "@/components/LogoMark";
+import { productUrl } from "@/lib/slug";
 
 type Products = {
   _id: string;
@@ -265,7 +266,7 @@ const HeaderSection = () => {
                 className="group cursor-pointer"
                 onClick={() => {
                   setMenu(false);
-                  router.push(`/product/${product._id}`);
+                  router.push(productUrl(product.title, product._id, (product as any).slug));
                 }}
               >
                 {/* Image */}

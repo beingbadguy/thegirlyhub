@@ -3,13 +3,14 @@ import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import axios, { AxiosError } from "axios";
 import { VscLoading } from "react-icons/vsc";
 import { MdOutlinePayment } from "react-icons/md";
 import { IoCashOutline } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
-import { Check } from "lucide-react";
+import { Check, ShoppingBag } from "lucide-react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import {
   FIRST_ORDER_DISCOUNT_RATE,
@@ -19,6 +20,8 @@ import {
 } from "@/lib/orderValidation";
 import { calculateShipping } from "@/lib/shipping";
 import { isProductInStock } from "@/lib/productStock";
+import { clearGuestCart } from "@/lib/guestCart";
+import { productUrl } from "@/lib/slug";
 
 declare global {
   interface Window {
@@ -28,12 +31,27 @@ declare global {
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(false);
+      return;
+    }
     if (window.Razorpay) {
       resolve(true);
       return;
     }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      existing.addEventListener("load", () => resolve(true));
+      existing.addEventListener("error", () => resolve(false));
+      return;
+    }
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
     script.onload = () => {
       resolve(true);
     };
@@ -98,10 +116,23 @@ export default function CheckoutPage() {
 
   const couponApplied = !!couponDetails;
   const [submitted, setSubmitted] = useState(false);
+  const [isCheckingCart, setIsCheckingCart] = useState(true);
 
   useEffect(() => {
     document.title = "Checkout | GirlyHub";
-    fetchUser();
+    loadRazorpayScript().catch(() => {});
+    let isMounted = true;
+    useAuthStore
+      .getState()
+      .fetchUser()
+      .finally(() => {
+        if (isMounted) {
+          setIsCheckingCart(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -125,23 +156,29 @@ export default function CheckoutPage() {
     }
   }, [eligibleForWelcomeCoupon, couponApplied, welcomeCouponRedeemed]);
 
-  useEffect(() => {
-    if (!userCart) return;
-    const available = userCart.products.filter((item) =>
-      isProductInStock(item.productId),
-    );
-    if (available.length === 0) {
-      router.push("/cart");
-    }
-  }, [userCart]);
-
   const availableCartItems =
-    userCart?.products.filter((item) => isProductInStock(item.productId)) ?? [];
+    userCart?.products?.filter(
+      (item) => item?.productId && isProductInStock(item.productId),
+    ) ?? [];
 
-  const subtotal = availableCartItems.reduce(
-    (acc, item) => acc + item.productId.discountedPrice * item.quantity,
-    0,
-  );
+  useEffect(() => {
+    if (isCheckingCart) return;
+    if (availableCartItems.length === 0) {
+      router.replace("/cart");
+    }
+  }, [isCheckingCart, availableCartItems.length, router]);
+
+  const subtotal = availableCartItems.reduce((acc, item) => {
+    const p = item.productId;
+    const price = Number(
+      p.discountedPrice ||
+        p.price ||
+        (p as any).sellingPrice ||
+        (p as any).discountPrice ||
+        0,
+    );
+    return acc + price * item.quantity;
+  }, 0);
 
   // Dynamic shipping calculation
   const shippingResult = calculateShipping(subtotal, paymentMode);
@@ -149,10 +186,10 @@ export default function CheckoutPage() {
   const isFreeShipping = shippingResult.isFreeShipping;
 
   const firstTimeDiscount =
-    couponApplied || user?.firstPurchase
+    couponApplied || user?.firstPurchase || subtotal <= 0
       ? 0
       : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
-  const baseTotal = subtotal + shippingCharge - firstTimeDiscount;
+  const baseTotal = Math.max(0, subtotal + shippingCharge - firstTimeDiscount);
 
   let couponDiscount = 0;
   if (couponDetails) {
@@ -180,14 +217,24 @@ export default function CheckoutPage() {
     phone,
     couponCode: couponApplied ? promoCode : undefined,
     products:
-      availableCartItems.map((item) => ({
-        productId: item.productId._id,
-        quantity: item.quantity,
-        size: item.size || "",
-        title: item.productId.title,
-        price: item.productId.discountedPrice,
-        image: item.productId.image,
-      })) ?? [],
+      availableCartItems.map((item) => {
+        const p = item.productId;
+        const price = Number(
+          p.discountedPrice ||
+            p.price ||
+            (p as any).sellingPrice ||
+            (p as any).discountPrice ||
+            0,
+        );
+        return {
+          productId: p._id,
+          quantity: item.quantity,
+          size: item.size || "",
+          title: p.title || (p as any).name || "Product",
+          price: price,
+          image: p.image || (p as any).mainImage || "",
+        };
+      }) ?? [],
   });
 
   const clearFieldError = (field: keyof OrderFieldErrors) => {
@@ -216,6 +263,10 @@ export default function CheckoutPage() {
   };
 
   const placeOrder = async () => {
+    if (availableCartItems.length === 0) {
+      router.replace("/cart");
+      return;
+    }
     if (!validateCheckout()) return;
 
     setPlacingOrder(true);
@@ -224,7 +275,8 @@ export default function CheckoutPage() {
         ...buildOrderPayload(),
       });
 
-      useAuthStore.setState({ userCart: null });
+      clearGuestCart();
+      useAuthStore.setState({ userCart: { products: [] } });
       router.push(`/success/${response.data.order._id}`);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -249,6 +301,10 @@ export default function CheckoutPage() {
   };
 
   const placeOnlineOrder = async () => {
+    if (availableCartItems.length === 0) {
+      router.replace("/cart");
+      return;
+    }
     if (!validateCheckout()) return;
 
     setPlacingOrder(true);
@@ -260,25 +316,25 @@ export default function CheckoutPage() {
         return;
       }
 
-      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-      if (!razorpayKey) {
-        setOrderError("Razorpay key is missing. Please contact support.");
-        setPlacingOrder(false);
-        return;
-      }
-
       // Create Razorpay order via our backend with full order payload
       const orderRes = await axios.post(
         "/api/create-order",
         buildOrderPayload(),
       );
 
-      const { order_id, amount, currency } = orderRes.data;
+      const { order_id, amount, currency, key } = orderRes.data;
+      const razorpayKey = key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+      if (!razorpayKey) {
+        setOrderError("Razorpay key is missing. Please contact support.");
+        setPlacingOrder(false);
+        return;
+      }
 
       const options = {
         key: razorpayKey,
         amount,
-        currency,
+        currency: currency || "INR",
         name: "GirlyHub",
         description: "Thank you for shopping with us!",
         order_id,
@@ -293,10 +349,11 @@ export default function CheckoutPage() {
 
             if (verifyRes.data.success) {
               // Clear local cart
-              useAuthStore.setState({ userCart: null });
+              clearGuestCart();
+              useAuthStore.setState({ userCart: { products: [] } });
               router.push(`/success/${verifyRes.data.orderId}`);
             } else {
-              setOrderError("Payment verification failed.");
+              setOrderError(verifyRes.data.message || "Payment verification failed.");
             }
           } catch (error) {
             console.error("Verification error", error);
@@ -325,17 +382,24 @@ export default function CheckoutPage() {
         },
       };
 
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.on("payment.failed", function (response: any) {
-        setOrderError("Payment failed: " + response.error.description);
+      try {
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.on("payment.failed", function (response: any) {
+          setOrderError("Payment failed: " + (response.error?.description || "Payment was rejected."));
+          setPlacingOrder(false);
+        });
+        paymentObject.open();
+      } catch (sdkErr: any) {
+        console.error("Razorpay open error:", sdkErr);
+        setOrderError("Could not launch payment window. Please try again.");
         setPlacingOrder(false);
-      });
-      paymentObject.open();
-    } catch (error) {
+      }
+    } catch (error: any) {
       console.error(error);
-      setOrderError(
-        "Something went wrong initializing payment. Please try again.",
-      );
+      const msg =
+        error.response?.data?.message ||
+        "Something went wrong initializing payment. Please try again.";
+      setOrderError(msg);
       setPlacingOrder(false);
     }
   };
@@ -407,6 +471,41 @@ export default function CheckoutPage() {
 
   const showError = (field: keyof OrderFieldErrors) =>
     submitted ? fieldErrors[field] : undefined;
+
+  if (isCheckingCart) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[#fffafb] px-4">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="size-10 animate-spin rounded-full border-4 border-rose-200 border-t-rose-600" />
+          <p className="text-sm font-medium text-gray-600">
+            Checking your cart...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (availableCartItems.length === 0) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[#fffafb] px-4">
+        <div className="flex max-w-md flex-col items-center gap-4 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+            <ShoppingBag className="size-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Your Cart is Empty</h2>
+          <p className="text-sm text-gray-600">
+            You don&apos;t have any items in your checkout. Redirecting you to your bag...
+          </p>
+          <Button
+            onClick={() => router.replace("/cart")}
+            className="mt-2 bg-rose-600 hover:bg-rose-700 text-white"
+          >
+            Go to Cart
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] bg-[#fffafb] px-4 py-6 sm:px-6 lg:px-8">
@@ -631,27 +730,40 @@ export default function CheckoutPage() {
               <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
                 {availableCartItems.map((item) => {
                   const product = item.productId;
-                  const unitPrice = product.discountedPrice || product.price;
+                  const unitPrice = Number(
+                    product.discountedPrice ||
+                      product.price ||
+                      (product as any).sellingPrice ||
+                      (product as any).discountPrice ||
+                      0,
+                  );
                   const lineTotal = unitPrice * item.quantity;
+                  const itemUrl = productUrl(product.title, product._id, (product as any).slug);
 
                   return (
                     <div
                       key={`${product._id}-${item.size || "default"}`}
                       className="flex gap-3 rounded-lg border border-gray-100 bg-white p-3"
                     >
-                      <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-rose-50">
+                      <Link
+                        href={itemUrl}
+                        className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-rose-50 transition hover:opacity-80"
+                      >
                         <Image
-                          src={product.image}
+                          src={product.image || "/placeholder.png"}
                           alt={product.title}
                           fill
                           className="object-contain p-1"
                         />
-                      </div>
+                      </Link>
 
                       <div className="min-w-0 flex-1">
-                        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-950">
+                        <Link
+                          href={itemUrl}
+                          className="line-clamp-2 text-sm font-semibold leading-5 text-gray-950 transition hover:text-rose-600"
+                        >
                           {product.title}
-                        </h3>
+                        </Link>
                         <div className="mt-1 space-y-0.5 text-xs text-gray-500">
                           {product.category && (
                             <p>Category: {product.category}</p>
