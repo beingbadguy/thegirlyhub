@@ -279,46 +279,94 @@ export const OrderStatusMail = async (
   );
 };
 
+export type OrderMailPayload = {
+  _id: string;
+  products: {
+    title: string;
+    price: number;
+    image: string;
+    quantity: number;
+    size?: string;
+  }[];
+  totalAmount: number;
+  subtotal?: number;
+  shippingCharge?: number;
+  firstOrderDiscount?: number;
+  couponDiscount?: number;
+  couponCode?: string | null;
+  recipientName?: string;
+  phone?: number | string;
+  address: string;
+  paymentMethod: string;
+  paymentStatus?: string;
+  deliveryType?: string;
+};
+
 // 10. Order Confirmation Mail
 export const OrderConfirmationMail = async (
   email: string,
   name: string,
-  order: {
-    _id: string;
-    products: {
-      title: string;
-      price: number;
-      image: string;
-      quantity: number;
-    }[];
-    totalAmount: number;
-    address: string;
-    paymentMethod: string;
-    deliveryType: string;
-  },
+  order: OrderMailPayload,
 ) => {
-  const TAX = 20;
-  const grandTotal = order.totalAmount + TAX;
+  const subtotal =
+    typeof order.subtotal === "number" && order.subtotal > 0
+      ? order.subtotal
+      : order.products.reduce(
+          (sum, item) =>
+            sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
+          0,
+        );
+  const shippingCharge =
+    typeof order.shippingCharge === "number" ? order.shippingCharge : 0;
+  const firstOrderDiscount =
+    typeof order.firstOrderDiscount === "number" ? order.firstOrderDiscount : 0;
+  const couponDiscount =
+    typeof order.couponDiscount === "number" ? order.couponDiscount : 0;
+  const totalPaid =
+    typeof order.totalAmount === "number"
+      ? order.totalAmount
+      : Math.max(
+          0,
+          subtotal + shippingCharge - firstOrderDiscount - couponDiscount,
+        );
+
+  const isOnline = order.paymentMethod === "online";
+  const paymentMethodLabel = isOnline ? "Online Payment" : "Cash on Delivery";
+  const paymentStatusLabel =
+    order.paymentStatus === "paid" || isOnline
+      ? "Paid"
+      : "Pending (Pay on Delivery)";
+  const paymentStatusColor =
+    order.paymentStatus === "paid" || isOnline ? "#16a34a" : "#d97706";
 
   const content = `
-    <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600; color: #1f2937;">Order Confirmed 🛍️</h1>
-    <p style="font-size: 15px; margin: 0 0 24px 0;">Hi ${name},</p>
-    <p style="font-size: 15px; margin: 0 0 30px 0;">We've successfully received your order <strong>#${order._id}</strong>. Here is your purchase details summary:</p>
+    <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #1f2937;">Order Confirmed 🛍️</h1>
+    <p style="font-size: 15px; margin: 0 0 20px 0; color: #4b5563;">Hi <strong style="color: #111827;">${name}</strong>,</p>
+    <p style="font-size: 15px; margin: 0 0 24px 0; color: #4b5563; line-height: 1.6;">
+      Thank you for shopping with us! We have received your order <strong style="color: #111827;">#${order._id}</strong> and are preparing it with care. Here is your purchase details summary:
+    </p>
     
-    <div style="border: 1px solid #fbcfe8; border-radius: 16px; padding: 24px; margin-bottom: 30px; background-color: #fffdfd;">
-      <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; border-bottom: 1px solid #fbcfe8; padding-bottom: 8px; color: #111827;">Items</h3>
+    <div style="border: 1px solid #fbcfe8; border-radius: 16px; padding: 22px; margin-bottom: 24px; background-color: #ffffff; box-shadow: 0 2px 8px rgba(190,24,93,0.03);">
+      <h3 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #fce7f3; padding-bottom: 10px; color: #111827;">
+        Order Items (${order.products.length})
+      </h3>
       
       ${order.products
         .map(
           (item) => `
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #fdf2f8;">
             <tr>
-              <td style="width: 60px; vertical-align: top;">
-                <img src="${item.image}" alt="${item.title}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid #e5e7eb;" />
+              <td style="width: 60px; vertical-align: middle;">
+                <img src="${item.image || `${BRAND_URL}/placeholder.png`}" alt="${item.title}" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid #fce7f3; display: block;" />
               </td>
-              <td style="padding-left: 16px; vertical-align: top;">
-                <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #1f2937;">${item.title}</h4>
-                <p style="margin: 0; font-size: 13px; color: #6b7280;">Qty: ${item.quantity} &bull; Price: ₹${item.price}</p>
+              <td style="padding-left: 14px; vertical-align: middle;">
+                <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #1f2937; line-height: 1.35;">${item.title}</h4>
+                <p style="margin: 0; font-size: 13px; color: #6b7280;">
+                  ${item.size ? `<span style="font-weight: 600; color: #374151;">Size: ${item.size}</span> &bull; ` : ""}Qty: <strong>${item.quantity}</strong> &bull; Price: <strong>₹${item.price}</strong>
+                </p>
+              </td>
+              <td style="text-align: right; vertical-align: middle; font-weight: 600; font-size: 14px; color: #111827; white-space: nowrap;">
+                ₹${((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}
               </td>
             </tr>
           </table>
@@ -326,32 +374,78 @@ export const OrderConfirmationMail = async (
         )
         .join("")}
         
-      <table style="width: 100%; border-collapse: collapse; border-top: 1px solid #fbcfe8; margin-top: 16px; padding-top: 16px; font-size: 14px;">
+      <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px;">
         <tr>
-          <td style="padding: 6px 0; color: #6b7280;">Subtotal:</td>
-          <td style="padding: 6px 0; text-align: right; font-weight: bold;">₹${order.totalAmount}</td>
+          <td style="padding: 6px 0; color: #6b7280;">Subtotal</td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #111827;">₹${subtotal.toFixed(2)}</td>
         </tr>
         <tr>
-          <td style="padding: 6px 0; color: #6b7280;">Delivery fee (Fixed):</td>
-          <td style="padding: 6px 0; text-align: right; font-weight: bold;">₹${TAX}</td>
+          <td style="padding: 6px 0; color: #6b7280;">Delivery Charge</td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 600;">
+            ${
+              shippingCharge === 0
+                ? '<span style="color: #16a34a; font-weight: 700;">FREE</span>'
+                : `₹${shippingCharge.toFixed(2)}`
+            }
+          </td>
         </tr>
+        ${
+          firstOrderDiscount > 0
+            ? `
+        <tr>
+          <td style="padding: 6px 0; color: #16a34a;">First Order Discount (15%)</td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #16a34a;">–₹${firstOrderDiscount.toFixed(2)}</td>
+        </tr>
+        `
+            : ""
+        }
+        ${
+          couponDiscount > 0
+            ? `
+        <tr>
+          <td style="padding: 6px 0; color: #16a34a;">
+            Coupon Discount ${order.couponCode ? `<span style="background-color: #dcfce7; color: #15803d; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${order.couponCode.toUpperCase()}</span>` : ""}
+          </td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #16a34a;">–₹${couponDiscount.toFixed(2)}</td>
+        </tr>
+        `
+            : ""
+        }
         <tr style="font-size: 16px;">
-          <td style="padding: 12px 0 0 0; font-weight: bold; border-top: 1px dashed #e5e7eb;">Total Paid:</td>
-          <td style="padding: 12px 0 0 0; text-align: right; font-weight: bold; color: ${BRAND_COLOR_PRIMARY}; border-top: 1px dashed #e5e7eb;">₹${grandTotal}</td>
+          <td style="padding: 12px 0 0 0; font-weight: 700; color: #111827; border-top: 1px dashed #fbcfe8;">${isOnline ? "Total Paid:" : "Total Payable (COD):"}</td>
+          <td style="padding: 12px 0 0 0; text-align: right; font-weight: 800; color: ${BRAND_COLOR_PRIMARY}; border-top: 1px dashed #fbcfe8; font-size: 18px;">₹${totalPaid.toFixed(2)}</td>
         </tr>
       </table>
     </div>
     
-    <div style="font-size: 14px; background-color: #f9fafb; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #111827;">Shipping Address</h3>
-      <p style="margin: 0 0 16px 0; color: #4b5563; line-height: 1.5;">${order.address}</p>
-      
-      <h3 style="margin: 0 0 4px 0; font-size: 14px; color: #111827;">Payment Method</h3>
-      <p style="margin: 0; color: #4b5563; text-transform: uppercase;">${order.paymentMethod}</p>
+    <div style="font-size: 14px; background-color: #fdf2f8; padding: 20px; border-radius: 14px; border: 1px solid #fbcfe8; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="vertical-align: top; width: 50%; padding-right: 12px;">
+            <h4 style="margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #9d174d; font-weight: 700;">Shipping Address</h4>
+            <p style="margin: 0 0 4px 0; font-weight: 600; color: #111827;">${order.recipientName || name}</p>
+            <p style="margin: 0; color: #4b5563; line-height: 1.5; font-size: 13px;">${order.address}</p>
+            ${order.phone ? `<p style="margin: 6px 0 0 0; color: #4b5563; font-size: 13px;">📞 +91 ${order.phone}</p>` : ""}
+          </td>
+          <td style="vertical-align: top; width: 50%; padding-left: 12px; border-left: 1px solid #fbcfe8;">
+            <h4 style="margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #9d174d; font-weight: 700;">Payment & Delivery</h4>
+            <p style="margin: 0 0 4px 0; color: #4b5563; font-size: 13px;">Method: <strong style="color: #111827;">${paymentMethodLabel}</strong></p>
+            <p style="margin: 0 0 4px 0; color: #4b5563; font-size: 13px;">Status: <strong style="color: ${paymentStatusColor};">${paymentStatusLabel}</strong></p>
+            <p style="margin: 0; color: #4b5563; font-size: 13px;">Speed: <strong style="color: #111827; text-transform: capitalize;">${order.deliveryType || "Standard"} (3–5 Days)</strong></p>
+          </td>
+        </tr>
+      </table>
     </div>
     
-    <p style="font-size: 14px; text-align: center; color: #9ca3af; margin: 30px 0 0 0;">
-      Need assistance? Reply directly to this mail or visit us at <a href="${BRAND_URL}/contact" style="color: ${BRAND_COLOR_PRIMARY}; text-decoration: none;">${BRAND_URL.replace("https://", "")}/contact</a>
+    <div style="text-align: center; margin: 30px 0 10px 0;">
+      <a href="${BRAND_URL}/track?orderId=${order._id}&email=${encodeURIComponent(email)}" 
+        style="display: inline-block; padding: 13px 30px; background-color: ${BRAND_COLOR_PRIMARY}; color: #ffffff; text-decoration: none; border-radius: 50px; font-weight: 700; letter-spacing: 0.5px; font-size: 13px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(190,24,93,0.18);">
+        Track Your Order 🚚
+      </a>
+    </div>
+
+    <p style="font-size: 13px; text-align: center; color: #9ca3af; margin: 24px 0 0 0;">
+      Need assistance? Reply directly to this mail or visit us at <a href="${BRAND_URL}/contact" style="color: ${BRAND_COLOR_PRIMARY}; text-decoration: none; font-weight: 600;">girlyhub.in/contact</a>
     </p>
   `;
   await sendMail(
@@ -366,32 +460,52 @@ export const OrderConfirmationMail = async (
 export const orderPlacedMessageToAdmin = async (
   email: string,
   name: string,
+  order?: Partial<OrderMailPayload>,
 ) => {
   const content = `
-    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #111827;">🛒 New Order Received</h1>
-    <p style="font-size: 15px; margin: 0 0 20px 0;">A new purchase transaction has completed successfully on the storefront.</p>
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827;">🛒 New Order Received</h1>
+    <p style="font-size: 15px; margin: 0 0 20px 0; color: #4b5563;">A new purchase transaction has completed successfully on the storefront.</p>
     
-    <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; background-color: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb;">
+      ${order?._id ? `<tr><td style="padding: 6px 12px; font-weight: bold; width: 130px;">Order ID:</td><td style="padding: 6px 12px; color: #111827;">#${order._id}</td></tr>` : ""}
       <tr>
-        <td style="padding: 8px 0; font-weight: bold; width: 130px;">Customer Name:</td>
-        <td style="padding: 8px 0; color: #4b5563;">${name}</td>
+        <td style="padding: 6px 12px; font-weight: bold;">Customer:</td>
+        <td style="padding: 6px 12px; color: #4b5563;">${name} (${email})</td>
       </tr>
-      <tr>
-        <td style="padding: 8px 0; font-weight: bold;">Email:</td>
-        <td style="padding: 8px 0; color: #4b5563;">${email}</td>
-      </tr>
+      ${order?.totalAmount !== undefined ? `<tr><td style="padding: 6px 12px; font-weight: bold;">Total Amount:</td><td style="padding: 6px 12px; font-weight: bold; color: ${BRAND_COLOR_PRIMARY};">₹${Number(order.totalAmount).toFixed(2)}</td></tr>` : ""}
+      ${order?.paymentMethod ? `<tr><td style="padding: 6px 12px; font-weight: bold;">Payment Method:</td><td style="padding: 6px 12px; text-transform: uppercase;">${order.paymentMethod} (${order.paymentStatus || (order.paymentMethod === "online" ? "paid" : "unpaid")})</td></tr>` : ""}
+      ${order?.address ? `<tr><td style="padding: 6px 12px; font-weight: bold;">Address:</td><td style="padding: 6px 12px; color: #4b5563;">${order.address}</td></tr>` : ""}
     </table>
+
+    ${
+      order?.products && order.products.length > 0
+        ? `
+      <div style="margin: 20px 0; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px;">
+        <h4 style="margin: 0 0 10px 0; font-size: 13px; text-transform: uppercase; color: #6b7280;">Items Ordered:</h4>
+        ${order.products
+          .map(
+            (item) => `
+          <p style="margin: 4px 0; font-size: 13px; color: #374151;">
+            &bull; <strong>${item.title}</strong> ${item.size ? `(Size: ${item.size})` : ""} &times; ${item.quantity} — ₹${((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}
+          </p>
+        `,
+          )
+          .join("")}
+      </div>
+    `
+        : ""
+    }
     
-    <div style="margin-top: 30px; text-align: center;">
-      <a href="${BRAND_URL}/admin/orders" 
-        style="display: inline-block; padding: 14px 32px; background-color: ${BRAND_COLOR_PRIMARY}; color: #ffffff; text-decoration: none; border-radius: 50px; font-weight: bold; letter-spacing: 1px; font-size: 13px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(190,24,93,0.15);">
-        Manage Orders
+    <div style="margin-top: 26px; text-align: center;">
+      <a href="https://admin.girlyhub.in/orders" 
+        style="display: inline-block; padding: 13px 30px; background-color: ${BRAND_COLOR_PRIMARY}; color: #ffffff; text-decoration: none; border-radius: 50px; font-weight: bold; letter-spacing: 1px; font-size: 13px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(190,24,93,0.15);">
+        View in Admin Dashboard
       </a>
     </div>
   `;
   await sendMail(
     "authorisedaman@gmail.com",
-    "🛒 New Order Placed by " + name,
+    `🛒 New Order Placed by ${name}${order?.totalAmount !== undefined ? ` (₹${Number(order.totalAmount).toFixed(2)})` : ""}`,
     "",
     getEmailWrapper(content),
   );

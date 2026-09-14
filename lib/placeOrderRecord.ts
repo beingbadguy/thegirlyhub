@@ -85,22 +85,31 @@ export async function placeOrderRecord(
   await Promise.all([...stockUpdates, ...extrasUpdates]);
 
   const orderId = newOrder._id.toString();
+  const customerEmail = prepared.email;
+  const customerName = prepared.user?.name || prepared.recipientName;
+
   const mailPayload = {
     _id: orderId,
     totalAmount: newOrder.totalAmount,
-    address: `${newOrder.address}, ${newOrder.city}, ${newOrder.state} - ${newOrder.zip}`,
+    subtotal: newOrder.subtotal,
+    shippingCharge: newOrder.shippingCharge,
+    firstOrderDiscount: newOrder.firstOrderDiscount,
+    couponDiscount: newOrder.couponDiscount,
+    couponCode: newOrder.couponCode,
+    recipientName: newOrder.recipientName || customerName,
+    phone: newOrder.phone,
+    address: `${newOrder.address}${newOrder.landmark ? `, ${newOrder.landmark}` : ""}, ${newOrder.city}, ${newOrder.state} - ${newOrder.zip}`,
     paymentMethod: newOrder.paymentMethod,
+    paymentStatus: newOrder.paymentStatus,
     deliveryType: newOrder.deliveryType,
     products: prepared.verifiedProducts,
   };
-  const customerEmail = prepared.email;
-  const customerName = prepared.user?.name || prepared.recipientName;
 
   after(async () => {
     try {
       await Promise.all([
         OrderConfirmationMail(customerEmail, customerName, mailPayload),
-        orderPlacedMessageToAdmin(customerEmail, customerName),
+        orderPlacedMessageToAdmin(customerEmail, customerName, mailPayload),
       ]);
     } catch (mailError) {
       console.error("Order confirmation email failed:", mailError);

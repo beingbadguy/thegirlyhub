@@ -1039,7 +1039,7 @@ const ProductPageClient = ({
                 >
                   <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans">
                     <pre className="overflow-auto whitespace-pre-wrap break-words font-sans">
-                      {product.info || product.description}
+                      {product.longDescription || product.description || product.info}
                     </pre>
                   </div>
                 </motion.div>

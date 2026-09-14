@@ -18,12 +18,18 @@ export async function generateMetadata({
       title: "Product Not Found",
     };
   }
-  const cleanDescription = (product as any).description
-    ? (product as any).description.replace(/<[^>]*>/g, "").slice(0, 150) + "..."
+  const rawTitle = (product as any).metaTitle || (product as any).title;
+  const rawDescription =
+    (product as any).metaDescription ||
+    (product as any).shortDescription ||
+    (product as any).description;
+
+  const cleanDescription = rawDescription
+    ? rawDescription.replace(/<[^>]*>/g, "").slice(0, 160)
     : `Buy ${(product as any).title} online at GirlyHub.`;
 
   return {
-    title: (product as any).title,
+    title: rawTitle,
     description: cleanDescription,
   };
 }
