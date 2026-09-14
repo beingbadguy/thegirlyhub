@@ -39,12 +39,16 @@ export function normalizeProductPayload(
 ) {
   const source = { ...(existing || {}), ...input };
   const listPrice = Number(
-    input.price ?? input.sellingPrice ?? source.price ?? 0,
+    input.price ??
+      input.sellingPrice ??
+      source.price ??
+      source.sellingPrice ??
+      0,
   );
   const finalPrice = Number(
-    input.sellingPrice ??
-      input.discountPrice ??
+    input.discountPrice ??
       input.discountedPrice ??
+      (input.price !== undefined ? input.sellingPrice : undefined) ??
       source.sellingPrice ??
       source.discountPrice ??
       source.discountedPrice ??
@@ -134,6 +138,7 @@ export function normalizeProductPayload(
     stock: totalStock,
     countInStock: totalStock,
     status,
+    tenantId: input.tenantId ?? source.tenantId ?? "girlyhub",
     isActive: status === "active" || status === "out_of_stock",
     isFeatured: input.isFeatured ?? Boolean(source.isFeatured),
     isNewArrival: input.isNewArrival ?? Boolean(source.isNewArrival),

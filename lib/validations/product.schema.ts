@@ -39,6 +39,7 @@ export const productBaseSchema = z.object({
   title: z.string().min(1, "Title is required").max(150),
   name: z.string().min(1).max(150).optional(),
   slug: z.string().min(1).optional(),
+  tenantId: z.string().min(1).optional().default("girlyhub"),
   description: z.string().min(1, "Description is required"),
   shortDescription: z.string().max(320).optional(),
   longDescription: z.string().optional(),
@@ -70,6 +71,8 @@ export const productBaseSchema = z.object({
   lowStockThreshold: z.number().int().min(0).optional(),
   trackInventory: z.boolean().optional(),
   isFeatured: z.boolean().optional().default(false),
+  isNewArrival: z.boolean().optional().default(false),
+  status: z.enum(["draft", "active", "out_of_stock", "archived"]).optional(),
   variants: z
     .union([z.array(jewelleryVariantSchema), legacyVariantOptionsSchema])
     .optional()

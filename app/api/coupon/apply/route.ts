@@ -1,17 +1,19 @@
 import { databaseConnection } from "@/config/databseConnection";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import Coupon from "@/models/coupon.model";
+import Order from "@/models/order.model";
+import User from "@/models/user.model";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   await databaseConnection();
 
   try {
-    const { code, totalAmount } = await req.json();
+    const { code, totalAmount, email } = await req.json();
     if (!code || !totalAmount) {
       return NextResponse.json(
         { success: false, message: "Coupon code and amount are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -20,35 +22,78 @@ export async function POST(req: NextRequest) {
     if (!coupon) {
       return NextResponse.json(
         { success: false, message: "Invalid coupon code" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (!coupon.isActive) {
       return NextResponse.json(
         { success: false, message: "This coupon is currently inactive" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (coupon.validTill && new Date() > new Date(coupon.validTill)) {
       return NextResponse.json(
         { success: false, message: "This coupon has expired" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const decoded = await fetchTokenDetails(req);
-    if (decoded && coupon.usersAvailed && coupon.usersAvailed.includes(decoded.userId)) {
+    if (coupon.code === "NEWGIRLY") {
+      const previousOrderQuery = decoded?.userId
+        ? { userId: decoded.userId }
+        : email
+          ? { email: String(email).trim().toLowerCase() }
+          : null;
+
+      if (previousOrderQuery) {
+        const previousOrder = await Order.exists(previousOrderQuery);
+        if (previousOrder) {
+          return NextResponse.json(
+            {
+              success: false,
+              message:
+                "This welcome coupon is available only on your first order.",
+            },
+            { status: 400 },
+          );
+        }
+      }
+
+      if (decoded?.userId) {
+        const customer = await User.findById(decoded.userId).select(
+          "firstPurchase",
+        );
+        if (customer?.firstPurchase) {
+          return NextResponse.json(
+            {
+              success: false,
+              message:
+                "This welcome coupon is available only on your first order.",
+            },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
+    if (
+      decoded &&
+      coupon.usersAvailed &&
+      coupon.usersAvailed.includes(decoded.userId)
+    ) {
       return NextResponse.json(
         { success: false, message: "You have already availed this coupon" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     let discountAmount = 0;
     if (coupon.type === "percentage") {
-      discountAmount = Math.round(((totalAmount * coupon.discount) / 100) * 100) / 100;
+      discountAmount =
+        Math.round(((totalAmount * coupon.discount) / 100) * 100) / 100;
     } else {
       discountAmount = coupon.discount;
     }
@@ -67,7 +112,7 @@ export async function POST(req: NextRequest) {
     console.log(error);
     return NextResponse.json(
       { success: false, message: "Error applying coupon" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

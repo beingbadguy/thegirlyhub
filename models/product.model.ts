@@ -34,6 +34,7 @@ const variantSchema = new mongoose.Schema(
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
+    tenantId: { type: String, trim: true, default: "girlyhub", index: true },
     slug: { type: String, trim: true, lowercase: true },
     shortDescription: { type: String, trim: true, maxlength: 320 },
     longDescription: { type: String, trim: true },

@@ -4,7 +4,7 @@ import Product from "@/models/product.model";
 
 // --- CUSTOM STYLING CONFIGS ---
 const BRAND_NAME = "GirlyHub";
-const BRAND_URL = "https://girlyhub.vercel.app";
+const BRAND_URL = "https://girlyhub.in";
 const BRAND_COLOR_PRIMARY = "#be185d"; // Rose 700
 const BRAND_COLOR_SECONDARY = "#fdf2f8"; // Rose 50
 const BRAND_COLOR_TEXT = "#374151"; // Gray 700
@@ -37,7 +37,7 @@ function getEmailWrapper(contentHtml: string): string {
 // 1. Email Verification Mail
 export const sendEmailVerificationMail = async (
   email: string,
-  verificationToken: string
+  verificationToken: string,
 ) => {
   const content = `
     <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #1f2937;">Verify Your Email Address</h1>
@@ -50,7 +50,12 @@ export const sendEmailVerificationMail = async (
     
     <p style="font-size: 14px; color: #6b7280; margin: 24px 0 0 0;">This code is valid for a limited time. If you did not request this verification, you can safely ignore this email.</p>
   `;
-  await sendMail(email, `${BRAND_NAME} ⚡ Email Verification`, "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    `${BRAND_NAME} ⚡ Email Verification`,
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 2. User Verified Confirmation Mail
@@ -69,7 +74,12 @@ export const userVerifiedMail = async (email: string) => {
       </a>
     </div>
   `;
-  await sendMail(email, `${BRAND_NAME} ⚡ Email Verified`, "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    `${BRAND_NAME} ⚡ Email Verified`,
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 3. Forget Password Mail
@@ -87,7 +97,12 @@ export const forgetPasswordMail = async (email: string, token: string) => {
     
     <p style="font-size: 14px; color: #6b7280; margin: 24px 0 0 0;">If you did not request a password reset, no action is required and your password will remain unchanged.</p>
   `;
-  await sendMail(email, `${BRAND_NAME} ⚡ Password Reset`, "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    `${BRAND_NAME} ⚡ Password Reset`,
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 4. Password Reset Success Mail
@@ -101,7 +116,12 @@ export const passwordResetSuccessMail = async (email: string) => {
     <p style="font-size: 15px; margin: 0 0 24px 0;">This is a confirmation that the password for your <strong>${BRAND_NAME}</strong> account was successfully updated.</p>
     <p style="font-size: 14px; color: #ef4444; margin: 24px 0 0 0;"><strong>Important:</strong> If you did not make this change, please contact our support team immediately to secure your account.</p>
   `;
-  await sendMail(email, `${BRAND_NAME} ⚡ Password Changed`, "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    `${BRAND_NAME} ⚡ Password Changed`,
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 5. Welcome User Mail (with dynamic products)
@@ -147,12 +167,17 @@ export const welcomeUserMail = async (email: string, userName: string) => {
         <div style="display: inline-block; width: 90px; margin: 6px; vertical-align: bottom;">
           <img src="${url}" alt="Product" style="width: 90px; height: 115px; border-radius: 12px; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.06);" />
         </div>
-      `
+      `,
         )
         .join("")}
     </div>
   `;
-  await sendMail(email, `Welcome to ${BRAND_NAME}! 💕`, "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    `Welcome to ${BRAND_NAME}! 💕`,
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 6. Newsletter Subscription Confirmation
@@ -175,7 +200,7 @@ export const newsletterSubscriptionMail = async (email: string) => {
 export const contactConfirmationMail = async (
   email: string,
   name: string,
-  message: string
+  message: string,
 ) => {
   const content = `
     <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #1f2937;">Thanks for reaching out, ${name}!</h1>
@@ -188,14 +213,19 @@ export const contactConfirmationMail = async (
     
     <p style="font-size: 15px; margin: 24px 0 0 0;">Have additional questions? You can reply directly to this email.</p>
   `;
-  await sendMail(email, "We've received your message 📨", "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    "We've received your message 📨",
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 8. New Contact Submission Notification to Admin
 export const contactMailToAdmin = async (
   email: string,
   name: string,
-  message: string
+  message: string,
 ) => {
   const content = `
     <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #111827;">📬 New Contact Form Entry</h1>
@@ -219,7 +249,7 @@ export const contactMailToAdmin = async (
     "officialgirlyhub@gmail.com",
     "📬 New Contact Form Message from " + name,
     "",
-    getEmailWrapper(content)
+    getEmailWrapper(content),
   );
 };
 
@@ -227,7 +257,7 @@ export const contactMailToAdmin = async (
 export const OrderStatusMail = async (
   email: string,
   orderId: string,
-  status: string
+  status: string,
 ) => {
   const cleanStatus = status.charAt(0).toUpperCase() + status.slice(1);
   const content = `
@@ -241,7 +271,12 @@ export const OrderStatusMail = async (
     
     <p style="font-size: 15px;">Thank you for shopping with <strong>${BRAND_NAME}</strong>. We will send you another update once your package reaches the next stage.</p>
   `;
-  await sendMail(email, "Your Order Status Updated 🚚", "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    "Your Order Status Updated 🚚",
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 10. Order Confirmation Mail
@@ -260,7 +295,7 @@ export const OrderConfirmationMail = async (
     address: string;
     paymentMethod: string;
     deliveryType: string;
-  }
+  },
 ) => {
   const TAX = 20;
   const grandTotal = order.totalAmount + TAX;
@@ -287,7 +322,7 @@ export const OrderConfirmationMail = async (
               </td>
             </tr>
           </table>
-        `
+        `,
         )
         .join("")}
         
@@ -319,13 +354,18 @@ export const OrderConfirmationMail = async (
       Need assistance? Reply directly to this mail or visit us at <a href="${BRAND_URL}/contact" style="color: ${BRAND_COLOR_PRIMARY}; text-decoration: none;">${BRAND_URL.replace("https://", "")}/contact</a>
     </p>
   `;
-  await sendMail(email, `Order Confirmed 🛍️ | ${BRAND_NAME}`, "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    `Order Confirmed 🛍️ | ${BRAND_NAME}`,
+    "",
+    getEmailWrapper(content),
+  );
 };
 
 // 11. Order Placed Notification to Admin
 export const orderPlacedMessageToAdmin = async (
   email: string,
-  name: string
+  name: string,
 ) => {
   const content = `
     <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #111827;">🛒 New Order Received</h1>
@@ -353,14 +393,14 @@ export const orderPlacedMessageToAdmin = async (
     "authorisedaman@gmail.com",
     "🛒 New Order Placed by " + name,
     "",
-    getEmailWrapper(content)
+    getEmailWrapper(content),
   );
 };
 
 // 12. New User Joined Notification to Admin
 export const newUserJoinedNotification = async (
   email: string,
-  name: string
+  name: string,
 ) => {
   const content = `
     <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #111827;">👤 New Customer Registered</h1>
@@ -388,7 +428,7 @@ export const newUserJoinedNotification = async (
     "authorisedaman@gmail.com",
     "👤 New User Joined: " + name,
     "",
-    getEmailWrapper(content)
+    getEmailWrapper(content),
   );
 };
 
@@ -396,7 +436,7 @@ export const newUserJoinedNotification = async (
 export const replyToUser = async (
   email: string,
   name: string,
-  message: string
+  message: string,
 ) => {
   const content = `
     <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #1f2937;">Hello ${name},</h1>
@@ -415,5 +455,10 @@ export const replyToUser = async (
       </a>
     </div>
   `;
-  await sendMail(email, "Re: Your Contact Query ✉️", "", getEmailWrapper(content));
+  await sendMail(
+    email,
+    "Re: Your Contact Query ✉️",
+    "",
+    getEmailWrapper(content),
+  );
 };

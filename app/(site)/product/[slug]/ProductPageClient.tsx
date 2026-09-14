@@ -20,6 +20,7 @@ import {
   Star,
   Sparkles,
   Check,
+  Clock3,
   MessageSquare,
   AlertCircle,
   Share2,
@@ -137,6 +138,9 @@ const ProductPageClient = ({
   const [similarProducts, setSimilarProducts] = useState<Product[]>(
     initialRecommendations,
   );
+  const [recentlyViewedProducts, setRecentlyViewedProducts] = useState<
+    Product[]
+  >([]);
   const [addingCart, setAddingCart] = useState<boolean>(false);
   const [quantity, setQuantity] = useState(1);
 
@@ -176,6 +180,29 @@ const ProductPageClient = ({
 
     return () => window.clearInterval(viewerTimer);
   }, []);
+
+  useEffect(() => {
+    const recordAndLoadRecentlyViewed = async () => {
+      try {
+        await axios.post("/api/user/recently-viewed", {
+          productId: initialProduct._id,
+        });
+        const response = await axios.get("/api/user/recently-viewed");
+        setRecentlyViewedProducts(
+          (response.data.products ?? []).filter(
+            (recentProduct: Product) =>
+              recentProduct._id !== initialProduct._id,
+          ),
+        );
+      } catch {
+        // Recently viewed is supplementary and should never block the product page.
+      }
+    };
+
+    if (user) {
+      recordAndLoadRecentlyViewed();
+    }
+  }, [initialProduct._id, user]);
 
   // Review states
   const [reviewEligible, setReviewEligible] = useState<boolean>(false);
@@ -1439,6 +1466,19 @@ const ProductPageClient = ({
           )}
         </div>
       </div>
+
+      {recentlyViewedProducts.length > 0 && (
+        <div className="mx-auto my-12">
+          <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-neutral-800 md:text-xl">
+            Recently viewed <Clock3 className="size-4 text-rose-500" />
+          </h2>
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+            {recentlyViewedProducts.map((recentProduct) => (
+              <ProductCard key={recentProduct._id} product={recentProduct} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Lightbox photo viewer overlay */}
       <AnimatePresence>

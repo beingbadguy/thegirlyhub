@@ -9,6 +9,27 @@ import {
   normalizeProductPayload,
   productInputFromFormData,
 } from "@/lib/productPayload";
+import { productCreateSchema } from "@/lib/validations/product.schema";
+
+function validationErrorResponse(error: {
+  issues: { path: PropertyKey[]; message: string }[];
+}) {
+  const fieldErrors = Object.fromEntries(
+    error.issues.map((issue) => [
+      issue.path.map(String).join(".") || "product",
+      issue.message,
+    ]),
+  );
+
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Product validation failed",
+      errors: fieldErrors,
+    },
+    { status: 400 },
+  );
+}
 
 export async function GET(request: NextRequest) {
   await databaseConnection();
@@ -83,7 +104,14 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       const body = await request.json();
-      const product = new Product(normalizeProductPayload(body));
+      const normalized = normalizeProductPayload(body);
+      const validation = productCreateSchema.safeParse({
+        ...normalized,
+        images: normalized.images.length ? normalized.images : body.images,
+      });
+      if (!validation.success) return validationErrorResponse(validation.error);
+
+      const product = new Product(normalized);
       await product.save();
       if (!product.slug) {
         product.slug = buildProductSlug(
@@ -103,13 +131,14 @@ export async function POST(request: NextRequest) {
     const description = (formInput.longDescription ||
       formInput.description ||
       formInput.shortDescription) as string;
-    const price = formData.get("price") as string;
+    const price = (formInput.price ?? formInput.sellingPrice) as string;
     const category = formInput.category as string;
     const countInStock = (formInput.totalStock ??
       formInput.stock ??
       formInput.countInStock) as string;
-    const discountedPrice = (formInput.sellingPrice ??
-      formInput.discountPrice ??
+    const discountedPrice = (formInput.discountPrice ??
+      formInput.discountedPrice ??
+      (formInput.price !== undefined ? formInput.sellingPrice : undefined) ??
       formInput.discountedPrice) as string;
     const info = (formInput.info || description) as string;
 
@@ -135,22 +164,21 @@ export async function POST(request: NextRequest) {
       (file) => file && typeof file !== "string" && file.size > 0,
     );
 
-    if (
-      !title?.trim() ||
-      !description ||
-      !price ||
-      imageFiles.length === 0 ||
-      !category ||
-      countInStock === null ||
-      countInStock === undefined ||
-      discountedPrice === null ||
-      discountedPrice === undefined ||
-      !info?.trim()
-    ) {
-      return NextResponse.json(
-        { message: "All fields are required", sucess: false, success: false },
-        { status: 200 },
-      );
+    const metadataValidation = productCreateSchema.safeParse({
+      ...formInput,
+      title,
+      description,
+      price: Number(price),
+      discountPrice: Number(discountedPrice),
+      category: String(category || "")
+        .trim()
+        .toLowerCase(),
+      stock: Number(countInStock),
+      images: imageFiles.length > 0 ? ["pending-upload"] : [],
+      info,
+    });
+    if (!metadataValidation.success) {
+      return validationErrorResponse(metadataValidation.error);
     }
 
     const discountPercentage =
@@ -181,7 +209,6 @@ export async function POST(request: NextRequest) {
         countInStock,
         discountedPrice,
         discountPercentage,
-        isActive: true,
         info,
         weight,
         length,

@@ -92,6 +92,10 @@ export default function CheckoutPage() {
     code: string;
   } | null>(null);
 
+  const welcomeCouponCode = "NEWGIRLY";
+  const eligibleForWelcomeCoupon = !user || !user.firstPurchase;
+  const [welcomeCouponRedeemed, setWelcomeCouponRedeemed] = useState(false);
+
   const couponApplied = !!couponDetails;
   const [submitted, setSubmitted] = useState(false);
 
@@ -116,6 +120,12 @@ export default function CheckoutPage() {
   }, [user]);
 
   useEffect(() => {
+    if (eligibleForWelcomeCoupon && !couponApplied && !welcomeCouponRedeemed) {
+      setPromoCode(welcomeCouponCode);
+    }
+  }, [eligibleForWelcomeCoupon, couponApplied, welcomeCouponRedeemed]);
+
+  useEffect(() => {
     if (!userCart) return;
     const available = userCart.products.filter((item) =>
       isProductInStock(item.productId),
@@ -138,9 +148,10 @@ export default function CheckoutPage() {
   const shippingCharge = shippingResult.shippingCharge;
   const isFreeShipping = shippingResult.isFreeShipping;
 
-  const firstTimeDiscount = user?.firstPurchase
-    ? 0
-    : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
+  const firstTimeDiscount =
+    couponApplied || user?.firstPurchase
+      ? 0
+      : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
   const baseTotal = subtotal + shippingCharge - firstTimeDiscount;
 
   let couponDiscount = 0;
@@ -348,6 +359,7 @@ export default function CheckoutPage() {
       const response = await axios.post("/api/coupon/apply", {
         code: promoCode,
         totalAmount: baseTotal,
+        email,
       });
       setCouponDetails({
         code: response.data.code || promoCode,
@@ -359,6 +371,35 @@ export default function CheckoutPage() {
       if (error instanceof AxiosError) {
         setPromoCodeError(error.response?.data.message);
       }
+    } finally {
+      setPromoCodeLoading(false);
+    }
+  };
+
+  const redeemWelcomeCoupon = async () => {
+    setPromoCode(welcomeCouponCode);
+    setWelcomeCouponRedeemed(true);
+    setPromoCodeError("");
+    setPromoCodeLoading(true);
+    try {
+      const response = await axios.post("/api/coupon/apply", {
+        code: welcomeCouponCode,
+        totalAmount: baseTotal,
+        email,
+      });
+      setCouponDetails({
+        code: response.data.code || welcomeCouponCode,
+        discount: response.data.discountValue,
+        type: response.data.couponType,
+      });
+      setPromoCodeError("");
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        setPromoCodeError(
+          error.response?.data?.message || "Unable to redeem this coupon.",
+        );
+      }
+      setWelcomeCouponRedeemed(false);
     } finally {
       setPromoCodeLoading(false);
     }
@@ -760,6 +801,26 @@ export default function CheckoutPage() {
             </div>
 
             <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
+              {eligibleForWelcomeCoupon && !couponApplied && (
+                <div className="mb-4 flex items-center justify-between gap-4 rounded-lg bg-rose-50 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-rose-900">
+                      Welcome offer: 15% off your first order
+                    </p>
+                    <p className="mt-1 text-xs text-rose-700/70">
+                      Use code {welcomeCouponCode} before you place your order.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={redeemWelcomeCoupon}
+                    disabled={promoCodeLoading || !availableCartItems.length}
+                    className="shrink-0 rounded-lg bg-rose-600 px-3 text-xs text-white hover:bg-rose-700"
+                  >
+                    {promoCodeLoading ? "Redeeming..." : "Redeem"}
+                  </Button>
+                </div>
+              )}
               <label htmlFor="promo" className="text-sm font-medium">
                 Promo code
               </label>

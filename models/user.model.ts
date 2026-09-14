@@ -91,6 +91,12 @@ const userSchema = new mongoose.Schema({
       ref: "Order",
     },
   ],
+  recentlyViewed: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+    },
+  ],
   firstPurchase: {
     type: Boolean,
     default: false,
