@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import axios, { AxiosError } from "axios";
 import { VscLoading } from "react-icons/vsc";
-import { MdOutlinePayment } from "react-icons/md";
+import { MdCancel, MdOutlinePayment } from "react-icons/md";
 import { IoCashOutline } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
 import { Check, ShoppingBag } from "lucide-react";
@@ -77,11 +77,10 @@ function FieldError({ message }: { message?: string }) {
 }
 
 function inputClass(hasError: boolean) {
-  return `w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm outline-none transition focus:ring-2 ${
-    hasError
+  return `w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm outline-none transition focus:ring-2 ${hasError
       ? "border-red-400 focus:border-red-400 focus:ring-red-100"
       : "border-gray-200 focus:border-pink-400 focus:ring-pink-100"
-  }`;
+    }`;
 }
 
 export default function CheckoutPage() {
@@ -117,10 +116,11 @@ export default function CheckoutPage() {
   const couponApplied = !!couponDetails;
   const [submitted, setSubmitted] = useState(false);
   const [isCheckingCart, setIsCheckingCart] = useState(true);
+  const [orderCompleted, setOrderCompleted] = useState(false);
 
   useEffect(() => {
     document.title = "Checkout | GirlyHub";
-    loadRazorpayScript().catch(() => {});
+    loadRazorpayScript().catch(() => { });
     let isMounted = true;
     useAuthStore
       .getState()
@@ -137,17 +137,15 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (user) {
-      setRecipientName(user.name || "");
-      setEmail(user.email || "");
-      setAddress(user.address || "");
-      setCity(user.city || "");
-      setState(user.state || "");
-      setLandmark(user.landmark || "");
-      setZip(user.zip ? String(user.zip) : "");
-      setPhone(user.phone ? String(user.phone) : "");
+      if (user.name) setRecipientName((prev) => prev || user.name || "");
+      if (user.email) setEmail((prev) => prev || user.email || "");
+      if (user.address) setAddress((prev) => prev || user.address || "");
+      if (user.city) setCity((prev) => prev || user.city || "");
+      if (user.state) setState((prev) => prev || user.state || "");
+      if (user.landmark) setLandmark((prev) => prev || user.landmark || "");
+      if (user.zip) setZip((prev) => prev || String(user.zip));
+      if (user.phone) setPhone((prev) => prev || String(user.phone));
     }
-    // Guest checkout: allow users without login to proceed
-    // The email field will be required for guest checkout
   }, [user]);
 
   useEffect(() => {
@@ -162,20 +160,20 @@ export default function CheckoutPage() {
     ) ?? [];
 
   useEffect(() => {
-    if (isCheckingCart) return;
+    if (isCheckingCart || placingOrder || orderCompleted) return;
     if (availableCartItems.length === 0) {
       router.replace("/cart");
     }
-  }, [isCheckingCart, availableCartItems.length, router]);
+  }, [isCheckingCart, placingOrder, orderCompleted, availableCartItems.length, router]);
 
   const subtotal = availableCartItems.reduce((acc, item) => {
     const p = item.productId;
     const price = Number(
       p.discountedPrice ||
-        p.price ||
-        (p as any).sellingPrice ||
-        (p as any).discountPrice ||
-        0,
+      p.price ||
+      (p as any).sellingPrice ||
+      (p as any).discountPrice ||
+      0,
     );
     return acc + price * item.quantity;
   }, 0);
@@ -221,10 +219,10 @@ export default function CheckoutPage() {
         const p = item.productId;
         const price = Number(
           p.discountedPrice ||
-            p.price ||
-            (p as any).sellingPrice ||
-            (p as any).discountPrice ||
-            0,
+          p.price ||
+          (p as any).sellingPrice ||
+          (p as any).discountPrice ||
+          0,
         );
         return {
           productId: p._id,
@@ -275,10 +273,27 @@ export default function CheckoutPage() {
         ...buildOrderPayload(),
       });
 
+      setOrderCompleted(true);
       clearGuestCart();
-      useAuthStore.setState({ userCart: { products: [] } });
+      useAuthStore.setState((prevStore) => {
+        if (!prevStore.user) return { userCart: { products: [] } };
+        return {
+          userCart: { products: [] },
+          user: {
+            ...prevStore.user,
+            name: recipientName || prevStore.user.name,
+            address: address || prevStore.user.address,
+            city: city || prevStore.user.city,
+            state: state || prevStore.user.state,
+            landmark: landmark || prevStore.user.landmark,
+            zip: Number(zip) || prevStore.user.zip,
+            phone: Number(phone) || prevStore.user.phone,
+          },
+        };
+      });
       router.push(`/success/${response.data.order._id}`);
     } catch (error: unknown) {
+      setOrderCompleted(false);
       if (error instanceof AxiosError) {
         const msg =
           error.response?.data?.message ||
@@ -348,15 +363,35 @@ export default function CheckoutPage() {
             });
 
             if (verifyRes.data.success) {
-              // Clear local cart
+              setOrderCompleted(true);
               clearGuestCart();
-              useAuthStore.setState({ userCart: { products: [] } });
-              router.push(`/success/${verifyRes.data.orderId}`);
+              useAuthStore.setState((prevStore) => {
+                if (!prevStore.user) return { userCart: { products: [] } };
+                return {
+                  userCart: { products: [] },
+                  user: {
+                    ...prevStore.user,
+                    name: recipientName || prevStore.user.name,
+                    address: address || prevStore.user.address,
+                    city: city || prevStore.user.city,
+                    state: state || prevStore.user.state,
+                    landmark: landmark || prevStore.user.landmark,
+                    zip: Number(zip) || prevStore.user.zip,
+                    phone: Number(phone) || prevStore.user.phone,
+                  },
+                };
+              });
+              const successId =
+                verifyRes.data.orderId ||
+                response.razorpay_payment_id;
+              router.push(`/online-success/${successId}`);
             } else {
+              setOrderCompleted(false);
               setOrderError(verifyRes.data.message || "Payment verification failed.");
             }
           } catch (error) {
             console.error("Verification error", error);
+            setOrderCompleted(false);
             setOrderError(
               "Payment verification failed. Please contact support.",
             );
@@ -409,7 +444,8 @@ export default function CheckoutPage() {
       setPromoCodeError("Coupon already applied.");
       return;
     }
-    if (!promoCode) {
+    const cleanCode = promoCode.trim();
+    if (!cleanCode) {
       setPromoCodeError("Please enter a valid coupon code.");
       return;
     }
@@ -419,30 +455,43 @@ export default function CheckoutPage() {
     }
 
     setPromoCodeLoading(true);
+    setPromoCodeError("");
     try {
       const response = await axios.post("/api/coupon/apply", {
-        code: promoCode,
+        code: cleanCode,
         totalAmount: baseTotal,
         email,
       });
       setCouponDetails({
-        code: response.data.code || promoCode,
+        code: response.data.code || cleanCode,
         discount: response.data.discountValue,
         type: response.data.couponType,
       });
-      setPromoCodeError(response.data.message || "Coupon applied!");
+      setPromoCode(response.data.code || cleanCode);
+      setPromoCodeError(response.data.message || "Coupon applied successfully!");
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        setPromoCodeError(error.response?.data.message);
+        setPromoCodeError(
+          error.response?.data?.message || "Invalid coupon code.",
+        );
+      } else {
+        setPromoCodeError("Failed to apply coupon. Please try again.");
       }
+      setCouponDetails(null);
     } finally {
       setPromoCodeLoading(false);
     }
   };
 
+  const removeCoupon = () => {
+    setCouponDetails(null);
+    setPromoCode("");
+    setPromoCodeError("");
+    setWelcomeCouponRedeemed(false);
+  };
+
   const redeemWelcomeCoupon = async () => {
     setPromoCode(welcomeCouponCode);
-    setWelcomeCouponRedeemed(true);
     setPromoCodeError("");
     setPromoCodeLoading(true);
     try {
@@ -456,13 +505,17 @@ export default function CheckoutPage() {
         discount: response.data.discountValue,
         type: response.data.couponType,
       });
-      setPromoCodeError("");
+      setWelcomeCouponRedeemed(true);
+      setPromoCodeError(response.data.message || "Welcome coupon applied successfully!");
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setPromoCodeError(
           error.response?.data?.message || "Unable to redeem this coupon.",
         );
+      } else {
+        setPromoCodeError("Failed to redeem welcome coupon.");
       }
+      setCouponDetails(null);
       setWelcomeCouponRedeemed(false);
     } finally {
       setPromoCodeLoading(false);
@@ -654,11 +707,10 @@ export default function CheckoutPage() {
                   <div data-invalid={showError("phone") ? "true" : undefined}>
                     <RequiredLabel>Phone</RequiredLabel>
                     <div
-                      className={`flex items-center overflow-hidden rounded-lg border bg-white transition focus-within:ring-2 ${
-                        showError("phone")
+                      className={`flex items-center overflow-hidden rounded-lg border bg-white transition focus-within:ring-2 ${showError("phone")
                           ? "border-red-400 focus-within:border-red-400 focus-within:ring-red-100"
                           : "border-gray-200 focus-within:border-pink-400 focus-within:ring-pink-100"
-                      }`}
+                        }`}
                     >
                       <span className="border-r border-gray-200 bg-rose-50 px-3.5 py-2.5 text-sm font-semibold text-rose-700">
                         +91
@@ -706,79 +758,78 @@ export default function CheckoutPage() {
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-xl border border-rose-100 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-sm">
+              <div className="mb-3.5 flex items-start justify-between gap-3 pb-3 border-b border-gray-100">
                 <div>
-                  <h2 className="text-lg font-bold text-rose-950">
-                    Items in this order
+                  <h2 className="text-base font-bold text-gray-900">
+                    Order Items ({availableCartItems.length})
                   </h2>
                   <p className="mt-0.5 text-xs text-gray-500">
-                    {availableCartItems.length} item
-                    {availableCartItems.length === 1 ? "" : "s"} ready for
-                    checkout
+                    Review your items before placing order
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => router.push("/cart")}
-                  className="shrink-0 text-xs font-semibold text-rose-600 transition hover:text-rose-700"
+                  className="shrink-0 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md transition"
                 >
                   Edit cart
                 </button>
               </div>
 
-              <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
+              <div className="max-h-[320px] space-y-2.5 overflow-y-auto pr-1.5 custom-scrollbar">
                 {availableCartItems.map((item) => {
                   const product = item.productId;
                   const unitPrice = Number(
                     product.discountedPrice ||
-                      product.price ||
-                      (product as any).sellingPrice ||
-                      (product as any).discountPrice ||
-                      0,
+                    product.price ||
+                    (product as any).sellingPrice ||
+                    (product as any).discountPrice ||
+                    0,
                   );
                   const lineTotal = unitPrice * item.quantity;
                   const itemUrl = productUrl(product.title, product._id, (product as any).slug);
+                  const itemImg = product.image || (product as any).mainImage || "/final_gh.png";
 
                   return (
                     <div
                       key={`${product._id}-${item.size || "default"}`}
-                      className="flex gap-3 rounded-lg border border-gray-100 bg-white p-3"
+                      className="flex gap-3 rounded-xl border border-gray-100 bg-gray-50/40 p-3 hover:bg-gray-50 transition-colors"
                     >
                       <Link
                         href={itemUrl}
-                        className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-rose-50 transition hover:opacity-80"
+                        className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-white border border-gray-100 p-0.5 transition hover:opacity-80"
                       >
                         <Image
-                          src={product.image || "/placeholder.png"}
-                          alt={product.title}
+                          src={itemImg}
+                          alt={product.title || "Product"}
                           fill
-                          className="object-contain p-1"
+                          className="object-contain p-0.5"
                         />
                       </Link>
 
                       <div className="min-w-0 flex-1">
                         <Link
                           href={itemUrl}
-                          className="line-clamp-2 text-sm font-semibold leading-5 text-gray-950 transition hover:text-rose-600"
+                          className="line-clamp-1 text-xs sm:text-sm font-semibold text-gray-900 transition hover:text-rose-600"
                         >
                           {product.title}
                         </Link>
-                        <div className="mt-1 space-y-0.5 text-xs text-gray-500">
-                          {product.category && (
-                            <p>Category: {product.category}</p>
+                        <div className="mt-1 flex items-center gap-2 flex-wrap text-xs text-gray-500">
+                          {item.size && item.size.toLowerCase() !== "one size" && (
+                            <span className="bg-gray-200/70 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
+                              Size: {item.size}
+                            </span>
                           )}
-                          {item.size &&
-                            item.size.toLowerCase() !== "one size" && (
-                              <p>Size: {item.size}</p>
-                            )}
-                          <p>Quantity: {item.quantity}</p>
+                          <span className="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
+                            Qty: {item.quantity}
+                          </span>
                         </div>
-                        <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-                          <span className="text-gray-600">
+                        <div className="mt-1.5 flex items-center justify-between text-xs">
+                          <span className="text-gray-500">
                             ₹{unitPrice.toFixed(2)} each
                           </span>
-                          <span className="font-bold text-rose-700">
+                          <span className="font-bold text-gray-900 text-sm">
                             ₹{lineTotal.toFixed(2)}
                           </span>
                         </div>
@@ -787,6 +838,12 @@ export default function CheckoutPage() {
                   );
                 })}
               </div>
+
+              {availableCartItems.length > 3 && (
+                <p className="mt-2 text-center text-[11px] text-gray-400">
+                  Scroll down to view all {availableCartItems.length} items ↓
+                </p>
+              )}
             </div>
 
             <div className="rounded-xl border border-rose-100 bg-white p-5 text-sm shadow-sm">
@@ -851,18 +908,16 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMode("cod")}
-                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
-                    paymentMode === "cod"
+                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${paymentMode === "cod"
                       ? "border-rose-500 bg-rose-50 shadow-sm"
                       : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`grid size-10 shrink-0 place-items-center rounded-full ${
-                      paymentMode === "cod"
+                    className={`grid size-10 shrink-0 place-items-center rounded-full ${paymentMode === "cod"
                         ? "bg-rose-600 text-white"
                         : "bg-gray-100 text-gray-600"
-                    }`}
+                      }`}
                   >
                     <IoCashOutline className="size-5" />
                   </span>
@@ -882,18 +937,16 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMode("online")}
-                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
-                    paymentMode === "online"
+                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${paymentMode === "online"
                       ? "border-rose-500 bg-rose-50 shadow-sm"
                       : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`grid size-10 shrink-0 place-items-center rounded-full ${
-                      paymentMode === "online"
+                    className={`grid size-10 shrink-0 place-items-center rounded-full ${paymentMode === "online"
                         ? "bg-rose-600 text-white"
                         : "bg-gray-100 text-gray-600"
-                    }`}
+                      }`}
                   >
                     <MdOutlinePayment className="size-5" />
                   </span>
@@ -927,40 +980,71 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={redeemWelcomeCoupon}
                     disabled={promoCodeLoading || !availableCartItems.length}
-                    className="shrink-0 rounded-lg bg-rose-600 px-3 text-xs text-white hover:bg-rose-700"
+                    className="shrink-0 rounded-lg bg-rose-600 px-3 text-xs text-white hover:bg-rose-700 cursor-pointer"
                   >
                     {promoCodeLoading ? "Redeeming..." : "Redeem"}
                   </Button>
                 </div>
               )}
-              <label htmlFor="promo" className="text-sm font-medium">
-                Promo code
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="promo" className="text-sm font-medium text-gray-800">
+                  Promo code
+                </label>
+                {couponApplied && couponDetails && (
+                  <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                    <Check className="size-3.5" />
+                    Applied ({couponDetails.type === "percentage" ? `${couponDetails.discount}% off` : `₹${couponDetails.discount} off`})
+                  </span>
+                )}
+              </div>
               <div className="mt-2 flex">
                 <input
                   id="promo"
                   value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
+                  onChange={(e) => {
+                    setPromoCode(e.target.value);
+                    if (promoCodeError && !couponApplied) setPromoCodeError("");
+                  }}
                   placeholder="Enter code"
-                  className="w-full rounded-l-lg border border-gray-200 px-3 py-2 text-sm"
+                  className={`w-full rounded-l-lg border px-3.5 py-2 text-sm outline-none transition ${
+                    couponApplied
+                      ? "border-emerald-300 bg-emerald-50/30 text-emerald-900 font-medium"
+                      : "border-gray-200 bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                  }`}
                   disabled={couponApplied}
                 />
-                <Button
-                  disabled={promoCodeLoading || couponApplied}
-                  onClick={applyCoupon}
-                  className="cursor-pointer rounded-l-none rounded-r-lg bg-rose-600 text-white hover:bg-rose-700"
-                >
-                  {promoCodeLoading ? (
-                    <VscLoading className="animate-spin text-xl" />
-                  ) : couponApplied ? (
-                    "Applied"
-                  ) : (
-                    "Apply"
-                  )}
-                </Button>
+                {couponApplied ? (
+                  <Button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="cursor-pointer rounded-l-none rounded-r-lg border border-l-0 border-rose-300 bg-rose-50 px-4 text-xs font-semibold text-rose-700 hover:bg-rose-100 hover:text-rose-800 transition"
+                  >
+                   <MdCancel className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={promoCodeLoading || !promoCode.trim()}
+                    onClick={applyCoupon}
+                    className="cursor-pointer rounded-l-none rounded-r-lg bg-rose-600 px-4 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50 transition"
+                  >
+                    {promoCodeLoading ? (
+                      <VscLoading className="animate-spin text-lg" />
+                    ) : (
+                      "Apply"
+                    )}
+                  </Button>
+                )}
               </div>
               {promoCodeError && (
-                <p className="mt-2 text-xs text-red-500">{promoCodeError}</p>
+                <p
+                  className={`mt-2 flex items-center gap-1.5 text-xs font-medium ${
+                    couponApplied ? "text-emerald-600" : "text-rose-600"
+                  }`}
+                >
+                  {couponApplied && <Check className="size-3.5 shrink-0 text-emerald-600" />}
+                  {promoCodeError}
+                </p>
               )}
             </div>
 

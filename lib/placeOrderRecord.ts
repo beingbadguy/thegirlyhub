@@ -2,6 +2,7 @@ import Cart from "@/models/cart.model";
 import Coupon from "@/models/coupon.model";
 import Order from "@/models/order.model";
 import Product from "@/models/product.model";
+import User from "@/models/user.model";
 import {
   OrderConfirmationMail,
   orderPlacedMessageToAdmin,
@@ -67,19 +68,37 @@ export async function placeOrderRecord(
     );
   }
 
-  if (prepared.user) {
-    prepared.user.order.push(newOrder._id);
-    prepared.user.firstPurchase = true;
-    prepared.user.cart = [];
-    prepared.user.address = prepared.address;
-    prepared.user.city = prepared.city;
-    prepared.user.state = prepared.state;
-    prepared.user.landmark = prepared.landmark;
-    prepared.user.zip = prepared.zip;
-    prepared.user.phone = prepared.phone;
-    prepared.user.updatedAt = new Date();
-    extrasUpdates.push(prepared.user.save());
-    extrasUpdates.push(Cart.findOneAndDelete({ userId: prepared.userId }));
+  const userToUpdate =
+    prepared.user ||
+    (prepared.userId
+      ? await User.findById(prepared.userId)
+      : await User.findOne({ email: prepared.email }));
+
+  if (userToUpdate) {
+    const orderIdStr = newOrder._id.toString();
+    const alreadyHasOrder = userToUpdate.order?.some(
+      (oid: any) => oid?.toString() === orderIdStr,
+    );
+    if (!alreadyHasOrder) {
+      userToUpdate.order.push(newOrder._id);
+    }
+    userToUpdate.firstPurchase = true;
+    userToUpdate.cart = [];
+    userToUpdate.address = prepared.address;
+    userToUpdate.city = prepared.city;
+    userToUpdate.state = prepared.state;
+    userToUpdate.landmark = prepared.landmark || null;
+    userToUpdate.zip = Number(prepared.zip);
+    userToUpdate.phone = Number(prepared.phone);
+    if (
+      prepared.recipientName &&
+      (!userToUpdate.name || userToUpdate.name.trim() === "User")
+    ) {
+      userToUpdate.name = prepared.recipientName;
+    }
+    userToUpdate.updatedAt = new Date();
+    extrasUpdates.push(userToUpdate.save());
+    extrasUpdates.push(Cart.findOneAndDelete({ userId: userToUpdate._id }));
   }
 
   await Promise.all([...stockUpdates, ...extrasUpdates]);

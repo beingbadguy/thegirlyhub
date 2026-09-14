@@ -121,11 +121,9 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?._id) return;
     fetchUserOrders();
-    fetchUserCart();
-    fetchUserWishlist();
-  }, [user]);
+  }, [user?._id]);
 
   useEffect(() => {
     if (!user) return;
@@ -629,7 +627,7 @@ export default function ProfilePage() {
                       No {orderFilter} orders.
                     </p>
                   ) : (
-                    <div>
+                    <div className="space-y-4">
                       {paginatedOrders.map((order) => (
                         <OrderDetailsCard
                           order={order as never}

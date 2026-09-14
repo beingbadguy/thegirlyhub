@@ -58,7 +58,11 @@ export async function POST(req: NextRequest) {
     const existingOrder = await Order.findOne({ paymentId: razorpay_payment_id });
     if (existingOrder) {
       return NextResponse.json(
-        { success: true, orderId: existingOrder._id },
+        {
+          success: true,
+          orderId: existingOrder._id.toString(),
+          paymentId: razorpay_payment_id,
+        },
         { status: 200 },
       );
     }
@@ -116,7 +120,11 @@ export async function POST(req: NextRequest) {
     await pending.save();
 
     return NextResponse.json(
-      { success: true, orderId: newOrder._id },
+      {
+        success: true,
+        orderId: newOrder._id.toString(),
+        paymentId: razorpay_payment_id,
+      },
       { status: 200 },
     );
   } catch (error) {

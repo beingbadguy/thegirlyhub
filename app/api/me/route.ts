@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = (await User.findById(decodedToken.userId)
-      .select("_id name email role image isVerified")
+      .select("-password -pass -verificationToken -verificationTokenExpiry -forgetToken -forgetTokenExpiry")
       .lean()) as any;
 
     if (!user) {
@@ -46,6 +46,15 @@ export async function GET(request: NextRequest) {
       isAdmin,
       image: user.image || null,
       isVerified: Boolean(user.isVerified),
+      address: user.address || "",
+      city: user.city || "",
+      state: user.state || "",
+      landmark: user.landmark || "",
+      zip: user.zip || null,
+      phone: user.phone || null,
+      firstPurchase: Boolean(user.firstPurchase),
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
 
     return NextResponse.json({

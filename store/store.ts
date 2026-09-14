@@ -94,6 +94,10 @@ async function hydrateGuestCart() {
   return response.data.cart;
 }
 
+let activeFetchUserPromise: Promise<void> | null = null;
+let activeFetchCartPromise: Promise<void> | null = null;
+let activeFetchWishlistPromise: Promise<void> | null = null;
+
 // Create Zustand store
 export const useAuthStore = create<AuthState>((set, get) => ({
   userWishlist: null,
@@ -106,25 +110,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   closeCart: () => set({ isCartOpen: false }),
 
   fetchUser: async () => {
-    try {
-      const response = await axios.get("/api/me");
-      set({ user: response.data.user });
+    if (activeFetchUserPromise) return activeFetchUserPromise;
 
-      const { fetchUserCart, fetchUserWishlist, syncCartAfterAuth } = get();
-      await syncCartAfterAuth();
-      fetchUserWishlist();
-      await fetchUserCart();
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        if (error.response?.status !== 401) {
-          console.error(error.response?.data);
+    activeFetchUserPromise = (async () => {
+      try {
+        const response = await axios.get("/api/me");
+        const userData = response.data.user;
+        set({ user: userData });
+
+        if (userData) {
+          const guestItems = readGuestCart();
+          if (guestItems.length > 0) {
+            await get().syncCartAfterAuth();
+          }
+          await Promise.all([get().fetchUserWishlist(), get().fetchUserCart()]);
+        } else {
+          await get().fetchUserCart();
         }
-      } else {
-        console.error("Failed to fetch user", error);
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          if (error.response?.status !== 401) {
+            console.error(error.response?.data);
+          }
+        } else {
+          console.error("Failed to fetch user", error);
+        }
+        set({ user: null, userWishlist: null });
+        await get().fetchUserCart();
+      } finally {
+        activeFetchUserPromise = null;
       }
-      set({ user: null });
-      await get().fetchUserCart();
-    }
+    })();
+
+    return activeFetchUserPromise;
   },
 
   logout: async () => {
@@ -139,6 +157,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoggingOut: false });
     }
   },
+
   addToWishlist: async (id: string) => {
     const user = get().user;
     if (!id) {
@@ -151,37 +170,63 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     try {
       await axios.post(`/api/wishlist/${id}`);
-      get().fetchUser();
+      await get().fetchUserWishlist();
     } catch (error) {
       console.error("Failed to add to wishlist:", error);
     }
   },
+
   fetchUserCart: async () => {
-    try {
-      if (!get().user) {
-        const cart = await hydrateGuestCart();
-        set({ userCart: cart });
-        return;
+    if (activeFetchCartPromise) return activeFetchCartPromise;
+
+    activeFetchCartPromise = (async () => {
+      try {
+        if (!get().user) {
+          const cart = await hydrateGuestCart();
+          set({ userCart: cart });
+          return;
+        }
+        const response = await axios.get(`/api/cart`);
+        set({ userCart: response.data.cart });
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          if (error.response?.status !== 401) {
+            console.log(error.response?.data);
+          }
+        } else {
+          console.error("Failed to fetch cart", error);
+        }
+      } finally {
+        activeFetchCartPromise = null;
       }
-      const response = await axios.get(`/api/cart`);
-      set({ userCart: response.data.cart });
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        console.log(error.response?.data);
-      }
-      console.error("Failed to fetch cart", error);
-    }
+    })();
+
+    return activeFetchCartPromise;
   },
 
   fetchUserWishlist: async () => {
-    try {
-      const response = await axios.get(`/api/wishlist`);
-      set({ userWishlist: response.data.wishlist });
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        console.log(error.response?.data?.message);
-      }
+    if (!get().user) {
+      set({ userWishlist: null });
+      return;
     }
+    if (activeFetchWishlistPromise) return activeFetchWishlistPromise;
+
+    activeFetchWishlistPromise = (async () => {
+      try {
+        const response = await axios.get(`/api/wishlist`);
+        set({ userWishlist: response.data.wishlist || { products: [] } });
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          if (error.response?.status !== 401) {
+            console.log(error.response?.data?.message);
+          }
+        }
+      } finally {
+        activeFetchWishlistPromise = null;
+      }
+    })();
+
+    return activeFetchWishlistPromise;
   },
 
   addToCart: async (productId: string, size = "") => {

@@ -52,27 +52,34 @@ export default function Page() {
   // }, [id, user]);
 
   useEffect(() => {
-    // Play success sound
-    const audio = new Audio("/success.mp3");
-    audio.volume = 0.1;
-    audio.play();
+    // Play success sound safely
+    try {
+      const audio = new Audio("/success.mp3");
+      audio.volume = 0.15;
+      audio.play().catch(() => {
+        // Autoplay may be blocked by browser policy without user gesture
+      });
+    } catch {
+      // Audio playback ignore error
+    }
 
     // Trigger confetti
-    const duration = 5 * 1000;
+    const duration = 4 * 1000;
     const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 };
 
     const randomInRange = (min: number, max: number) =>
       Math.random() * (max - min) + min;
 
-    const interval = window.setInterval(() => {
+    const interval: number = window.setInterval(() => {
       const timeLeft = animationEnd - Date.now();
 
       if (timeLeft <= 0) {
-        return clearInterval(interval);
+        clearInterval(interval);
+        return;
       }
 
-      const particleCount = 50 * (timeLeft / duration);
+      const particleCount = 40 * (timeLeft / duration);
       confetti({
         ...defaults,
         particleCount,
@@ -84,11 +91,15 @@ export default function Page() {
         origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
       });
     }, 250);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[90vh] bg-white text-center px-4">

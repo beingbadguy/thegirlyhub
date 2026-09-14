@@ -114,9 +114,6 @@ const HeaderSection = () => {
 
   useEffect(() => {
     fetchUser();
-    if (!user) {
-      fetchUser();
-    }
   }, []);
 
   useEffect(() => {

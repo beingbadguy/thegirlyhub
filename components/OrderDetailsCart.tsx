@@ -358,21 +358,25 @@ export default function OrderDetailsCard({
       <article className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
 
         {/* ── Header Bar ── */}
-        <div className="px-5 py-4 flex flex-wrap items-start gap-3 border-b border-gray-50">
+        <div
+          onClick={() => setOpen((o) => !o)}
+          className="px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 cursor-pointer hover:bg-gray-50/50 transition-colors"
+        >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Order</span>
-              <code className="text-xs font-mono font-semibold text-pink-700 bg-pink-50 px-2 py-0.5 rounded-lg truncate max-w-[180px]">
+              <code className="text-xs font-mono font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-lg truncate max-w-[180px]">
                 #{order._id}
               </code>
               <button
                 title="Copy order ID"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   navigator.clipboard.writeText(order._id);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1500);
                 }}
-                className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                className="p-1 rounded-md hover:bg-gray-200/70 transition-colors cursor-pointer"
               >
                 {copied ? (
                   <Check className="w-3.5 h-3.5 text-green-500" />
@@ -380,55 +384,94 @@ export default function OrderDetailsCard({
                   <Copy className="w-3.5 h-3.5 text-gray-400" />
                 )}
               </button>
+              <div className="flex items-center gap-1.5 text-xs text-gray-400 ml-2">
+                <Clock className="w-3 h-3" />
+                <span>{formattedDate}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <Clock className="w-3 h-3 text-gray-400" />
-              <span className="text-xs text-gray-400">{formattedDate}</span>
+
+            {/* Product Preview Thumbnails in Summary */}
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <div className="flex items-center -space-x-2 overflow-hidden">
+                {order.products.slice(0, 4).map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="relative size-9 rounded-lg border-2 border-white bg-gray-100 overflow-hidden shrink-0 shadow-xs"
+                  >
+                    {getProductImage(item) ? (
+                      <img
+                        src={getProductImage(item)}
+                        alt={getProductTitle(item)}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">
+                        Item
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <span className="text-xs font-medium text-gray-600 truncate max-w-[240px] sm:max-w-md">
+                {order.products.length} item{order.products.length !== 1 ? "s" : ""}:{" "}
+                <span className="text-gray-900 font-semibold">{getProductTitle(order.products[0])}</span>
+                {order.products.length > 1 && ` and ${order.products.length - 1} more`}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="text-right">
-              <p className="text-xs text-gray-400 font-medium">Total</p>
-              <p className="text-base font-bold text-gray-800">₹{order.totalAmount.toFixed(2)}</p>
+          <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
+            <div className="text-left md:text-right">
+              <p className="text-[11px] text-gray-400 font-medium">Total Amount</p>
+              <p className="text-base font-bold text-gray-900">₹{order.totalAmount.toFixed(2)}</p>
             </div>
 
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusColor.bg} ${statusColor.text}`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
-              {STATUS_LABELS[order.status]}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusColor.bg} ${statusColor.text}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
+                {STATUS_LABELS[order.status]}
+              </span>
 
-            <button
-              onClick={() => setOpen((o) => !o)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-            >
-              {open ? (
-                <ChevronUp className="w-4 h-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              )}
-            </button>
+              <button
+                type="button"
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
+                title={open ? "Collapse details" : "Expand details"}
+              >
+                {open ? (
+                  <ChevronUp className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* ── Quick Info Row ── */}
-        <div className="px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-1.5 bg-gray-50/60 border-b border-gray-100 text-xs text-gray-500">
-          <span className="flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            {[order.address, order.city, order.state].filter(Boolean).join(", ")}
-            {order.zip && ` – ${order.zip}`}
-          </span>
-          <span className="flex items-center gap-1">
-            <Phone className="w-3 h-3" />
-            {order.phone}
-          </span>
-          {order.deliveryType === "fast" && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full font-semibold">
-              <Truck className="w-3 h-3" /> Express Delivery
+        <div className="px-5 py-2.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 bg-gray-50/70 border-b border-gray-100 text-xs text-gray-500">
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-gray-400" />
+              {[order.address, order.city, order.state].filter(Boolean).join(", ")}
+              {order.zip && ` – ${order.zip}`}
             </span>
-          )}
+            <span className="flex items-center gap-1">
+              <Phone className="w-3 h-3 text-gray-400" />
+              {order.phone}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-200/80 text-gray-700 uppercase">
+              {order.paymentMethod === "cod" ? "Cash on Delivery" : "Online Paid"}
+            </span>
+            {order.deliveryType === "fast" && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-50 text-orange-600 rounded-md text-[11px] font-semibold">
+                <Truck className="w-3 h-3" /> Express
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ── Expanded Panel ── */}

@@ -1,5 +1,6 @@
 import { databaseConnection } from "@/config/databseConnection";
 import Order from "@/models/order.model";
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -11,11 +12,20 @@ export async function GET(
     const { id } = await context.params;
     if (!id) {
       return NextResponse.json(
-        { message: "Product id is required", success: false },
+        { message: "Order ID is required", success: false },
         { status: 400 }
       );
     }
-    const order = await Order.findById(id);
+
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id).populate("products.productId");
+    }
+
+    if (!order) {
+      order = await Order.findOne({ paymentId: id }).populate("products.productId");
+    }
+
     if (!order) {
       return NextResponse.json(
         { message: "Order not found", success: false },
@@ -28,10 +38,11 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching order:", error);
     return NextResponse.json(
       { message: "Error fetching order", success: false },
       { status: 500 }
     );
   }
 }
+

@@ -25,24 +25,37 @@ export async function GET(request: NextRequest) {
     const wishlist = await Wishlist.findOne({
       userId: decoded?.userId,
     }).populate("products.productId");
+
     if (!wishlist) {
       return NextResponse.json(
-        { message: "Wishlist not found.", success: false, data: [] },
-        { status: 404 }
+        {
+          wishlist: { products: [] },
+          success: true,
+          message: "Wishlist is empty",
+        },
+        { status: 200 }
       );
     }
+
+    const validProducts = (wishlist.products || []).filter(
+      (item: any) => item?.productId && item.productId._id
+    );
+
     return NextResponse.json(
       {
-        wishlist: wishlist,
+        wishlist: {
+          ...wishlist.toObject(),
+          products: validProducts,
+        },
         success: true,
-        message: "Wishlist fetched Successfully",
+        message: "Wishlist fetched successfully",
       },
       { status: 200 }
     );
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching wishlist:", error);
     return NextResponse.json(
-      { message: "Error fetching wishlist" },
+      { message: "Error fetching wishlist", success: false },
       { status: 500 }
     );
   }

@@ -28,7 +28,9 @@ const WishlistPage = () => {
     }
   };
 
-  const allProducts = userWishlist?.products || [];
+  const allProducts = (userWishlist?.products || []).filter(
+    (item) => item?.productId && (item.productId._id || (item.productId as any).id)
+  );
   const totalItems = allProducts.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const isWishlistEmpty = totalItems < 1;

@@ -144,8 +144,13 @@ const ProductPageClient = ({
   const [addingCart, setAddingCart] = useState<boolean>(false);
   const [quantity, setQuantity] = useState(1);
 
+  const defaultImg =
+    (initialProduct.images && initialProduct.images.length > 0
+      ? initialProduct.images[0]
+      : initialProduct.image) || "/final_gh.png";
+
   // Gallery states
-  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [selectedImage, setSelectedImage] = useState<string>(defaultImg);
   const [zoomStyle, setZoomStyle] = useState<React.CSSProperties>({
     display: "none",
   });
@@ -624,16 +629,22 @@ const ProductPageClient = ({
               onMouseLeave={handleMouseLeave}
               onClick={() => setLightboxImage(selectedImage)}
             >
-              <Image
-                src={selectedImage}
-                alt={product.title}
-                fill
-                priority
-                className="object-contain p-0 md:p-4"
-              />
+              {selectedImage ? (
+                <Image
+                  src={selectedImage}
+                  alt={product.title || "Product"}
+                  fill
+                  priority
+                  className="object-contain p-0 md:p-4"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-neutral-100 text-xs text-neutral-400">
+                  No image available
+                </div>
+              )}
 
               {/* Magnifier Lens Container (Desktop only) */}
-              {!isMobile && (
+              {!isMobile && selectedImage && (
                 <div
                   style={zoomStyle}
                   className="absolute inset-0 z-20 pointer-events-none border border-neutral-200 bg-white"
@@ -644,23 +655,25 @@ const ProductPageClient = ({
 
           {/* Thumbnails list */}
           <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-2 justify-start">
-            {displayImages.map((img, idx) => (
-              <button
-                key={idx}
-                className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] bg-neutral-50 transition-all duration-300 shrink-0 cursor-pointer ${selectedImage === img
-                    ? " border-2 border-neutral-900 opacity-100"
-                    : "border-2 border-neutral-200/40 opacity-60 hover:opacity-100"
-                  }`}
-                onClick={() => setSelectedImage(img)}
-              >
-                <Image
-                  src={img}
-                  alt={`Thumbnail ${idx + 1}`}
-                  fill
-                  className="object-contain p-1"
-                />
-              </button>
-            ))}
+            {displayImages
+              .filter((img): img is string => Boolean(img && img.trim()))
+              .map((img, idx) => (
+                <button
+                  key={idx}
+                  className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] bg-neutral-50 transition-all duration-300 shrink-0 cursor-pointer ${selectedImage === img
+                      ? " border-2 border-neutral-900 opacity-100"
+                      : "border-2 border-neutral-200/40 opacity-60 hover:opacity-100"
+                    }`}
+                  onClick={() => setSelectedImage(img)}
+                >
+                  <Image
+                    src={img}
+                    alt={`Thumbnail ${idx + 1}`}
+                    fill
+                    className="object-contain p-1"
+                  />
+                </button>
+              ))}
           </div>
         </div>
 
