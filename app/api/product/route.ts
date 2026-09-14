@@ -233,10 +233,10 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
     return NextResponse.json(
-      { message: "Error creating product", success: false },
+      { message: error?.message || "Error creating product", success: false },
       { status: 500 },
     );
   }
@@ -245,7 +245,8 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   await databaseConnection();
   try {
-    const { id, isActive } = await request.json();
+    const body = await request.json();
+    const id = body.id || body._id;
     if (!id) {
       return NextResponse.json(
         { message: "Product id is required", success: false },
@@ -259,7 +260,9 @@ export async function PUT(request: NextRequest) {
         { status: 404 },
       );
     }
-    product.isActive = isActive;
+
+    const normalized = normalizeProductPayload(body, product.toObject());
+    Object.assign(product, normalized);
 
     await product.save();
     return NextResponse.json(
@@ -269,7 +272,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.log(error);
     return NextResponse.json(
-      { message: "Error fetching product", success: false },
+      { message: "Error updating product", success: false },
       { status: 500 },
     );
   }

@@ -40,7 +40,7 @@ type ReviewType = {
 };
 
 type ProductVariant = {
-  sku: string;
+  sku?: string;
   attributes?: { color?: string; size?: string };
   price: number;
   discountedPrice: number;
@@ -647,11 +647,10 @@ const ProductPageClient = ({
             {displayImages.map((img, idx) => (
               <button
                 key={idx}
-                className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] bg-neutral-50 transition-all duration-300 shrink-0 cursor-pointer ${
-                  selectedImage === img
+                className={`relative w-[64px] h-[64px] md:w-[75px] md:h-[75px] bg-neutral-50 transition-all duration-300 shrink-0 cursor-pointer ${selectedImage === img
                     ? " border-2 border-neutral-900 opacity-100"
                     : "border-2 border-neutral-200/40 opacity-60 hover:opacity-100"
-                }`}
+                  }`}
                 onClick={() => setSelectedImage(img)}
               >
                 <Image
@@ -685,11 +684,10 @@ const ProductPageClient = ({
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${
-                      i < Math.round(displayRatings)
+                    className={`w-4 h-4 ${i < Math.round(displayRatings)
                         ? "fill-amber-400 text-amber-400"
                         : "text-neutral-200"
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -799,7 +797,7 @@ const ProductPageClient = ({
             </div>
 
             <p className="text-sm leading-relaxed text-neutral-600">
-              {product.longDescription || product.description}
+              {product.shortDescription || product.description}
             </p>
 
             {/* Sizes variants */}
@@ -822,11 +820,10 @@ const ProductPageClient = ({
                     <button
                       key={s}
                       onClick={() => setSize(s)}
-                      className={`min-w-[45px] h-[40px] px-3 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${
-                        s === size
+                      className={`min-w-[45px] h-[40px] px-3 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${s === size
                           ? "bg-neutral-900 text-white border-transparent shadow-sm"
                           : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-400"
-                      }`}
+                        }`}
                     >
                       {s}
                     </button>
@@ -849,11 +846,10 @@ const ProductPageClient = ({
                         key={colName}
                         onClick={() => setColor(colName)}
                         title={colName}
-                        className={`relative w-8 h-8 rounded-full border-2 transition-all p-0.5 ${
-                          colName === color
+                        className={`relative w-8 h-8 rounded-full border-2 transition-all p-0.5 ${colName === color
                             ? "border-neutral-950 scale-110 shadow-sm"
                             : "border-transparent hover:scale-105"
-                        }`}
+                          }`}
                       >
                         <div
                           style={{ backgroundColor: cleanColor }}
@@ -1196,11 +1192,10 @@ const ProductPageClient = ({
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${
-                      i < Math.round(displayRatings)
+                    className={`w-4 h-4 ${i < Math.round(displayRatings)
                         ? "fill-amber-400 text-amber-400"
                         : "text-neutral-200"
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -1257,11 +1252,10 @@ const ProductPageClient = ({
                           className="focus:outline-none transition-transform active:scale-95"
                         >
                           <Star
-                            className={`w-7 h-7 ${
-                              starVal <= reviewRating
+                            className={`w-7 h-7 ${starVal <= reviewRating
                                 ? "fill-amber-400 text-amber-400 scale-105"
                                 : "text-neutral-200 hover:text-amber-200"
-                            }`}
+                              }`}
                           />
                         </button>
                       );
@@ -1391,11 +1385,10 @@ const ProductPageClient = ({
                           {Array.from({ length: 5 }, (_, i) => (
                             <Star
                               key={i}
-                              className={`w-3 h-3 ${
-                                i < rev.rating
+                              className={`w-3 h-3 ${i < rev.rating
                                   ? "fill-amber-400 text-amber-400"
                                   : "text-neutral-200"
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>

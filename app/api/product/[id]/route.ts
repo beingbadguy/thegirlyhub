@@ -146,7 +146,7 @@ export async function PUT(
       );
     }
 
-    const product = await Product.findById(id);
+    const product = await findProductBySlugOrId(id);
     if (!product) {
       return NextResponse.json(
         { message: "Product not found", success: false },

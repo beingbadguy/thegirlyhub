@@ -20,9 +20,24 @@ export const databaseConnection = async () => {
         dbName: "Basics", // optional
         bufferCommands: false,
       })
-      .then((mongoose) => {
+      .then(async (mongooseInstance) => {
         console.log("🔌 MongoDB Connected");
-        return mongoose;
+        try {
+          const db = mongooseInstance.connection.db;
+          if (db) {
+            const productCollection = db.collection("products");
+            const indexes = await productCollection.indexes();
+            for (const idx of indexes) {
+              if (idx.name === "tenantId_1_variants.sku_1") {
+                await productCollection.dropIndex(idx.name).catch(() => {});
+                console.log(`Dropped problematic index: ${idx.name}`);
+              }
+            }
+          }
+        } catch {
+          // Ignore index cleanup error
+        }
+        return mongooseInstance;
       });
   }
 

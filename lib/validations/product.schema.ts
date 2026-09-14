@@ -1,46 +1,20 @@
 import { z } from "zod";
 
-export const categoryEnum = z.enum([
-  "jewellery",
-  "earrings",
-  "necklace",
-  "ring",
-  "bracelet",
-  "other",
-  "scrunchies",
-  "shoes",
-  "flats",
-  "dresses",
-  "suits",
-]);
+export const categoryEnum = z.string().optional().default("jewellery");
 
-const jewelleryVariantSchema = z.object({
-  sku: z.string().min(1),
-  attributes: z
-    .object({
-      color: z.string().optional(),
-      size: z.string().optional(),
-    })
-    .optional(),
-  price: z.number().min(0),
-  discountedPrice: z.number().min(0),
-  stock: z.number().int().min(0),
-  images: z.array(z.string()).optional().default([]),
-  weight: z.number().min(0).optional(),
-});
-
-const legacyVariantOptionsSchema = z.object({
-  sizes: z.array(z.string()).default([]),
-  colors: z.array(z.string()).default([]),
-});
+const optionalCoerceNumber = (defaultValue = 0) =>
+  z.preprocess((val) => {
+    if (val === undefined || val === null || val === "") return defaultValue;
+    const num = Number(val);
+    return isNaN(num) ? defaultValue : num;
+  }, z.number().min(0).default(defaultValue));
 
 // Base schema without refinements so .partial() can be used safely
 export const productBaseSchema = z.object({
-  title: z.string().min(1, "Title is required").max(150),
-  name: z.string().min(1).max(150).optional(),
-  slug: z.string().min(1).optional(),
-  tenantId: z.string().min(1).optional().default("girlyhub"),
-  description: z.string().min(1, "Description is required"),
+  title: z.string().max(150).optional(),
+  name: z.string().max(150).optional(),
+  slug: z.string().optional(),
+  description: z.string().optional().default(""),
   shortDescription: z.string().max(320).optional(),
   longDescription: z.string().optional(),
   subCategory: z.string().optional(),
@@ -54,56 +28,76 @@ export const productBaseSchema = z.object({
   style: z.string().optional(),
   gender: z.string().optional(),
   setType: z.string().optional(),
-  price: z.number().min(0, "Price must be a positive number"),
-  costPrice: z.number().min(0).optional(),
-  sellingPrice: z.number().min(0).optional(),
-  currency: z.literal("INR").optional(),
-  discountPrice: z
-    .number()
-    .min(0, "Discount price must be a positive number")
-    .optional(),
-  category: categoryEnum,
-  images: z.array(z.string()).min(1, "At least one image is required"),
+  price: optionalCoerceNumber(0),
+  costPrice: optionalCoerceNumber(0).optional(),
+  sellingPrice: optionalCoerceNumber(0).optional(),
+  currency: z.string().optional().default("INR"),
+  discountPrice: optionalCoerceNumber(0).optional(),
+  discountedPrice: optionalCoerceNumber(0).optional(),
+  category: z.string().optional().default("jewellery"),
+  images: z.array(z.string()).optional().default([]),
   mainImage: z.string().optional(),
   video: z.string().optional(),
-  stock: z.number().int().min(0, "Stock must be a non-negative integer"),
-  totalStock: z.number().int().min(0).optional(),
-  lowStockThreshold: z.number().int().min(0).optional(),
+  stock: optionalCoerceNumber(0),
+  totalStock: optionalCoerceNumber(0).optional(),
+  lowStockThreshold: optionalCoerceNumber(10).optional(),
   trackInventory: z.boolean().optional(),
   isFeatured: z.boolean().optional().default(false),
   isNewArrival: z.boolean().optional().default(false),
-  status: z.enum(["draft", "active", "out_of_stock", "archived"]).optional(),
-  variants: z
-    .union([z.array(jewelleryVariantSchema), legacyVariantOptionsSchema])
+  status: z
+    .enum([
+      "draft",
+      "active",
+      "featured",
+      "new_arrival",
+      "out_of_stock",
+      "archived",
+    ])
     .optional()
-    .default([]),
-  weight: z.number().min(0).optional(),
-  length: z.number().min(0).optional(),
-  breadth: z.number().min(0).optional(),
-  height: z.number().min(0).optional(),
+    .default("draft"),
+  isActive: z.boolean().optional(),
+  weight: optionalCoerceNumber(0).optional(),
+  length: optionalCoerceNumber(0).optional(),
+  breadth: optionalCoerceNumber(0).optional(),
+  height: optionalCoerceNumber(0).optional(),
   info: z.string().optional(),
 });
 
-// Create validation (adds price check refinement)
-export const productCreateSchema = productBaseSchema.refine(
-  (data) => {
-    if (data.discountPrice !== undefined && data.discountPrice > data.price) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: "Discount price cannot be greater than regular price",
-    path: ["discountPrice"],
-  },
-);
+// Create validation: name or title required
+export const productCreateSchema = productBaseSchema
+  .refine(
+    (data) =>
+      Boolean((data.title && data.title.trim()) || (data.name && data.name.trim())),
+    {
+      message: "Product name or title is required",
+      path: ["name"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (
+        data.discountPrice !== undefined &&
+        data.price !== undefined &&
+        data.price > 0 &&
+        data.discountPrice > data.price
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Discount price cannot be greater than regular price",
+      path: ["discountPrice"],
+    },
+  );
 
-// Update validation (calls .partial() on the base schema, then adds price check refinement)
+// Update validation (all fields optional)
 export const productUpdateSchema = productBaseSchema.partial().refine(
   (data) => {
     if (
       data.discountPrice !== undefined &&
       data.price !== undefined &&
+      data.price > 0 &&
       data.discountPrice > data.price
     ) {
       return false;
@@ -115,3 +109,4 @@ export const productUpdateSchema = productBaseSchema.partial().refine(
     path: ["discountPrice"],
   },
 );
+

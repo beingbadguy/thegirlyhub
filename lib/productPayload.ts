@@ -7,7 +7,24 @@ const productBooleanFields = new Set([
   "isActive",
 ]);
 
-const productJsonFields = new Set(["tags", "variants", "dimensions"]);
+const productJsonFields = new Set(["dimensions"]);
+
+const productNumberFields = new Set([
+  "costPrice",
+  "sellingPrice",
+  "price",
+  "discountPrice",
+  "discountedPrice",
+  "discountPercentage",
+  "totalStock",
+  "stock",
+  "countInStock",
+  "lowStockThreshold",
+  "weight",
+  "length",
+  "breadth",
+  "height",
+]);
 
 export function productInputFromFormData(formData: FormData) {
   const input: Record<string, any> = {};
@@ -25,6 +42,9 @@ export function productInputFromFormData(formData: FormData) {
       }
     } else if (productBooleanFields.has(key)) {
       input[key] = value === "true" || value === "1";
+    } else if (productNumberFields.has(key)) {
+      const num = Number(value);
+      input[key] = isNaN(num) ? 0 : num;
     } else {
       input[key] = value;
     }
@@ -54,6 +74,10 @@ export function normalizeProductPayload(
       source.discountedPrice ??
       listPrice,
   );
+  const costPrice = Number(input.costPrice ?? source.costPrice ?? 0) || 0;
+  const weight = Number(input.weight ?? source.weight ?? 0) || 0;
+  const lowStockThreshold =
+    Number(input.lowStockThreshold ?? source.lowStockThreshold ?? 10) || 10;
   const images = Array.isArray(input.images)
     ? input.images.filter(Boolean)
     : input.image
@@ -63,28 +87,17 @@ export function normalizeProductPayload(
         : source.image
           ? [source.image]
           : [];
-  const variants = Array.isArray(input.variants)
-    ? input.variants
-    : Array.isArray(source.variants)
-      ? source.variants
-      : [];
-  const variantStock = variants.reduce(
-    (total: number, variant: { stock?: number }) =>
-      total + Number(variant.stock || 0),
-    0,
+
+  const totalStock = Number(
+    input.totalStock ??
+      input.stock ??
+      input.countInStock ??
+      source.totalStock ??
+      source.stock ??
+      source.countInStock ??
+      0,
   );
-  const totalStock =
-    variants.length > 0
-      ? variantStock
-      : Number(
-          input.totalStock ??
-            input.stock ??
-            input.countInStock ??
-            source.totalStock ??
-            source.stock ??
-            source.countInStock ??
-            0,
-        );
+
   const name = input.name ?? input.title ?? source.name ?? source.title ?? "";
   const description =
     input.longDescription ??
@@ -94,6 +107,15 @@ export function normalizeProductPayload(
     source.description ??
     source.shortDescription ??
     "";
+  const category = (
+    input.category ??
+    source.category ??
+    "jewellery"
+  )
+    .toString()
+    .trim()
+    .toLowerCase();
+
   const status =
     input.status ??
     (input.isActive !== undefined
@@ -103,14 +125,16 @@ export function normalizeProductPayload(
       : (source.status ?? (source.isActive === false ? "draft" : "active")));
 
   return {
+    ...source,
     ...input,
     name,
     title: name,
+    category,
     slug:
       input.slug ||
       source.slug ||
       (existing?._id
-        ? buildProductSlug(name, String(existing._id))
+        ? buildProductSlug(name || "product", String(existing._id))
         : undefined),
     description,
     shortDescription:
@@ -126,21 +150,24 @@ export function normalizeProductPayload(
       images[0] ??
       "",
     images,
+    costPrice,
+    weight,
+    lowStockThreshold,
     price: listPrice,
     sellingPrice: finalPrice,
     discountedPrice: finalPrice,
     discountPrice: finalPrice,
     discountPercentage:
-      listPrice > 0
+      listPrice > 0 && listPrice > finalPrice
         ? Math.max(0, ((listPrice - finalPrice) / listPrice) * 100)
         : 0,
     totalStock,
     stock: totalStock,
     countInStock: totalStock,
     status,
-    tenantId: input.tenantId ?? source.tenantId ?? "girlyhub",
     isActive: status === "active" || status === "out_of_stock",
     isFeatured: input.isFeatured ?? Boolean(source.isFeatured),
     isNewArrival: input.isNewArrival ?? Boolean(source.isNewArrival),
   };
 }
+
