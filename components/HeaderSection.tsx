@@ -90,8 +90,12 @@ const HeaderSection = () => {
   }, []);
 
   useEffect(() => {
-    if (userCart?.products?.length) {
-      setTotalNumberOfProducts(userCart?.products.length);
+    const validCartProducts = userCart?.products?.filter(
+      (item) => item.productId,
+    );
+
+    if (validCartProducts?.length) {
+      setTotalNumberOfProducts(validCartProducts.length);
     } else {
       setTotalNumberOfProducts(0);
     }

@@ -127,11 +127,11 @@ export default function ProductCard({
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-100 bg-white p-4 transition-all duration-300 hover:border-neutral-200 ${className}`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-neutral-100 bg-white p-0 transition-all duration-300 hover:border-neutral-200 md:rounded-3xl md:p-4 ${className}`}
     >
       {/* Image area with overlays */}
       <div
-        className="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-neutral-100/85 border border-neutral-100/50 cursor-pointer"
+        className="relative mb-3 aspect-square w-full cursor-pointer overflow-hidden bg-neutral-100/85 md:mb-4 md:rounded-2xl md:border md:border-neutral-100/50"
         onClick={goToProduct}
       >
         {/* Discount Badge on the top left */}
@@ -208,7 +208,7 @@ export default function ProductCard({
       </div>
 
       {/* Info */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col px-2 pb-3 md:px-0 md:pb-0">
         {product.category && (
           <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 mb-1 block">
             {product.category}
@@ -239,7 +239,7 @@ export default function ProductCard({
 
       {showStock && (
         <p
-          className={`mt-1 text-xs font-medium mb-2 ${
+          className={`mx-2 mt-1 mb-2 text-xs font-medium md:mx-0 ${
             inStock ? "text-green-600" : "text-rose-600"
           }`}
         >
@@ -249,7 +249,7 @@ export default function ProductCard({
 
       {showActions &&
         (inStock ? (
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mx-2 mt-2 mb-3 grid grid-cols-2 gap-2 md:mx-0 md:mb-0">
             <button
               type="button"
               onClick={handleCardAddToCart}
@@ -273,7 +273,7 @@ export default function ProductCard({
           <button
             type="button"
             disabled
-            className="mt-2 w-full cursor-not-allowed rounded-full border border-neutral-100 bg-neutral-50 py-2 text-xs font-medium text-neutral-400 uppercase tracking-wide"
+            className="mx-2 mt-2 mb-3 w-auto cursor-not-allowed rounded-full border border-neutral-100 bg-neutral-50 py-2 text-xs font-medium text-neutral-400 uppercase tracking-wide md:mx-0 md:mb-0"
           >
             Out of stock
           </button>

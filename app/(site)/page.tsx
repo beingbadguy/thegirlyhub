@@ -1,17 +1,17 @@
 import Faqs from "@/components/Faqs";
 import HomeAdSlots from "@/components/HomeAdSlots";
 import NewArrivals from "@/components/NewArrivals";
+import CategoryProductSections from "@/components/CategoryProductSections";
 import Newsletter from "@/components/Newsletter";
-import ShopByCategory from "@/components/ShopByCategory";
 import CountVisitor from "@/components/CountVisitor";
 import HeroBannerSlider from "@/components/HeroBannerSlider";
 
-import StaggeringCategories from "@/components/StaggeringCategories";
 import TrustStrip from "@/components/TrustStrip";
 import SummerSaleBanner from "@/components/SummerSaleBanner";
 import HomeReviews from "@/components/HomeReviews";
 import OfferBanner from "@/components/OfferBanner";
 import HomeConnect from "@/components/HomeConnect";
+import StaggeringCategories from "@/components/StaggeringCategories";
 
 export default function Home() {
   return (
@@ -19,10 +19,11 @@ export default function Home() {
       <div>
         <StaggeringCategories />
         <HeroBannerSlider />
-        {/* <ShopByCategory limit={12} showSeeMore /> */}
+        <NewArrivals limit={12} showSeeMore />
+        <NewArrivals limit={12} featured />
+        <CategoryProductSections />
         <HomeAdSlots />
         <OfferBanner />
-        <NewArrivals limit={12} showSeeMore />
         <TrustStrip />
         <HomeReviews />
         <HomeConnect />

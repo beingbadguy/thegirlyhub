@@ -14,7 +14,7 @@ const page = () => {
         <span>/</span>
         <span className="text-black"> New Arrivals</span>
       </div>
-      <NewArrivals limit={12} paginated />
+      <NewArrivals limit={100} />
     </div>
   );
 };

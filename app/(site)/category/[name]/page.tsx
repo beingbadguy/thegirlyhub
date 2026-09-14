@@ -33,7 +33,11 @@ const Page = () => {
   const fetchProducts = async (pageNum: number) => {
     setLoading(true);
     try {
-      const params: Record<string, string | number> = { page: pageNum, limit: 12, category: categoryName };
+      const params: Record<string, string | number> = {
+        page: pageNum,
+        limit: 12,
+        category: categoryName,
+      };
       if (maxValue < 100000) params.maxPrice = maxValue;
       if (sortBy !== "default") params.sort = sortBy;
 
@@ -72,8 +76,7 @@ const Page = () => {
   return (
     <div className="min-h-[75vh] p-4">
       <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome />{" "}
-        /{" "}
+        <BreadcrumbHome /> /{" "}
         <span
           className="cursor-pointer hover:text-pink-600"
           onClick={() => router.push("/category")}
@@ -166,7 +169,7 @@ const Page = () => {
           <div className="text-sm">
             {total} product{total !== 1 ? "s" : ""} in {categoryName}
           </div>
-          <div className="my-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="my-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}

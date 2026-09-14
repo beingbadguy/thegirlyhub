@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     const minPrice = request.nextUrl.searchParams.get("minPrice");
     const maxPrice = request.nextUrl.searchParams.get("maxPrice");
     const sortParam = request.nextUrl.searchParams.get("sort");
+    const featured = request.nextUrl.searchParams.get("featured");
 
     const filter: any = {};
     if (query) {
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
       ];
     }
     if (category) filter.category = category;
+    if (featured === "true") filter.isFeatured = true;
     if (minPrice || maxPrice) {
       filter.discountedPrice = {};
       if (minPrice) filter.discountedPrice.$gte = Number(minPrice);

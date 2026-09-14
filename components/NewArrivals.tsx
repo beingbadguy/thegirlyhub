@@ -12,12 +12,14 @@ interface NewArrivalsProps {
   limit?: number;
   paginated?: boolean;
   showSeeMore?: boolean;
+  featured?: boolean;
 }
 
 const NewArrivals = ({
   limit = 12,
   paginated = false,
   showSeeMore = false,
+  featured = false,
 }: NewArrivalsProps) => {
   const [products, setProducts] = useState<
     React.ComponentProps<typeof ProductCard>["product"][]
@@ -32,7 +34,11 @@ const NewArrivals = ({
       setLoading(true);
       try {
         const response = await axios.get("/api/product", {
-          params: { page: paginated ? page : 1, limit },
+          params: {
+            page: paginated ? page : 1,
+            limit,
+            ...(featured ? { featured: true } : {}),
+          },
         });
         setProducts(response.data.products);
         setTotalPages(response.data.pagination?.totalPages ?? 1);
@@ -46,7 +52,11 @@ const NewArrivals = ({
       }
     };
     fetchAllProducts();
-  }, [limit, paginated, page]);
+  }, [featured, limit, paginated, page]);
+
+  if (featured && !loading && products.length === 0) {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -55,7 +65,7 @@ const NewArrivals = ({
           <Skeleton className="mx-auto h-4 w-28 rounded-full" />
           <Skeleton className="mx-auto mt-4 h-10 w-56" />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {[...Array(8)].map((_, index) => (
             <div key={index} className="rounded-2xl bg-white p-3">
               <Skeleton className="mb-4 aspect-[4/3] w-full rounded-xl" />
@@ -76,18 +86,22 @@ const NewArrivals = ({
           NEW IN
         </div>
         <h2 className="font-serif text-3xl font-medium tracking-tight text-rose-950 sm:text-4xl">
-          New Arrivals
+          {featured ? "Featured Products" : "New Arrivals"}
         </h2>
         <p className="mx-auto mt-3 max-w-md text-[15px] text-rose-900/60">
-          Fresh drops you’ll fall in love with.
+          {featured
+            ? "Handpicked favourites chosen to make every look feel special."
+            : "Fresh drops you’ll fall in love with."}
         </p>
       </div>
 
       {products.length === 0 ? (
-        <p className="text-center text-rose-900/50">No new arrivals found.</p>
+        <p className="text-center text-rose-900/50">
+          {featured ? "No featured products found." : "No new arrivals found."}
+        </p>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} showActions />
             ))}
@@ -99,7 +113,9 @@ const NewArrivals = ({
                 href="/newarrivals"
                 className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-8 py-3 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50"
               >
-                See all new arrivals →
+                {featured
+                  ? "See all featured products →"
+                  : "See all new arrivals →"}
               </Link>
             </div>
           )}

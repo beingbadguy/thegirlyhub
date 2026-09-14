@@ -76,8 +76,16 @@ const CategoryImageSlider = ({ category }: { category: Category }) => {
   );
 };
 
-const StaggeringCategories = () => {
-  const categoryLimit = 6;
+type StaggeringCategoriesProps = {
+  limit?: number;
+  showViewAll?: boolean;
+};
+
+const StaggeringCategories = ({
+  limit = 6,
+  showViewAll = true,
+}: StaggeringCategoriesProps) => {
+  const categoryLimit = limit;
   const [catLoading, setCatLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
@@ -114,8 +122,8 @@ const StaggeringCategories = () => {
           <Skeleton className="mx-auto mt-4 h-10 w-64" />
           <Skeleton className="mx-auto mt-3 h-5 w-80 max-w-full" />
         </div>
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {[...Array(6)].map((_, index) => (
+        <div className="grid grid-cols-3 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {[...Array(Math.min(categoryLimit, 12))].map((_, index) => (
             <div key={index} className="flex flex-col items-center gap-3">
               <Skeleton className="size-20 rounded-full" />
               <Skeleton className="h-4 w-20" />
@@ -170,14 +178,16 @@ const StaggeringCategories = () => {
         ))}
       </motion.ul>
 
-      <div className="mt-12 text-center">
-        <Link
-          href="/category"
-          className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-8 py-3 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50"
-        >
-          View all categories
-        </Link>
-      </div>
+      {showViewAll && (
+        <div className="mt-12 text-center">
+          <Link
+            href="/categories"
+            className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-8 py-3 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50"
+          >
+            View all categories
+          </Link>
+        </div>
+      )}
     </section>
   );
 };

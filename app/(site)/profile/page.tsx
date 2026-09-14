@@ -685,7 +685,7 @@ export default function ProfilePage() {
                     </p>
                   ) : (
                     <>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
                         {paginatedCart.map((item) => (
                           <ProductCard
                             key={item.productId._id}
@@ -742,7 +742,7 @@ export default function ProfilePage() {
                     </p>
                   ) : (
                     <>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
                         {paginatedWishlist.map((item) => (
                           <ProductCard
                             key={item.productId._id}

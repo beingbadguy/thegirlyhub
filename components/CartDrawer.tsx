@@ -4,6 +4,7 @@ import { useAuthStore } from "@/store/store";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { calculateShipping } from "@/lib/shipping";
 
 export default function CartDrawer() {
   const {
@@ -20,6 +21,7 @@ export default function CartDrawer() {
       (item.productId.discountedPrice || item.productId.price) * item.quantity,
     0,
   );
+  const shipping = calculateShipping(subtotal, "online");
 
   return (
     <>
@@ -144,6 +146,38 @@ export default function CartDrawer() {
         </div>
 
         <footer className="border-t border-neutral-100 bg-white px-6 py-5">
+          {items.length > 0 && (
+            <div className="mb-5 rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">
+                    {shipping.isFreeShipping
+                      ? "Free delivery unlocked"
+                      : `Add ₹${shipping.remainingForFreeShipping.toLocaleString("en-IN")} more`}
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {shipping.isFreeShipping
+                      ? "Your order qualifies for complimentary delivery."
+                      : "Shop a little more to unlock free delivery."}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs font-semibold text-rose-600">
+                  ₹{Math.min(subtotal, 499).toLocaleString("en-IN")} / ₹499
+                </span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${shipping.isFreeShipping ? "bg-emerald-500" : "bg-rose-500"}`}
+                  style={{ width: `${shipping.freeShippingProgress}%` }}
+                />
+              </div>
+              {shipping.isFreeShipping && (
+                <p className="mt-2 text-xs font-medium text-emerald-600">
+                  You saved ₹49 on delivery
+                </p>
+              )}
+            </div>
+          )}
           <div className="mb-4 flex items-center justify-between text-base font-semibold">
             <span>Total</span>
             <span>₹{subtotal.toLocaleString("en-IN")}</span>

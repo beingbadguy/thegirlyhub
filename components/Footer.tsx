@@ -34,7 +34,7 @@ const Footer = () => {
         {/* About */}
         <div>
           <div className="mb-4">
-            <LogoMark />
+            <LogoMark isFooter={true}  className="h-10"/>
           </div>
           <p className="text-sm leading-6 text-pink-100/75">
             GirlyHub is your go-to destination for high-quality accessories,

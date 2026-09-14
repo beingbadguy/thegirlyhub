@@ -15,7 +15,8 @@ const StickyMenuBar = () => {
   const isProductPage = pathname.startsWith("/product/");
   const [isVisible, setIsVisible] = useState(!isProductPage);
   const lastScrollY = useRef(0);
-  const cartCount = userCart?.products?.length ?? 0;
+  const cartCount =
+    userCart?.products?.filter((item) => item.productId).length ?? 0;
   const wishlistCount = userWishlist?.products?.length ?? 0;
 
   useEffect(() => {

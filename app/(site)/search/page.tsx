@@ -46,7 +46,7 @@ const Page = () => {
   }, [query]);
 
   const grid = (items: Products[]) => (
-    <div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className="my-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
       {items.map((product) => (
         <ProductCard key={product._id} product={product} />
       ))}

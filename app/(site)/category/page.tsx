@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import ShopByCategory from "@/components/ShopByCategory";
+import StaggeringCategories from "@/components/StaggeringCategories";
 import { useRouter } from "next/navigation";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 
@@ -15,7 +15,7 @@ const Page = () => {
         <BreadcrumbHome /> /{" "}
         <span className="cursor-pointer text-black">Categories</span>
       </div>
-      <ShopByCategory limit={12} paginated />
+      <StaggeringCategories limit={100} showViewAll={false} />
     </div>
   );
 };
