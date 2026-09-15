@@ -63,6 +63,8 @@ export default function HeroBannerSlider() {
                 fill
                 src={banner.mobileImage || banner.image}
                 alt="banner mobile"
+                sizes="100vw"
+                quality={95}
                 className="object-cover"
                 priority
               />
@@ -74,6 +76,8 @@ export default function HeroBannerSlider() {
                 fill
                 src={banner.tabletImage || banner.image}
                 alt="banner tablet"
+                sizes="100vw"
+                quality={95}
                 className="object-cover"
                 priority
               />
@@ -85,6 +89,8 @@ export default function HeroBannerSlider() {
                 fill
                 src={banner.image}
                 alt="banner desktop"
+                sizes="100vw"
+                quality={95}
                 className="object-cover"
                 priority
               />

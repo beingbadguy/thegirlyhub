@@ -12,6 +12,7 @@ import HomeReviews from "@/components/HomeReviews";
 import OfferBanner from "@/components/OfferBanner";
 import HomeConnect from "@/components/HomeConnect";
 import StaggeringCategories from "@/components/StaggeringCategories";
+import InstagramShowcase from "@/components/InstagramShowcase";
 
 export default function Home() {
   return (
@@ -31,6 +32,7 @@ export default function Home() {
         {/* <SummerSaleBanner/> */}
         <Newsletter />
         <Faqs />
+        <InstagramShowcase />
         <CountVisitor />
       </div>
     </main>
