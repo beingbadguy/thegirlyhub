@@ -22,6 +22,14 @@ import { calculateShipping } from "@/lib/shipping";
 import { isProductInStock } from "@/lib/productStock";
 import { clearGuestCart } from "@/lib/guestCart";
 import { productUrl } from "@/lib/slug";
+import {
+  User,
+  Mail,
+  MapPin,
+  Phone,
+  Landmark,
+  ClipboardList,
+} from "lucide-react";
 
 declare global {
   interface Window {
@@ -39,7 +47,9 @@ const loadRazorpayScript = () => {
       resolve(true);
       return;
     }
-    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    const existing = document.querySelector(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
+    );
     if (existing) {
       if (window.Razorpay) {
         resolve(true);
@@ -77,10 +87,11 @@ function FieldError({ message }: { message?: string }) {
 }
 
 function inputClass(hasError: boolean) {
-  return `w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm outline-none transition focus:ring-2 ${hasError
+  return `w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm outline-none transition focus:ring-2 ${
+    hasError
       ? "border-red-400 focus:border-red-400 focus:ring-red-100"
       : "border-gray-200 focus:border-pink-400 focus:ring-pink-100"
-    }`;
+  }`;
 }
 
 export default function CheckoutPage() {
@@ -120,7 +131,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     document.title = "Checkout | GirlyHub";
-    loadRazorpayScript().catch(() => { });
+    loadRazorpayScript().catch(() => {});
     let isMounted = true;
     useAuthStore
       .getState()
@@ -164,16 +175,22 @@ export default function CheckoutPage() {
     if (availableCartItems.length === 0) {
       router.replace("/cart");
     }
-  }, [isCheckingCart, placingOrder, orderCompleted, availableCartItems.length, router]);
+  }, [
+    isCheckingCart,
+    placingOrder,
+    orderCompleted,
+    availableCartItems.length,
+    router,
+  ]);
 
   const subtotal = availableCartItems.reduce((acc, item) => {
     const p = item.productId;
     const price = Number(
       p.discountedPrice ||
-      p.price ||
-      (p as any).sellingPrice ||
-      (p as any).discountPrice ||
-      0,
+        p.price ||
+        (p as any).sellingPrice ||
+        (p as any).discountPrice ||
+        0,
     );
     return acc + price * item.quantity;
   }, 0);
@@ -219,10 +236,10 @@ export default function CheckoutPage() {
         const p = item.productId;
         const price = Number(
           p.discountedPrice ||
-          p.price ||
-          (p as any).sellingPrice ||
-          (p as any).discountPrice ||
-          0,
+            p.price ||
+            (p as any).sellingPrice ||
+            (p as any).discountPrice ||
+            0,
         );
         return {
           productId: p._id,
@@ -266,6 +283,9 @@ export default function CheckoutPage() {
       return;
     }
     if (!validateCheckout()) return;
+    // open a modal to confirm the order before placing it
+
+    
 
     setPlacingOrder(true);
     try {
@@ -382,12 +402,13 @@ export default function CheckoutPage() {
                 };
               });
               const successId =
-                verifyRes.data.orderId ||
-                response.razorpay_payment_id;
+                verifyRes.data.orderId || response.razorpay_payment_id;
               router.push(`/online-success/${successId}`);
             } else {
               setOrderCompleted(false);
-              setOrderError(verifyRes.data.message || "Payment verification failed.");
+              setOrderError(
+                verifyRes.data.message || "Payment verification failed.",
+              );
             }
           } catch (error) {
             console.error("Verification error", error);
@@ -420,7 +441,10 @@ export default function CheckoutPage() {
       try {
         const paymentObject = new window.Razorpay(options);
         paymentObject.on("payment.failed", function (response: any) {
-          setOrderError("Payment failed: " + (response.error?.description || "Payment was rejected."));
+          setOrderError(
+            "Payment failed: " +
+              (response.error?.description || "Payment was rejected."),
+          );
           setPlacingOrder(false);
         });
         paymentObject.open();
@@ -468,7 +492,9 @@ export default function CheckoutPage() {
         type: response.data.couponType,
       });
       setPromoCode(response.data.code || cleanCode);
-      setPromoCodeError(response.data.message || "Coupon applied successfully!");
+      setPromoCodeError(
+        response.data.message || "Coupon applied successfully!",
+      );
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setPromoCodeError(
@@ -506,7 +532,9 @@ export default function CheckoutPage() {
         type: response.data.couponType,
       });
       setWelcomeCouponRedeemed(true);
-      setPromoCodeError(response.data.message || "Welcome coupon applied successfully!");
+      setPromoCodeError(
+        response.data.message || "Welcome coupon applied successfully!",
+      );
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setPromoCodeError(
@@ -545,9 +573,12 @@ export default function CheckoutPage() {
           <div className="flex size-16 items-center justify-center rounded-full bg-rose-50 text-rose-500">
             <ShoppingBag className="size-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Your Cart is Empty</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Your Cart is Empty
+          </h2>
           <p className="text-sm text-gray-600">
-            You don&apos;t have any items in your checkout. Redirecting you to your bag...
+            You don&apos;t have any items in your checkout. Redirecting you to
+            your bag...
           </p>
           <Button
             onClick={() => router.replace("/cart")}
@@ -583,138 +614,168 @@ export default function CheckoutPage() {
               </h2>
 
               <div className="space-y-4">
+                {/* Name */}
                 <div
                   data-invalid={showError("recipientName") ? "true" : undefined}
                 >
                   <RequiredLabel>Full name</RequiredLabel>
-                  <input
-                    autoComplete="name"
-                    value={recipientName}
-                    onChange={(e) => {
-                      setRecipientName(e.target.value);
-                      clearFieldError("recipientName");
-                    }}
-                    placeholder="Recipient full name"
-                    className={inputClass(!!showError("recipientName"))}
-                  />
+
+                  <div className="flex items-center gap-3 rounded-lg border px-3 py-2 focus-within:ring-2 focus-within:ring-pink-100 focus-within:border-pink-400">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <input
+                      autoComplete="name"
+                      value={recipientName}
+                      onChange={(e) => {
+                        setRecipientName(e.target.value);
+                        clearFieldError("recipientName");
+                      }}
+                      placeholder="Recipient full name"
+                      className="w-full bg-transparent outline-none text-sm"
+                    />
+                  </div>
+
                   <FieldError message={showError("recipientName")} />
                 </div>
 
+                {/* Email */}
                 <div data-invalid={showError("email") ? "true" : undefined}>
-                  <label className="mb-1 block text-sm font-medium text-gray-800">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      clearFieldError("email");
-                    }}
-                    placeholder="you@example.com"
-                    className={inputClass(!!showError("email"))}
-                  />
+                  <RequiredLabel>Email</RequiredLabel>
+
+                  <div className="flex items-center gap-3 rounded-lg border px-3 py-2 focus-within:ring-2 focus-within:ring-pink-100 focus-within:border-pink-400">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        clearFieldError("email");
+                      }}
+                      placeholder="you@example.com"
+                      className="w-full bg-transparent outline-none text-sm"
+                    />
+                  </div>
+
                   <FieldError message={showError("email")} />
                 </div>
 
+                {/* Address */}
                 <div data-invalid={showError("address") ? "true" : undefined}>
-                  <RequiredLabel>
-                    Address (please enter proper address ){" "}
-                  </RequiredLabel>
-                  <textarea
-                    autoComplete="street-address"
-                    value={address}
-                    onChange={(e) => {
-                      setAddress(e.target.value);
-                      clearFieldError("address");
-                    }}
-                    placeholder="House no., street, area"
-                    rows={3}
-                    className={inputClass(!!showError("address"))}
-                  />
+                  <RequiredLabel>Address</RequiredLabel>
+
+                  <div className="flex items-start gap-3 rounded-lg border px-3 py-2 focus-within:ring-2 focus-within:ring-pink-100 focus-within:border-pink-400">
+                    <MapPin className="h-4 w-4 text-gray-400 mt-1" />
+                    <textarea
+                      autoComplete="street-address"
+                      value={address}
+                      onChange={(e) => {
+                        setAddress(e.target.value);
+                        clearFieldError("address");
+                      }}
+                      rows={3}
+                      placeholder="House no., street, area"
+                      className="w-full bg-transparent outline-none text-sm resize-none"
+                    />
+                  </div>
+
                   <FieldError message={showError("address")} />
                 </div>
 
+                {/* City + State */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div data-invalid={showError("city") ? "true" : undefined}>
                     <RequiredLabel>City</RequiredLabel>
-                    <input
-                      autoComplete="address-level2"
-                      value={city}
-                      onChange={(e) => {
-                        setCity(e.target.value);
-                        clearFieldError("city");
-                      }}
-                      placeholder="City"
-                      className={inputClass(!!showError("city"))}
-                    />
+
+                    <div className="flex items-center gap-3 rounded-lg border px-3 py-2 focus-within:ring-2 focus-within:ring-pink-100 focus-within:border-pink-400">
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <input
+                        autoComplete="address-level2"
+                        value={city}
+                        onChange={(e) => {
+                          setCity(e.target.value);
+                          clearFieldError("city");
+                        }}
+                        placeholder="City"
+                        className="w-full bg-transparent outline-none text-sm"
+                      />
+                    </div>
+
                     <FieldError message={showError("city")} />
                   </div>
 
                   <div data-invalid={showError("state") ? "true" : undefined}>
                     <RequiredLabel>State</RequiredLabel>
-                    <select
-                      autoComplete="address-level1"
-                      value={state}
-                      onChange={(e) => {
-                        setState(e.target.value);
-                        clearFieldError("state");
-                      }}
-                      className={inputClass(!!showError("state"))}
-                    >
-                      <option value="">Select state</option>
-                      {INDIAN_STATES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+
+                    <div className="flex items-center gap-3 rounded-lg border px-3 py-2 focus-within:ring-2 focus-within:ring-pink-100 focus-within:border-pink-400">
+                      <select
+                        autoComplete="address-level1"
+                        value={state}
+                        onChange={(e) => {
+                          setState(e.target.value);
+                          clearFieldError("state");
+                        }}
+                        className="w-full bg-transparent outline-none text-sm"
+                      >
+                        <option value="">Select state</option>
+                        {INDIAN_STATES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <FieldError message={showError("state")} />
                   </div>
                 </div>
 
+                {/* Landmark */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-800">
-                    Landmark
-                  </label>
-                  <input
-                    autoComplete="address-line2"
-                    value={landmark}
-                    onChange={(e) => setLandmark(e.target.value)}
-                    placeholder="Near school, mall, etc. (optional)"
-                    className={inputClass(false)}
-                  />
+                  <RequiredLabel>Landmark</RequiredLabel>
+
+                  <div className="flex items-center gap-3 rounded-lg border px-3 py-2">
+                    <Landmark className="h-4 w-4 text-gray-400" />
+                    <input
+                      autoComplete="address-line2"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      placeholder="Near school, mall, etc. (optional)"
+                      className="w-full bg-transparent outline-none text-sm"
+                    />
+                  </div>
                 </div>
 
+                {/* Zip + Phone */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div data-invalid={showError("zip") ? "true" : undefined}>
                     <RequiredLabel>Pincode</RequiredLabel>
-                    <input
-                      inputMode="numeric"
-                      autoComplete="postal-code"
-                      value={zip}
-                      onChange={(e) => {
-                        setZip(e.target.value.replace(/\D/g, "").slice(0, 6));
-                        clearFieldError("zip");
-                      }}
-                      placeholder="6-digit pincode"
-                      className={inputClass(!!showError("zip"))}
-                    />
+
+                    <div className="flex items-center gap-3 rounded-lg border px-3 py-2 focus-within:ring-2 focus-within:ring-pink-100 focus-within:border-pink-400">
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <input
+                        inputMode="numeric"
+                        autoComplete="postal-code"
+                        value={zip}
+                        onChange={(e) => {
+                          setZip(e.target.value.replace(/\D/g, "").slice(0, 6));
+                          clearFieldError("zip");
+                        }}
+                        placeholder="6-digit pincode"
+                        className="w-full bg-transparent outline-none text-sm"
+                      />
+                    </div>
+
                     <FieldError message={showError("zip")} />
                   </div>
 
                   <div data-invalid={showError("phone") ? "true" : undefined}>
                     <RequiredLabel>Phone</RequiredLabel>
-                    <div
-                      className={`flex items-center overflow-hidden rounded-lg border bg-white transition focus-within:ring-2 ${showError("phone")
-                          ? "border-red-400 focus-within:border-red-400 focus-within:ring-red-100"
-                          : "border-gray-200 focus-within:border-pink-400 focus-within:ring-pink-100"
-                        }`}
-                    >
-                      <span className="border-r border-gray-200 bg-rose-50 px-3.5 py-2.5 text-sm font-semibold text-rose-700">
+
+                    <div className="flex items-center rounded-lg border overflow-hidden focus-within:ring-2 focus-within:ring-pink-100 focus-within:border-pink-400">
+                      <span className="bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
                         +91
                       </span>
+                      <Phone className="h-4 w-4 text-gray-400 ml-2" />
                       <input
                         type="tel"
                         inputMode="numeric"
@@ -727,31 +788,35 @@ export default function CheckoutPage() {
                           clearFieldError("phone");
                         }}
                         placeholder="10-digit mobile number"
-                        aria-label="10-digit Indian mobile number"
-                        className="min-w-0 flex-1 bg-transparent px-3.5 py-2.5 text-sm outline-none"
+                        className="w-full px-2 py-2 outline-none text-sm"
                       />
                     </div>
+
                     <p className="mt-1 text-[11px] text-gray-400">
                       We&apos;ll use this number for delivery updates.
                     </p>
+
                     <FieldError message={showError("phone")} />
                   </div>
                 </div>
 
+                {/* Notes */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-800">
-                    Order notes
-                  </label>
-                  <textarea
-                    maxLength={500}
-                    value={orderNotes}
-                    onChange={(e) =>
-                      setOrderNotes(e.target.value.slice(0, 500))
-                    }
-                    placeholder="Delivery instructions, gift wrap, etc. (optional)"
-                    rows={2}
-                    className={inputClass(false)}
-                  />
+                  <RequiredLabel>Order notes</RequiredLabel>
+
+                  <div className="flex items-start gap-3 rounded-lg border px-3 py-2">
+                    <ClipboardList className="h-4 w-4 text-gray-400 mt-1" />
+                    <textarea
+                      maxLength={500}
+                      value={orderNotes}
+                      onChange={(e) =>
+                        setOrderNotes(e.target.value.slice(0, 500))
+                      }
+                      placeholder="Delivery instructions, gift wrap, etc. (optional)"
+                      rows={2}
+                      className="w-full bg-transparent outline-none text-sm resize-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -782,14 +847,21 @@ export default function CheckoutPage() {
                   const product = item.productId;
                   const unitPrice = Number(
                     product.discountedPrice ||
-                    product.price ||
-                    (product as any).sellingPrice ||
-                    (product as any).discountPrice ||
-                    0,
+                      product.price ||
+                      (product as any).sellingPrice ||
+                      (product as any).discountPrice ||
+                      0,
                   );
                   const lineTotal = unitPrice * item.quantity;
-                  const itemUrl = productUrl(product.title, product._id, (product as any).slug);
-                  const itemImg = product.image || (product as any).mainImage || "/final_gh.png";
+                  const itemUrl = productUrl(
+                    product.title,
+                    product._id,
+                    (product as any).slug,
+                  );
+                  const itemImg =
+                    product.image ||
+                    (product as any).mainImage ||
+                    "/final_gh.png";
 
                   return (
                     <div
@@ -816,11 +888,12 @@ export default function CheckoutPage() {
                           {product.title}
                         </Link>
                         <div className="mt-1 flex items-center gap-2 flex-wrap text-xs text-gray-500">
-                          {item.size && item.size.toLowerCase() !== "one size" && (
-                            <span className="bg-gray-200/70 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
-                              Size: {item.size}
-                            </span>
-                          )}
+                          {item.size &&
+                            item.size.toLowerCase() !== "one size" && (
+                              <span className="bg-gray-200/70 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
+                                Size: {item.size}
+                              </span>
+                            )}
                           <span className="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
                             Qty: {item.quantity}
                           </span>
@@ -908,16 +981,18 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMode("cod")}
-                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${paymentMode === "cod"
+                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
+                    paymentMode === "cod"
                       ? "border-rose-500 bg-rose-50 shadow-sm"
                       : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
-                    }`}
+                  }`}
                 >
                   <span
-                    className={`grid size-10 shrink-0 place-items-center rounded-full ${paymentMode === "cod"
+                    className={`grid size-10 shrink-0 place-items-center rounded-full ${
+                      paymentMode === "cod"
                         ? "bg-rose-600 text-white"
                         : "bg-gray-100 text-gray-600"
-                      }`}
+                    }`}
                   >
                     <IoCashOutline className="size-5" />
                   </span>
@@ -937,16 +1012,18 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMode("online")}
-                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${paymentMode === "online"
+                  className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition ${
+                    paymentMode === "online"
                       ? "border-rose-500 bg-rose-50 shadow-sm"
                       : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
-                    }`}
+                  }`}
                 >
                   <span
-                    className={`grid size-10 shrink-0 place-items-center rounded-full ${paymentMode === "online"
+                    className={`grid size-10 shrink-0 place-items-center rounded-full ${
+                      paymentMode === "online"
                         ? "bg-rose-600 text-white"
                         : "bg-gray-100 text-gray-600"
-                      }`}
+                    }`}
                   >
                     <MdOutlinePayment className="size-5" />
                   </span>
@@ -987,13 +1064,20 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <label htmlFor="promo" className="text-sm font-medium text-gray-800">
+                <label
+                  htmlFor="promo"
+                  className="text-sm font-medium text-gray-800"
+                >
                   Promo code
                 </label>
                 {couponApplied && couponDetails && (
                   <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
                     <Check className="size-3.5" />
-                    Applied ({couponDetails.type === "percentage" ? `${couponDetails.discount}% off` : `₹${couponDetails.discount} off`})
+                    Applied (
+                    {couponDetails.type === "percentage"
+                      ? `${couponDetails.discount}% off`
+                      : `₹${couponDetails.discount} off`}
+                    )
                   </span>
                 )}
               </div>
@@ -1019,7 +1103,7 @@ export default function CheckoutPage() {
                     onClick={removeCoupon}
                     className="cursor-pointer rounded-l-none rounded-r-lg border border-l-0 border-rose-300 bg-rose-50 px-4 text-xs font-semibold text-rose-700 hover:bg-rose-100 hover:text-rose-800 transition"
                   >
-                   <MdCancel className="size-4" />
+                    <MdCancel className="size-4" />
                   </Button>
                 ) : (
                   <Button
@@ -1042,7 +1126,9 @@ export default function CheckoutPage() {
                     couponApplied ? "text-emerald-600" : "text-rose-600"
                   }`}
                 >
-                  {couponApplied && <Check className="size-3.5 shrink-0 text-emerald-600" />}
+                  {couponApplied && (
+                    <Check className="size-3.5 shrink-0 text-emerald-600" />
+                  )}
                   {promoCodeError}
                 </p>
               )}

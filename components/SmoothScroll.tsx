@@ -2,42 +2,11 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import Lenis from "lenis";
-
-let activeLenis: Lenis | null = null;
 
 export default function SmoothScroll() {
   const pathname = usePathname();
 
-  useEffect(() => {
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (reduceMotion) return;
-
-    const lenis = new Lenis({
-      autoRaf: false,
-      duration: 1.05,
-      smoothWheel: true,
-      syncTouch: false,
-    });
-    activeLenis = lenis;
-    let frameId = 0;
-
-    const raf = (time: number) => {
-      lenis.raf(time);
-      frameId = window.requestAnimationFrame(raf);
-    };
-
-    frameId = window.requestAnimationFrame(raf);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      lenis.destroy();
-      activeLenis = null;
-    };
-  }, []);
-
+  // Smooth scroll for in-page anchor links (e.g. #recommended, #details)
   useEffect(() => {
     const handleAnchorClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0) return;
@@ -59,11 +28,7 @@ export default function SmoothScroll() {
       if (!destination) return;
 
       event.preventDefault();
-      if (activeLenis) {
-        activeLenis.scrollTo(destination, { duration: 1.05, offset: -12 });
-      } else {
-        destination.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      destination.scrollIntoView({ behavior: "smooth", block: "start" });
       window.history.pushState(null, "", url.hash);
     };
 
@@ -71,18 +36,16 @@ export default function SmoothScroll() {
     return () => document.removeEventListener("click", handleAnchorClick);
   }, [pathname]);
 
+  // Scroll to top smoothly on route change
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       return;
     }
-
-    if (activeLenis) {
-      activeLenis.scrollTo(0, { duration: 1.05 });
-    } else {
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-    }
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, [pathname]);
 
   return null;
 }
+
+

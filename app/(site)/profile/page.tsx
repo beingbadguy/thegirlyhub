@@ -9,10 +9,12 @@ import { useAuthStore } from "@/store/store";
 import axios, { AxiosError } from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { compressImage } from "@/utils/image";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import {
+  ChevronLeft,
+  ChevronRight,
   Heart,
   LogOut,
   MapPin,
@@ -96,6 +98,73 @@ export default function ProfilePage() {
   const [wishlistPage, setWishlistPage] = useState(1);
   const [authChecked, setAuthChecked] = useState(false);
   const itemsPerPage = 12;
+
+  // Filter tabs horizontal scroll & drag support
+  const filterScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isDraggingFilter, setIsDraggingFilter] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftState, setScrollLeftState] = useState(0);
+
+  const checkFilterScroll = useCallback(() => {
+    const el = filterScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 6);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    checkFilterScroll();
+    const el = filterScrollRef.current;
+    if (!el) return;
+    const handleScroll = () => checkFilterScroll();
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [checkFilterScroll, menu, orders.length]);
+
+  const scrollFilters = (direction: "left" | "right") => {
+    const el = filterScrollRef.current;
+    if (!el) return;
+    const amount = direction === "left" ? -220 : 220;
+    el.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  const handleFilterWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = filterScrollRef.current;
+    if (!el) return;
+    if (el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
+      el.scrollLeft += e.deltaY;
+      checkFilterScroll();
+    }
+  };
+
+  const handleMouseDownFilter = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = filterScrollRef.current;
+    if (!el) return;
+    setIsDraggingFilter(true);
+    setStartX(e.pageX - el.offsetLeft);
+    setScrollLeftState(el.scrollLeft);
+  };
+
+  const handleMouseMoveFilter = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingFilter) return;
+    const el = filterScrollRef.current;
+    if (!el) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    el.scrollLeft = scrollLeftState - walk;
+    checkFilterScroll();
+  };
+
+  const handleMouseUpFilter = () => {
+    setIsDraggingFilter(false);
+  };
 
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -593,30 +662,65 @@ export default function ProfilePage() {
                   <h1 className="mb-4 font-serif text-2xl text-rose-950">
                     Orders ({orders.length})
                   </h1>
-                  <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-                    {ORDER_FILTERS.map((filter) => {
-                      const count =
-                        filter.key === "all"
-                          ? orders.length
-                          : orderCounts[filter.key] || 0;
-                      return (
-                        <button
-                          key={filter.key}
-                          type="button"
-                          onClick={() => {
-                            setOrderFilter(filter.key);
-                            setOrderPage(1);
-                          }}
-                          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition sm:text-sm ${
-                            orderFilter === filter.key
-                              ? "bg-rose-700 text-white"
-                              : "bg-rose-50 text-rose-800 hover:bg-rose-100"
-                          }`}
-                        >
-                          {filter.label} ({count})
-                        </button>
-                      );
-                    })}
+                  <div className="relative mb-4">
+                    {/* Left Scroll Arrow */}
+                    {canScrollLeft && (
+                      <button
+                        type="button"
+                        onClick={() => scrollFilters("left")}
+                        className="absolute -left-2.5 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white text-rose-700 shadow-md border border-rose-200 hover:bg-rose-50 transition-all cursor-pointer"
+                        aria-label="Scroll left"
+                      >
+                        <ChevronLeft className="size-4" />
+                      </button>
+                    )}
+
+                    {/* Scrollable Filter List */}
+                    <div
+                      ref={filterScrollRef}
+                      onWheel={handleFilterWheel}
+                      onMouseDown={handleMouseDownFilter}
+                      onMouseMove={handleMouseMoveFilter}
+                      onMouseUp={handleMouseUpFilter}
+                      onMouseLeave={handleMouseUpFilter}
+                      className="flex gap-2 overflow-x-auto pb-2 pt-1 scroll-smooth select-none cursor-grab active:cursor-grabbing"
+                    >
+                      {ORDER_FILTERS.map((filter) => {
+                        const count =
+                          filter.key === "all"
+                            ? orders.length
+                            : orderCounts[filter.key] || 0;
+                        return (
+                          <button
+                            key={filter.key}
+                            type="button"
+                            onClick={() => {
+                              setOrderFilter(filter.key);
+                              setOrderPage(1);
+                            }}
+                            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition sm:text-sm shadow-xs ${
+                              orderFilter === filter.key
+                                ? "bg-rose-700 text-white shadow-sm"
+                                : "bg-rose-50 text-rose-800 hover:bg-rose-100"
+                            }`}
+                          >
+                            {filter.label} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right Scroll Arrow */}
+                    {canScrollRight && (
+                      <button
+                        type="button"
+                        onClick={() => scrollFilters("right")}
+                        className="absolute -right-2.5 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white text-rose-700 shadow-md border border-rose-200 hover:bg-rose-50 transition-all cursor-pointer"
+                        aria-label="Scroll right"
+                      >
+                        <ChevronRight className="size-4" />
+                      </button>
+                    )}
                   </div>
                   {orders.length === 0 ? (
                     <p className="text-sm text-rose-900/60">

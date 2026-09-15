@@ -64,32 +64,7 @@
   }
 }
 
-::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-}
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: transparent;
-}
-
-/* globals.css */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 2px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #be185d; /* Tailwind pink-800 */
-  border-radius: 9999px;
-}
 
 @theme inline {
   --color-background: var(--background);
