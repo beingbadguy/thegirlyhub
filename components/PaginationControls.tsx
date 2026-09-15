@@ -31,10 +31,12 @@ export default function PaginationControls({
   page,
   totalPages,
   onPageChange,
+  className = "mt-8",
 }: {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  className?: string;
 }) {
   if (totalPages <= 1) return null;
 
@@ -45,7 +47,7 @@ export default function PaginationControls({
 
   return (
     <nav
-      className="mt-8 flex flex-wrap items-center justify-center gap-1.5"
+      className={`flex flex-wrap items-center justify-center gap-1.5 ${className}`}
       aria-label="Pagination"
     >
       <button

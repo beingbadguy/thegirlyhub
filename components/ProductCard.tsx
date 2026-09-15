@@ -69,6 +69,9 @@ export default function ProductCard({
 
   const handleMouseEnter = () => {
     setIsHovered(true);
+    if (images.length > 1) {
+      setActiveImageIndex(1);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -179,15 +182,23 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Product image using cover fit */}
-        <div className="size-full">
-          <Image
-            src={images[activeImageIndex] || "/placeholder.png"}
-            alt={product.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            priority
-          />
+        {/* Product image using smooth crossfade */}
+        <div className="relative size-full overflow-hidden">
+          {images.map((imgSrc, idx) => (
+            <Image
+              key={`${imgSrc}-${idx}`}
+              src={imgSrc || "/placeholder.png"}
+              alt={product.title}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
+                idx === activeImageIndex
+                  ? "opacity-100 z-1"
+                  : "opacity-0 z-0 pointer-events-none"
+              }`}
+              priority={idx === 0}
+            />
+          ))}
         </div>
 
         {/* Slideshow dots indicator */}

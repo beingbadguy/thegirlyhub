@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import ProductsClient from "./ProductsClient";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_CONFIG } from "@/lib/seo/config";
@@ -29,7 +30,9 @@ export default function ProductsPage() {
   return (
     <>
       <JsonLd data={breadcrumbSchema} />
-      <ProductsClient />
+      <Suspense fallback={<div className="min-h-screen bg-neutral-50/40" />}>
+        <ProductsClient />
+      </Suspense>
     </>
   );
 }

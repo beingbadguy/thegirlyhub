@@ -5,7 +5,7 @@ import CategoryProductSections from "@/components/CategoryProductSections";
 import Newsletter from "@/components/Newsletter";
 import CountVisitor from "@/components/CountVisitor";
 import HeroBannerSlider from "@/components/HeroBannerSlider";
-
+import BudgetPriceZone from "@/components/BudgetPriceZone";
 import TrustStrip from "@/components/TrustStrip";
 import SummerSaleBanner from "@/components/SummerSaleBanner";
 import HomeReviews from "@/components/HomeReviews";
@@ -19,10 +19,11 @@ export default function Home() {
       <div>
         <StaggeringCategories />
         <HeroBannerSlider />
+        <BudgetPriceZone />
         <NewArrivals limit={12} showSeeMore />
         <NewArrivals limit={12} featured />
-        <CategoryProductSections />
         <HomeAdSlots />
+        <CategoryProductSections />
         <OfferBanner />
         <TrustStrip />
         <HomeReviews />

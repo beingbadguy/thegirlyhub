@@ -1,5 +1,8 @@
 "use client";
-import { IoCloseOutline } from "react-icons/io5";
+
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { X, SlidersHorizontal, Check, RotateCcw } from "lucide-react";
 
 interface Category {
   _id: string;
@@ -17,8 +20,22 @@ type FilterSidebarProps = {
   showFilter: boolean;
   setShowFilter: (val: boolean) => void;
   onClear: () => void;
-  hideCategory?: boolean; // In case we are already in a specific category page
+  hideCategory?: boolean;
 };
+
+const SORT_OPTIONS = [
+  { label: "Default / Newest", value: "default" },
+  { label: "Price: Low to High", value: "priceLowToHigh" },
+  { label: "Price: High to Low", value: "priceHighToLow" },
+];
+
+const QUICK_PRICES = [
+  { label: "All", value: 100000 },
+  { label: "Under ₹500", value: 500 },
+  { label: "Under ₹1,000", value: 1000 },
+  { label: "Under ₹2,500", value: 2500 },
+  { label: "Under ₹5,000", value: 5000 },
+];
 
 export default function FilterSidebar({
   categories,
@@ -33,132 +50,345 @@ export default function FilterSidebar({
   onClear,
   hideCategory = false,
 }: FilterSidebarProps) {
-  return (
-    <>
-      {showFilter && (
-        <div
-          className="fixed inset-0 z-[998] bg-black/50 transition-opacity"
-          onClick={() => setShowFilter(false)}
-        />
-      )}
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Strict background scroll lock
+  useEffect(() => {
+    if (!showFilter) return;
+
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowFilter(false);
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [showFilter, setShowFilter]);
+
+  if (!mounted) return null;
+
+  const activeFiltersCount =
+    (selectedCategory ? 1 : 0) +
+    (maxValue < 100000 ? 1 : 0) +
+    (sortBy !== "default" ? 1 : 0);
+
+  return createPortal(
+    <>
+      {/* Backdrop overlay */}
       <div
-        className={`fixed top-0 left-0 h-full w-[280px] sm:w-[320px] bg-white z-[999] shadow-2xl transition-transform duration-300 flex flex-col ${
-          showFilter ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-0 z-[99998] bg-black/45 backdrop-blur-xs transition-opacity duration-300 ${
+          showFilter ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
+        onClick={() => setShowFilter(false)}
+        onWheel={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onTouchMove={(e) => e.preventDefault()}
+      />
+
+      {/* Drawer: Bottom sheet on mobile (< md), Left side-drawer on desktop (md+) */}
+      <aside
+        className={`fixed z-[99999] bg-white flex flex-col shadow-2xl transition-transform duration-300 ease-out 
+          inset-x-0 bottom-0 max-h-[88vh] rounded-t-[28px] border-t border-neutral-100
+          md:inset-y-0 md:left-0 md:right-auto md:w-[380px] md:max-h-full md:rounded-none md:border-t-0 md:border-r
+          ${
+            showFilter
+              ? "translate-y-0 md:translate-x-0"
+              : "translate-y-full md:translate-y-0 md:-translate-x-full"
+          }`}
+        style={{ overscrollBehavior: "contain" }}
+        onWheel={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b p-4">
-          <h3 className="text-xl font-bold font-serif text-neutral-900">Filters</h3>
-          <IoCloseOutline
-            className="size-7 cursor-pointer text-neutral-600 hover:text-neutral-900 transition-colors"
+        {/* Mobile Pull Bar */}
+        <div className="w-12 h-1.5 bg-neutral-200 rounded-full mx-auto mt-3 mb-1 md:hidden shrink-0" />
+
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-6 py-4">
+          <div className="flex items-center gap-2.5">
+            <div className="grid size-9 place-items-center rounded-xl bg-rose-50 text-rose-600">
+              <SlidersHorizontal className="size-4" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Filters</h3>
+              <p className="text-[11px] text-neutral-500 font-medium">
+                {activeFiltersCount > 0
+                  ? `${activeFiltersCount} filter${activeFiltersCount > 1 ? "s" : ""} applied`
+                  : "Refine your selection"}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
             onClick={() => setShowFilter(false)}
-          />
+            aria-label="Close filters"
+            className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition active:scale-95"
+          >
+            <X className="size-5" />
+          </button>
         </div>
 
-        <aside className="flex-1 overflow-y-auto p-5 space-y-8 scrollbar-none">
+        {/* Scrollable Filters Content */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-5 space-y-7"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          {/* CATEGORY SECTION */}
           {!hideCategory && categories && categories.length > 0 && (
             <div>
-              <h4 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-                Category
-              </h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-600">
+                  Category
+                </h4>
+                {selectedCategory && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory("")}
+                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 transition"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                {/* All Categories Option */}
+                <label
+                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm cursor-pointer transition border ${
+                    selectedCategory === ""
+                      ? "border-rose-200 bg-rose-50/60 font-semibold text-rose-950"
+                      : "border-transparent bg-neutral-50/80 hover:bg-neutral-100/70 text-neutral-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`grid size-4 place-items-center rounded-full border transition ${
+                        selectedCategory === ""
+                          ? "border-rose-600 bg-rose-600"
+                          : "border-neutral-300 bg-white"
+                      }`}
+                    >
+                      {selectedCategory === "" && (
+                        <div className="size-1.5 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <span>All Categories</span>
+                  </div>
+                  {selectedCategory === "" && (
+                    <Check className="size-4 text-rose-600" />
+                  )}
                   <input
                     type="radio"
                     name="category"
                     value=""
                     checked={selectedCategory === ""}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="accent-pink-600 size-4 cursor-pointer"
+                    onChange={() => setSelectedCategory("")}
+                    className="sr-only"
                   />
-                  <span className="text-sm text-neutral-700 group-hover:text-pink-600 transition-colors">
-                    All Categories
-                  </span>
                 </label>
-                {categories.map((category) => (
-                  <label key={category._id} className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      type="radio"
-                      name="category"
-                      value={category.name}
-                      checked={selectedCategory === category.name}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="accent-pink-600 size-4 cursor-pointer"
-                    />
-                    <span className="text-sm text-neutral-700 group-hover:text-pink-600 transition-colors">
-                      {category.name}
-                    </span>
-                  </label>
-                ))}
+
+                {/* Individual Categories */}
+                {categories.map((category) => {
+                  const isChecked = selectedCategory === category.name;
+                  return (
+                    <label
+                      key={category._id}
+                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm cursor-pointer transition border ${
+                        isChecked
+                          ? "border-rose-200 bg-rose-50/60 font-semibold text-rose-950"
+                          : "border-transparent bg-neutral-50/80 hover:bg-neutral-100/70 text-neutral-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`grid size-4 place-items-center rounded-full border transition ${
+                            isChecked
+                              ? "border-rose-600 bg-rose-600"
+                              : "border-neutral-300 bg-white"
+                          }`}
+                        >
+                          {isChecked && (
+                            <div className="size-1.5 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="capitalize">{category.name}</span>
+                      </div>
+                      {isChecked && <Check className="size-4 text-rose-600" />}
+                      <input
+                        type="radio"
+                        name="category"
+                        value={category.name}
+                        checked={isChecked}
+                        onChange={() => setSelectedCategory(category.name)}
+                        className="sr-only"
+                      />
+                    </label>
+                  );
+                })}
               </div>
             </div>
           )}
 
+          {/* MAX PRICE SECTION */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-              Max Price
-            </h4>
-            <div className="px-2">
-              <input
-                type="range"
-                min={0}
-                max={100000}
-                step={500}
-                value={maxValue}
-                onChange={(e) => setMaxValue(Number(e.target.value))}
-                className="w-full accent-pink-600 h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="mt-4 flex items-center justify-between text-sm font-medium">
-                <span className="bg-neutral-100 px-3 py-1.5 rounded border text-neutral-600">₹0</span>
-                <span className="text-neutral-400">-</span>
-                <span className="bg-neutral-100 px-3 py-1.5 rounded border text-neutral-900">₹{maxValue}</span>
+            <div className="mb-3 flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-600">
+                Max Price
+              </h4>
+              {maxValue < 100000 && (
+                <button
+                  type="button"
+                  onClick={() => setMaxValue(100000)}
+                  className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 transition"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {/* Slider */}
+              <div className="px-1">
+                <input
+                  type="range"
+                  min={100}
+                  max={20000}
+                  step={100}
+                  value={maxValue > 20000 ? 20000 : maxValue}
+                  onChange={(e) => setMaxValue(Number(e.target.value))}
+                  className="w-full accent-rose-600 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              {/* Price Tags Indicator */}
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <div className="flex-1 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-center">
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 block font-semibold">
+                    Min
+                  </span>
+                  <span className="font-bold text-neutral-800">₹0</span>
+                </div>
+                <span className="text-neutral-300 font-semibold">-</span>
+                <div className="flex-1 rounded-xl border border-rose-200 bg-rose-50/50 px-3 py-2 text-center">
+                  <span className="text-[10px] uppercase tracking-wider text-rose-500 block font-semibold">
+                    Max
+                  </span>
+                  <span className="font-bold text-rose-950">
+                    {maxValue >= 20000 ? "Any Price" : `₹${maxValue.toLocaleString("en-IN")}`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick Preset Chips */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {QUICK_PRICES.map((preset) => {
+                  const isSelected =
+                    preset.value === 100000
+                      ? maxValue >= 20000
+                      : maxValue === preset.value;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => setMaxValue(preset.value)}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
+                        isSelected
+                          ? "bg-rose-600 text-white shadow-xs"
+                          : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
+          {/* SORT BY SECTION */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-              Sort By
-            </h4>
-            <div className="space-y-2">
-              {[
-                { label: "Default / Newest", value: "default" },
-                { label: "Price: Low to High", value: "priceLowToHigh" },
-                { label: "Price: High to Low", value: "priceHighToLow" },
-              ].map((opt) => (
-                <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="sort"
-                    value={opt.value}
-                    checked={sortBy === opt.value}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="accent-pink-600 size-4 cursor-pointer"
-                  />
-                  <span className="text-sm text-neutral-700 group-hover:text-pink-600 transition-colors">
-                    {opt.label}
-                  </span>
-                </label>
-              ))}
+            <div className="mb-3 flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-600">
+                Sort By
+              </h4>
+            </div>
+
+            <div className="space-y-1.5">
+              {SORT_OPTIONS.map((opt) => {
+                const isChecked = sortBy === opt.value;
+                return (
+                  <label
+                    key={opt.value}
+                    className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm cursor-pointer transition border ${
+                      isChecked
+                        ? "border-rose-200 bg-rose-50/60 font-semibold text-rose-950"
+                        : "border-transparent bg-neutral-50/80 hover:bg-neutral-100/70 text-neutral-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`grid size-4 place-items-center rounded-full border transition ${
+                          isChecked
+                            ? "border-rose-600 bg-rose-600"
+                            : "border-neutral-300 bg-white"
+                        }`}
+                      >
+                        {isChecked && (
+                          <div className="size-1.5 rounded-full bg-white" />
+                        )}
+                      </div>
+                      <span>{opt.label}</span>
+                    </div>
+                    {isChecked && <Check className="size-4 text-rose-600" />}
+                    <input
+                      type="radio"
+                      name="sort"
+                      value={opt.value}
+                      checked={isChecked}
+                      onChange={() => setSortBy(opt.value)}
+                      className="sr-only"
+                    />
+                  </label>
+                );
+              })}
             </div>
           </div>
-        </aside>
+        </div>
 
-        <div className="p-4 border-t bg-neutral-50 flex gap-3">
+        {/* Footer Actions */}
+        <div className="shrink-0 border-t border-neutral-100 bg-neutral-50/80 p-4 pb-6 md:pb-4 flex items-center gap-3">
           <button
-            className="flex-1 border border-neutral-300 bg-white hover:bg-neutral-100 py-2.5 rounded-lg text-sm font-semibold text-neutral-700 transition-colors cursor-pointer"
+            type="button"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-700 shadow-xs transition hover:bg-neutral-50 active:scale-98 cursor-pointer"
             onClick={onClear}
           >
-            Reset
+            <RotateCcw className="size-3.5 text-neutral-400" />
+            <span>Reset</span>
           </button>
           <button
-            className="flex-1 bg-pink-600 hover:bg-pink-700 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors cursor-pointer shadow-sm shadow-pink-200"
+            type="button"
+            className="flex-[2] rounded-xl bg-rose-600 hover:bg-rose-700 py-3 text-sm font-semibold text-white shadow-md shadow-rose-200 transition active:scale-98 cursor-pointer"
             onClick={() => setShowFilter(false)}
           >
             View Results
           </button>
         </div>
-      </div>
-    </>
+      </aside>
+    </>,
+    document.body
   );
 }

@@ -4,7 +4,8 @@ import PaginationControls from "@/components/PaginationControls";
 import ProductCard, { ProductCardProduct } from "@/components/ProductCard";
 import axios from "axios";
 import { Heart, LoaderCircle, Search, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type SearchDrawerProps = {
   open: boolean;
@@ -27,21 +28,49 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Strict scroll lock on both html & body
+  useEffect(() => {
     if (!open) return;
+
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
 
     document.addEventListener("keydown", handleEscape);
-    document.body.classList.add("overflow-hidden");
+
+    // Auto-focus search input when opened
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 150);
+
     return () => {
+      clearTimeout(timer);
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
       document.removeEventListener("keydown", handleEscape);
-      document.body.classList.remove("overflow-hidden");
     };
   }, [open, onClose]);
+
+  // Reset scroll position when page or query changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [page, query]);
 
   useEffect(() => {
     if (!open) return;
@@ -52,11 +81,12 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
         const response = await axios.get<ProductResponse>("/api/product", {
           params: { q: query.trim() || undefined, page, limit: 12 },
         });
+
         setProducts(response.data.products);
         setTotal(response.data.pagination.total);
         setTotalPages(response.data.pagination.totalPages || 1);
       } catch (error) {
-        console.error("Failed to search products:", error);
+        console.error(error);
         setProducts([]);
         setTotal(0);
         setTotalPages(1);
@@ -65,7 +95,7 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
       }
     }, 250);
 
-    return () => window.clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [open, query, page]);
 
   const handleQueryChange = (value: string) => {
@@ -73,109 +103,132 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
     setPage(1);
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <>
+      {/* overlay */}
       <div
-        aria-hidden="true"
-        className={`fixed inset-0 z-[1000] bg-black/30 transition-opacity duration-300 ${
-          open ? "opacity-100" : "pointer-events-none opacity-0"
+        className={`fixed inset-0 z-[99998] bg-black/40 backdrop-blur-xs transition-opacity duration-300 ${
+          open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
+        onWheel={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onTouchMove={(e) => e.preventDefault()}
       />
+
+      {/* drawer */}
       <aside
-        aria-label="Search products"
-        aria-hidden={!open}
-        className={`fixed right-0 top-0 z-[1001] flex h-dvh w-full flex-col bg-white shadow-2xl transition-transform duration-300 sm:max-w-xl lg:max-w-2xl ${
+        className={`fixed inset-y-0 right-0 z-[99999] flex h-full h-[100dvh] max-h-screen w-full max-w-2xl flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
+        style={{ overscrollBehavior: "contain" }}
+        onWheel={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-rose-100 px-5 py-2 sm:px-8">
+        {/* HEADER */}
+        <div className="flex shrink-0 items-center justify-between border-b px-5 py-3.5">
           <div>
-            <p className="font-instrument text-2xl text-rose-600">Search</p>
-            <p className="mt-1 text-xs text-neutral-500">
-              <Heart className="inline size-4 mr-1 text-rose-600" />
-              Find something you love{" "}
+            <p className="text-xl font-semibold text-rose-600">Search</p>
+            <p className="text-xs text-gray-500">
+              <Heart className="inline size-3.5 mr-1 text-rose-600" />
+              Find something you love
             </p>
           </div>
           <button
-            type="button"
-            aria-label="Close search"
             onClick={onClose}
-            className="flex size-10 items-center justify-center rounded-full text-neutral-500 transition hover:bg-rose-50 hover:text-rose-700"
+            aria-label="Close search"
+            className="rounded-full p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 active:scale-95"
           >
             <X className="size-5" />
           </button>
         </div>
 
-        <div className="border-b border-neutral-200 px-5 py-4 sm:px-8">
-          <div className="flex items-center gap-3 border-b border-neutral-300 pb-3 focus-within:border-rose-600">
-            <Search className="size-3 shrink-0 text-neutral-500" />
+        {/* SEARCH */}
+        <div className="shrink-0 border-b px-5 py-3">
+          <div className="flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 focus-within:border-rose-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-rose-100 transition-all">
+            <Search className="size-4 shrink-0 text-gray-400" />
             <input
-              autoFocus={open}
+              ref={inputRef}
               value={query}
-              onChange={(event) => handleQueryChange(event.target.value)}
-              placeholder="Search dresses, jewellery, accessories..."
-              className="min-w-0 flex-1 bg-transparent text-base text-neutral-900 outline-none placeholder:text-neutral-400 text-sm"
+              onChange={(e) => handleQueryChange(e.target.value)}
+              placeholder="Search products..."
+              className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder:text-gray-400"
             />
             {query && (
               <button
                 type="button"
-                aria-label="Clear search"
                 onClick={() => handleQueryChange("")}
-                className="text-neutral-400 transition hover:text-rose-600"
+                className="text-gray-400 hover:text-gray-600"
               >
-                <X className="size-5" />
+                <X className="size-4" />
               </button>
             )}
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold text-neutral-900 ">
-              {query.trim() ? `Results for “${query.trim()}”` : "All products"}
+        {/* CONTENT */}
+        <div className="flex flex-1 flex-col min-h-0 overflow-hidden px-5 pt-4 pb-3">
+          {/* title */}
+          <div className="flex shrink-0 items-center justify-between mb-3">
+            <h2 className="font-medium text-gray-800 text-sm md:text-base">
+              {query ? `Results for "${query}"` : "All products"}
             </h2>
             {!loading && (
-              <span className="text-xs text-neutral-500">
-                {total} result{total === 1 ? "" : "s"}
+              <span className="text-xs text-gray-500 font-medium">
+                {total} {total === 1 ? "result" : "results"}
               </span>
             )}
           </div>
 
           {loading ? (
-            <div className="flex min-h-48 items-center justify-center">
-              <LoaderCircle className="size-7 animate-spin text-rose-600" />
+            <div className="flex flex-1 items-center justify-center">
+              <LoaderCircle className="animate-spin text-rose-600 size-8" />
             </div>
           ) : products.length > 0 ? (
-            <>
-              <div className="grid grid-cols-2 gap-3 sm:gap-5">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product._id}
-                    product={product}
-                    showActions={false}
-                    onProductClick={onClose}
-                    className="rounded-none border-0 p-0 "
-                  />
-                ))}
+            <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+              {/* 🔥 SCROLL AREA */}
+              <div
+                ref={scrollContainerRef}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 pb-6"
+                style={{
+                  WebkitOverflowScrolling: "touch",
+                  overscrollBehavior: "contain",
+                }}
+              >
+                <div className="grid grid-cols-2 gap-3 pb-6">
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product._id}
+                      product={product}
+                      onProductClick={onClose}
+                    />
+                  ))}
+                </div>
               </div>
-              <PaginationControls
-                page={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </>
+
+              {/* FIXED PAGINATION */}
+              {totalPages > 1 && (
+                <div className="shrink-0 pt-3 border-t mt-auto">
+                  <PaginationControls
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    className="mt-0"
+                  />
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="flex min-h-48 flex-col items-center justify-center text-center">
-              <Search className="mb-3 size-8 text-rose-300" />
-              <p className="font-medium text-neutral-800">No products found</p>
-              <p className="mt-1 text-sm text-neutral-500">
-                Try a different search term.
-              </p>
+            <div className="flex flex-1 items-center justify-center text-sm text-gray-500">
+              No products found
             </div>
           )}
         </div>
       </aside>
-    </>
+    </>,
+    document.body
   );
 }

@@ -120,6 +120,7 @@ const HeaderSection = () => {
     lastScrollY.current = window.scrollY;
 
     const handleScroll = () => {
+      if (searchOpen) return;
       const currentScrollY = window.scrollY;
       const scrollDelta = currentScrollY - lastScrollY.current;
 
@@ -136,7 +137,7 @@ const HeaderSection = () => {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [menu]);
+  }, [menu, searchOpen]);
 
   return (
     <div className="sticky top-0 z-[998]">
@@ -178,8 +179,8 @@ const HeaderSection = () => {
           >
             <X className="w-6 h-6" />
           </p>
-          <div className="flex items-center justify-start  lg:hidden ">
-            <span className="relative flex h-12 w-44 items-center overflow-visible">
+          <div className="flex items-start relative top-0 -left-8  justify-start  lg:hidden ">
+            <span className="relative flex h-5 w-44 items-center overflow-visible">
               <LogoMark />
             </span>
           </div>

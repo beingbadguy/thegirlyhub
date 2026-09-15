@@ -60,7 +60,7 @@ const StickyMenuBar = () => {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 z-[999] w-full border-t bg-white py-2 shadow-md transition-transform duration-300 md:hidden ${isVisible ? "translate-y-0" : "translate-y-full"}`}
+      className={`fixed bottom-0 left-0 z-[99] w-full border-t bg-white py-2 shadow-md transition-transform duration-300 md:hidden ${isVisible ? "translate-y-0" : "translate-y-full"}`}
     >
       <div className="flex justify-around items-center py-2">
         {menu.map((item) => {
