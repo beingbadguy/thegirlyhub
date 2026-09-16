@@ -1,6 +1,6 @@
 "use client";
 
-import axios, { AxiosError } from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -30,28 +30,37 @@ const NewArrivals = ({
   const [totalProducts, setTotalProducts] = useState(0);
 
   useEffect(() => {
+    let active = true;
     const fetchAllProducts = async () => {
-      setLoading(true);
       try {
-        const response = await axios.get("/api/product", {
-          params: {
+        const data = await cachedApiGet<{
+          products?: React.ComponentProps<typeof ProductCard>["product"][];
+          pagination?: { totalPages: number; total: number };
+        }>(
+          "/api/product",
+          {
             page: paginated ? page : 1,
             limit,
             ...(featured ? { featured: true } : {}),
           },
-        });
-        setProducts(response.data.products);
-        setTotalPages(response.data.pagination?.totalPages ?? 1);
-        setTotalProducts(response.data.pagination?.total ?? 0);
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          console.error(error.response?.data);
+          { ttlMs: 3 * 60 * 1000 },
+        );
+        if (active) {
+          setProducts(data.products || []);
+          setTotalPages(data.pagination?.totalPages ?? 1);
+          setTotalProducts(data.pagination?.total ?? 0);
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
+      } catch (error: unknown) {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
     fetchAllProducts();
+    return () => {
+      active = false;
+    };
   }, [featured, limit, paginated, page]);
 
   if (featured && !loading && products.length === 0) {

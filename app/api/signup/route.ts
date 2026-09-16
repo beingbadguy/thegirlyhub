@@ -8,51 +8,61 @@ import {
   sendEmailVerificationMail,
   welcomeUserMail,
 } from "@/services/sendMail";
+import { checkRateLimitAsync, getClientIp } from "@/lib/rateLimiter";
+import { signupSchema } from "@/lib/validations/auth.schema";
 
 export async function POST(request: NextRequest) {
   await databaseConnection();
   try {
-    const { name, email, password } = await request.json();
-    if (!name || !email || !password) {
+    // 1. IP Rate Limiting: Max 5 signups per IP per hour
+    const ip = getClientIp(request);
+    const rateLimit = await checkRateLimitAsync(`signup_${ip}`, 5, 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
         {
           success: false,
-          message: "Missing required fields",
+          message:
+            "Too many accounts created from this network. Please try again later.",
         },
-        { status: 404 },
-      );
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
         {
-          success: false,
-          message: "Invalid email address",
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
         },
-        { status: 404 },
-      );
-    }
-    if (password.length < 6) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Password must be at least 6 characters long",
-        },
-        { status: 404 },
       );
     }
 
-    const user = await User.findOne({ email });
-    if (user) {
+    // 2. Strict Zod Validation & Sanitization
+    const body = await request.json();
+    const parseResult = signupSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMessage =
+        parseResult.error.issues[0]?.message || "Invalid registration details";
       return NextResponse.json(
         {
           success: false,
-          message: "Email already exists",
+          message: errorMessage,
         },
-        { status: 404 },
+        { status: 400 },
       );
     }
 
+    const { name, email, password } = parseResult.data;
+
+    // 3. Duplicate Account Check
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "An account with this email address already exists.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // 4. Secure Hash Generation (cost factor 10)
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const verificationToken = crypto.randomInt(100000, 999999).toString();
@@ -67,23 +77,28 @@ export async function POST(request: NextRequest) {
       isVerified: false,
     });
     await newUser.save();
-    const userData = newUser.toObject();
-    delete userData.password;
-    delete userData.verificationToken;
-    delete userData.verificationTokenExpiry;
+
+    const sanitizedUserData = {
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role || "user",
+      isVerified: false,
+      createdAt: newUser.createdAt,
+    };
 
     const response = NextResponse.json(
       {
         success: true,
         message: "User registered successfully",
-        data: userData,
+        data: sanitizedUserData,
       },
       {
-        status: 200,
+        status: 201,
       },
     );
 
-    // Dispatch emails concurrently in background to avoid blocking HTTP response latency
+    // 5. Dispatch confirmation & welcome emails asynchronously in background
     Promise.allSettled([
       sendEmailVerificationMail(newUser.email, verificationToken),
       welcomeUserMail(newUser.email, newUser.name),
@@ -94,13 +109,13 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.log(error);
+    console.error("Error during signup:", error);
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to register user",
+        message: "Failed to register user. Please try again.",
       },
-      { status: 401 },
+      { status: 500 },
     );
   }
 }

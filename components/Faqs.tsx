@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import { Heart } from "lucide-react";
 import {
   Accordion,
@@ -19,11 +19,25 @@ const Faqs = () => {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    axios
-      .get("/api/faq")
-      .then((response) => setFaqs(response.data.faqs || []))
-      .catch(() => setFaqs([]))
-      .finally(() => setLoaded(true));
+    let active = true;
+    cachedApiGet<{ faqs?: { _id: string; question: string; answer: string }[] }>(
+      "/api/faq",
+      undefined,
+      { ttlMs: 10 * 60 * 1000 },
+    )
+      .then((data) => {
+        if (active) setFaqs(data.faqs || []);
+      })
+      .catch(() => {
+        if (active) setFaqs([]);
+      })
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loaded && faqs.length === 0) return null;

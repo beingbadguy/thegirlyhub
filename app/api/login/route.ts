@@ -5,40 +5,65 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateTokenAndSetCookie } from "@/lib/generateTokenAndSetCookie";
 import crypto from "crypto";
 import { sendEmailVerificationMail } from "@/services/sendMail";
+import { loginSchema } from "@/lib/validations/auth.schema";
+import {
+  checkRateLimitAsync,
+  clearRateLimit,
+  getClientIp,
+  getUserAgent,
+  isIpBlockedAsync,
+  recordFailedAttemptAsync,
+} from "@/lib/rateLimiter";
 
 export async function POST(request: NextRequest) {
   await databaseConnection();
+  const ip = getClientIp(request);
+  const userAgent = getUserAgent(request);
+
+  // 1. Abuse Check: Block if IP is temporarily banned
+  const blockStatus = await isIpBlockedAsync(ip);
+  if (blockStatus.blocked) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Too many failed login attempts. Please try again later.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(blockStatus.retryAfterSeconds) },
+      },
+    );
+  }
+
+  // 2. Rate Limiting: Max 10 login attempts per IP per 15 mins
+  const rateLimit = await checkRateLimitAsync(`login_${ip}`, 10, 15 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Too many login attempts. Please wait before trying again.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
   try {
-    const { email, password } = await request.json();
-    if (!email || !password) {
+    const body = await request.json();
+    const validation = loginSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
         {
           success: false,
-          message: "Please provide email and password",
+          message: validation.error.issues[0]?.message || "Invalid credentials format",
         },
-        { status: 404 },
-      );
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid email address",
-        },
-        { status: 404 },
-      );
-    }
-    if (password.length < 6) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Password must be at least 6 characters long",
-        },
-        { status: 404 },
+        { status: 400 },
       );
     }
 
+    const { email, password } = validation.data;
     const normalizedEmail = email.trim().toLowerCase();
     const user = (await User.findOne({ email: normalizedEmail })
       .select("_id name email password role isVerified")
@@ -50,14 +75,19 @@ export async function POST(request: NextRequest) {
 
     const isMatched = await bcrypt.compare(password, passwordToCompare);
     if (!user || !isMatched) {
+      // Record failed attempt for brute-force tracking
+      await recordFailedAttemptAsync(ip, userAgent, `Failed login for ${email}`, 5, 15 * 60 * 1000);
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid credentials",
+          message: "Invalid email or password",
         },
         { status: 401 },
       );
     }
+
+    // Clear failed attempts on successful credentials match
+    clearRateLimit(`login_${ip}`).catch(() => {});
 
     if (!user.isVerified) {
       const verificationToken = crypto.randomInt(100000, 999999).toString();

@@ -8,10 +8,15 @@ export async function POST() {
     });
 
     // Properly setting an expired cookie to remove it
+    response.cookies.set("girlyhub", "", {
+      httpOnly: true,
+      expires: new Date(0),
+      path: "/",
+    });
     response.cookies.set("basics", "", {
       httpOnly: true,
-      expires: new Date(0), // Expire the cookie
-      path: "/", // Ensure it covers the whole app
+      expires: new Date(0),
+      path: "/",
     });
 
     return response;

@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const imageBuffer = Buffer.from(await image.arrayBuffer());
     const upload = await cloudinary.v2.uploader.upload(
       `data:${image.type};base64,${imageBuffer.toString("base64")}`,
-      { folder: "basics-banners" },
+      { folder: "girlyhub_banners" },
     );
 
     let mobileImageUrl = undefined;
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       const mobileImageBuffer = Buffer.from(await mobileImage.arrayBuffer());
       const uploadMobile = await cloudinary.v2.uploader.upload(
         `data:${mobileImage.type};base64,${mobileImageBuffer.toString("base64")}`,
-        { folder: "basics-banners" },
+        { folder: "girlyhub_banners" },
       );
       mobileImageUrl = uploadMobile.secure_url;
     }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       const tabletImageBuffer = Buffer.from(await tabletImage.arrayBuffer());
       const uploadTablet = await cloudinary.v2.uploader.upload(
         `data:${tabletImage.type};base64,${tabletImageBuffer.toString("base64")}`,
-        { folder: "basics-banners" },
+        { folder: "girlyhub_banners" },
       );
       tabletImageUrl = uploadTablet.secure_url;
     }

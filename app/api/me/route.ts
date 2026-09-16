@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
         },
         { status: 401 }
       );
+      response.cookies.delete("girlyhub");
       response.cookies.delete("basics");
       return response;
     }

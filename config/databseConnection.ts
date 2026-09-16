@@ -17,7 +17,6 @@ export const databaseConnection = async () => {
   if (!cached.promise) {
     cached.promise = mongoose
       .connect(MONGODB_URI, {
-        dbName: "Basics",
         bufferCommands: false,
         maxPoolSize: 50,
         minPoolSize: 10,

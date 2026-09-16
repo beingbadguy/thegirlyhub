@@ -57,7 +57,7 @@ export async function PUT(
         const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
         const upload = await cloudinary.v2.uploader.upload(
           `data:${imageFile.type};base64,${imageBuffer.toString("base64")}`,
-          { folder: "basics-banners" },
+          { folder: "girlyhub_banners" },
         );
         update.image = upload.secure_url;
       }
@@ -67,7 +67,7 @@ export async function PUT(
         const imageBuffer = Buffer.from(await mobileImageFile.arrayBuffer());
         const upload = await cloudinary.v2.uploader.upload(
           `data:${mobileImageFile.type};base64,${imageBuffer.toString("base64")}`,
-          { folder: "basics-banners" },
+          { folder: "girlyhub_banners" },
         );
         update.mobileImage = upload.secure_url;
       }
@@ -77,7 +77,7 @@ export async function PUT(
         const imageBuffer = Buffer.from(await tabletImageFile.arrayBuffer());
         const upload = await cloudinary.v2.uploader.upload(
           `data:${tabletImageFile.type};base64,${imageBuffer.toString("base64")}`,
-          { folder: "basics-banners" },
+          { folder: "girlyhub_banners" },
         );
         update.tabletImage = upload.secure_url;
       }

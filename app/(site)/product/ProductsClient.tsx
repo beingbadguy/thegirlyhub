@@ -1,6 +1,6 @@
 "use client";
 
-import axios, { AxiosError } from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SlidersHorizontal, ChevronDown, Sparkles, Heart, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -69,14 +69,14 @@ export default function ProductsClient() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("/api/category", {
-        params: { page: 1, limit: 100 },
-      });
-      setCategories(response.data.categories || []);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      }
+      const data = await cachedApiGet<{ categories?: Category[] }>(
+        "/api/category",
+        { page: 1, limit: 100 },
+        { ttlMs: 5 * 60 * 1000 },
+      );
+      setCategories(data.categories || []);
+    } catch {
+      // Ignore category list error
     }
   };
 
@@ -93,14 +93,16 @@ export default function ProductsClient() {
       if (debouncedMaxPrice < 100000) params.maxPrice = debouncedMaxPrice;
       if (sortBy !== "default") params.sort = sortBy;
 
-      const response = await axios.get("/api/product", { params });
-      setProducts(response.data.products || []);
-      setTotalPages(response.data.pagination?.totalPages ?? 1);
-      setServerTotal(response.data.pagination?.total ?? 0);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      }
+      const data = await cachedApiGet<{
+        products?: Product[];
+        pagination?: { totalPages: number; total: number };
+      }>("/api/product", params, { ttlMs: 3 * 60 * 1000 });
+
+      setProducts(data.products || []);
+      setTotalPages(data.pagination?.totalPages ?? 1);
+      setServerTotal(data.pagination?.total ?? 0);
+    } catch {
+      // Keep existing products if fetch failed
     } finally {
       setIsInitialLoading(false);
       setIsFetching(false);

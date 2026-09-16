@@ -27,7 +27,7 @@ const PRICE_TIERS: PriceTier[] = [
     badge: "Pocket Friendly",
     badgeIcon: Tag,
     title: "Under ₹99",
-    description: "Hair pins, mini claw clips, safety studs & cute everyday basics",
+    description: "Hair pins, mini claw clips, safety studs & cute everyday essentials",
     tagline: "Starting from ₹29",
     href: "/product?maxPrice=99",
     gradient: "from-[#ff6b8b] via-[#ff758c] to-[#ff7eb3]",

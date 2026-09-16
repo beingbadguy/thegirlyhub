@@ -1,6 +1,6 @@
 "use client";
 
-import axios, { AxiosError } from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import { motion, Variants } from "framer-motion";
 import { Heart } from "lucide-react";
 import Image from "next/image";
@@ -90,29 +90,35 @@ const StaggeringCategories = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
 
-  const fetchCategories = async () => {
-    setCatLoading(true);
-    try {
-      const response = await axios.get("/api/category", {
-        params: {
-          page: 1,
-          limit: categoryLimit,
-          includeProductImages: true,
-        },
-      });
-      setCategories(response.data.categories ?? []);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      }
-    } finally {
-      setCatLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let active = true;
+    const fetchCategories = async () => {
+      try {
+        const data = await cachedApiGet<{ categories?: Category[] }>(
+          "/api/category",
+          {
+            page: 1,
+            limit: categoryLimit,
+            includeProductImages: true,
+          },
+          { ttlMs: 5 * 60 * 1000 },
+        );
+        if (active) {
+          setCategories(data.categories ?? []);
+          setCatLoading(false);
+        }
+      } catch (error: unknown) {
+        if (active) {
+          setCatLoading(false);
+        }
+      }
+    };
+
     fetchCategories();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [categoryLimit]);
 
   if (catLoading) {
     return (

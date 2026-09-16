@@ -1,5 +1,6 @@
 "use client";
 
+import { cachedApiGet } from "@/lib/apiCache";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -23,8 +24,11 @@ export default function HeroBannerSlider() {
   useEffect(() => {
     let mounted = true;
 
-    fetch("/api/banner")
-      .then((res) => (res.ok ? res.json() : null))
+    cachedApiGet<{ banners?: Banner[] }>(
+      "/api/banner",
+      undefined,
+      { ttlMs: 10 * 60 * 1000 },
+    )
       .then((data) => {
         if (!mounted || !data?.banners?.length) return;
         setBanners(data.banners);

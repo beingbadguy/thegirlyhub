@@ -50,7 +50,10 @@ export async function middleware(request: NextRequest) {
     return applyCorsHeaders(NextResponse.next(), origin);
   }
 
-  const token = request.cookies.get("basics")?.value || "";
+  const token =
+    request.cookies.get("girlyhub")?.value ||
+    request.cookies.get("basics")?.value ||
+    "";
 
   // Public routes (user shouldn't be redirected if logged in)
   const restrictedForLoggedIn = [
@@ -80,6 +83,7 @@ export async function middleware(request: NextRequest) {
     const response = isProtectedRoute
       ? NextResponse.redirect(new URL("/login", request.url))
       : NextResponse.next();
+    response.cookies.delete("girlyhub");
     response.cookies.delete("basics");
     return response;
   }

@@ -95,7 +95,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const dataURI = `data:${file.type};base64,${base64String}`;
       
       const uploadResponse = await cloudinary.v2.uploader.upload(dataURI, {
-        folder: "basicsreviews",
+        folder: "girlyhub_reviews",
       });
       photoUrls.push(uploadResponse.secure_url);
     }

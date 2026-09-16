@@ -1,6 +1,6 @@
 "use client";
 
-import axios, { AxiosError } from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,27 +39,34 @@ const ShopByCategory = ({
 
   const router = useRouter();
 
-  const fetchCategories = async (pageNum: number) => {
-    setCatLoading(true);
-    try {
-      const response = await axios.get("/api/category", {
-        params: { page: pageNum, limit },
-      });
-      setCategories(response.data.categories);
-      setTotalPages(response.data.pagination?.totalPages ?? 1);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
-    } finally {
-      setCatLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let active = true;
+    const fetchCategories = async (pageNum: number) => {
+      try {
+        const data = await cachedApiGet<{
+          categories?: Category[];
+          pagination?: { totalPages: number };
+        }>(
+          "/api/category",
+          { page: pageNum, limit },
+          { ttlMs: 5 * 60 * 1000 },
+        );
+        if (active) {
+          setCategories(data.categories || []);
+          setTotalPages(data.pagination?.totalPages ?? 1);
+          setCatLoading(false);
+        }
+      } catch (error: unknown) {
+        if (active) {
+          setCatLoading(false);
+        }
+      }
+    };
+
     fetchCategories(page);
+    return () => {
+      active = false;
+    };
   }, [page, limit]);
 
   if (catLoading) {

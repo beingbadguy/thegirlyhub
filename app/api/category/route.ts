@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const dataURI = `data:${categoryImage.type};base64,${base64String}`;
 
     const categoryImageResponse = await cloudinary.v2.uploader.upload(dataURI, {
-      folder: "basicscategory",
+      folder: "girlyhub_categories",
     });
 
     const category = await Category.create({

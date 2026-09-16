@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import { Heart, Quote, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Reveal, Stagger, StaggerItem } from "@/components/MotionEffects";
@@ -31,11 +31,25 @@ export default function HomeReviews() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    axios
-      .get("/api/home-reviews")
-      .then((response) => setReviews(response.data.reviews || []))
-      .catch(() => setReviews([]))
-      .finally(() => setLoaded(true));
+    let active = true;
+    cachedApiGet<{ reviews?: HomeReview[] }>(
+      "/api/home-reviews",
+      undefined,
+      { ttlMs: 10 * 60 * 1000 },
+    )
+      .then((data) => {
+        if (active) setReviews(data.reviews || []);
+      })
+      .catch(() => {
+        if (active) setReviews([]);
+      })
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loaded && reviews.length === 0) return null;

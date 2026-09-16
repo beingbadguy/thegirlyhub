@@ -2,7 +2,7 @@
 
 import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
-import axios, { AxiosError } from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Sparkles, SlidersHorizontal, ChevronDown } from "lucide-react";
@@ -50,16 +50,16 @@ export default function CategoryPageClient({ categoryName }: CategoryPageClientP
       if (debouncedMaxPrice < 100000) params.maxPrice = debouncedMaxPrice;
       if (sortBy !== "default") params.sort = sortBy;
 
-      const response = await axios.get("/api/product", { params });
-      setProducts(response.data.products || []);
-      setTotalPages(response.data.pagination?.totalPages ?? 1);
-      setTotal(response.data.pagination?.total ?? 0);
+      const data = await cachedApiGet<{
+        products?: Product[];
+        pagination?: { totalPages: number; total: number };
+      }>("/api/product", params, { ttlMs: 3 * 60 * 1000 });
+
+      setProducts(data.products || []);
+      setTotalPages(data.pagination?.totalPages ?? 1);
+      setTotal(data.pagination?.total ?? 0);
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
+      // Keep existing products if fetch failed
     } finally {
       setIsInitialLoading(false);
       setIsFetching(false);

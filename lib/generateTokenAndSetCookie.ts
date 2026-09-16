@@ -15,10 +15,13 @@ export const generateTokenAndSetCookie = async (
     }
   );
 
-  response.cookies.set("basics", token, {
+  response.cookies.set("girlyhub", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    path: "/",
   });
+  // Clear legacy cookie if present
+  response.cookies.delete("basics");
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import axios, { AxiosError } from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -20,24 +20,37 @@ const CategoryProductSections = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     const fetchCategoryProducts = async () => {
       try {
-        const [categoryResponse, productResponse] = await Promise.all([
-          axios.get("/api/category", { params: { page: 1, limit: 100 } }),
-          axios.get("/api/product", { params: { page: 1, limit: 100 } }),
+        const [categoryData, productData] = await Promise.all([
+          cachedApiGet<{ categories?: Category[] }>(
+            "/api/category",
+            { page: 1, limit: 100 },
+            { ttlMs: 5 * 60 * 1000 },
+          ),
+          cachedApiGet<{ products?: Product[] }>(
+            "/api/product",
+            { page: 1, limit: 100 },
+            { ttlMs: 3 * 60 * 1000 },
+          ),
         ]);
-        setCategories(categoryResponse.data.categories ?? []);
-        setProducts(productResponse.data.products ?? []);
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          console.error(error.response?.data);
+        if (active) {
+          setCategories(categoryData.categories ?? []);
+          setProducts(productData.products ?? []);
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
+      } catch (error: unknown) {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
     fetchCategoryProducts();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const productsByCategory = useMemo(() => {

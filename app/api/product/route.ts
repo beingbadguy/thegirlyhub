@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
       const base64String = Buffer.from(arrayBuffer).toString("base64");
       const dataURI = `data:${file.type};base64,${base64String}`;
       const uploadResponse = await cloudinary.v2.uploader.upload(dataURI, {
-        folder: "basicsproduct",
+        folder: "girlyhub_products",
       });
       return uploadResponse.secure_url;
     });

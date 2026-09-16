@@ -184,6 +184,12 @@ export async function PUT(
   await databaseConnection();
   try {
     const decoded = await fetchTokenDetails(request);
+    if (!decoded?.userId) {
+      return NextResponse.json(
+        { message: "You must log in to update your cart", success: false },
+        { status: 401 },
+      );
+    }
     const { id } = await context.params;
     const { quantity } = await request.json();
 
@@ -195,7 +201,7 @@ export async function PUT(
     }
 
     const [cart, dbProduct] = (await Promise.all([
-      Cart.findOne({ userId: decoded?.userId }),
+      Cart.findOne({ userId: decoded.userId }),
       Product.findById(id)
         .select("countInStock stock totalStock isActive status")
         .lean(),
@@ -258,8 +264,14 @@ export async function DELETE(
   await databaseConnection();
   try {
     const decoded = await fetchTokenDetails(request);
+    if (!decoded?.userId) {
+      return NextResponse.json(
+        { message: "You must log in to update your cart", success: false },
+        { status: 401 },
+      );
+    }
     const { id } = await context.params;
-    const cart = await Cart.findOne({ userId: decoded?.userId });
+    const cart = await Cart.findOne({ userId: decoded.userId });
     if (!cart) {
       return NextResponse.json(
         { message: "Cart not found", success: false, data: [] },

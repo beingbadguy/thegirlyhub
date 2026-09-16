@@ -146,7 +146,7 @@ export async function PUT(
       const dataURI = `data:${categoryImage.type};base64,${base64String}`;
 
       const categoryImageResponse = await cloudinary.v2.uploader.upload(dataURI, {
-        folder: "basicscategory",
+        folder: "girlyhub_categories",
       });
       imageUrl = categoryImageResponse.secure_url;
     }

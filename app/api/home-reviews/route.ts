@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await image.arrayBuffer();
     const dataURI = `data:${image.type};base64,${Buffer.from(arrayBuffer).toString("base64")}`;
     const upload = await cloudinary.v2.uploader.upload(dataURI, {
-      folder: "basics-home-reviews",
+      folder: "girlyhub_home_reviews",
     });
 
     const productTitleValue = formData.get("productTitle");

@@ -20,7 +20,7 @@ import { MdOutlineCategory } from "react-icons/md";
 import { IoPhonePortraitOutline } from "react-icons/io5";
 import { Separator } from "@radix-ui/react-select";
 import { AnimatePresence, motion } from "framer-motion";
-import axios, { AxiosError } from "axios";
+import { cachedApiGet } from "@/lib/apiCache";
 import SearchDrawer from "@/components/SearchDrawer";
 import LogoMark from "@/components/LogoMark";
 import { productUrl } from "@/lib/slug";
@@ -64,17 +64,14 @@ const HeaderSection = () => {
 
   const fetchAllProducts = async () => {
     try {
-      const response = await axios.get("/api/product", {
-        params: { limit: 12 },
-      });
-      setProducts(response.data.products);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        console.error(error.response?.data);
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
-    } finally {
+      const data = await cachedApiGet<{ products?: Products[] }>(
+        "/api/product",
+        { limit: 12 },
+        { ttlMs: 5 * 60 * 1000 },
+      );
+      setProducts(data.products || []);
+    } catch {
+      // Ignore network errors in header preview
     }
   };
 
