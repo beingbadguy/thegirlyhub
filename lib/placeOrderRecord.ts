@@ -22,6 +22,57 @@ export async function placeOrderRecord(
     if (existing) return existing;
   }
 
+  // 1. Atomic Stock Claim: Deduct stock with condition { countInStock: { $gte: qty } }
+  // Sort product IDs deterministically to prevent cross-transaction lock-ordering deadlocks
+  const consolidatedStockNeeds = new Map<string, number>();
+  for (const item of prepared.verifiedProducts) {
+    const idStr = String(item.productId);
+    consolidatedStockNeeds.set(
+      idStr,
+      (consolidatedStockNeeds.get(idStr) || 0) + item.quantity,
+    );
+  }
+
+  const sortedProductIds = Array.from(consolidatedStockNeeds.keys()).sort();
+  const deductedStock: { productId: string; quantity: number }[] = [];
+
+  for (const productId of sortedProductIds) {
+    const qty = consolidatedStockNeeds.get(productId)!;
+    const updated = await Product.findOneAndUpdate(
+      {
+        _id: productId,
+        countInStock: { $gte: qty },
+      },
+      {
+        $inc: { sold: qty, countInStock: -qty },
+      },
+      { new: true, select: "_id countInStock" },
+    ).lean();
+
+    if (!updated) {
+      // Roll back already deducted products in this order batch
+      if (deductedStock.length > 0) {
+        await Promise.all(
+          deductedStock.map((d) =>
+            Product.findByIdAndUpdate(d.productId, {
+              $inc: { sold: -d.quantity, countInStock: d.quantity },
+            }),
+          ),
+        );
+      }
+      const itemInfo = prepared.verifiedProducts.find(
+        (p) => String(p.productId) === productId,
+      );
+      const title = itemInfo?.title || "Item";
+      const outOfStockErr: any = new Error(`"${title}" is out of stock.`);
+      outOfStockErr.code = "OUT_OF_STOCK";
+      outOfStockErr.statusCode = 400;
+      throw outOfStockErr;
+    }
+
+    deductedStock.push({ productId, quantity: qty });
+  }
+
   const newOrder = new Order({
     userId: prepared.userId || undefined,
     isGuest: prepared.isGuest,
@@ -50,13 +101,24 @@ export async function placeOrderRecord(
     status: "processing",
   });
 
-  await newOrder.save();
+  try {
+    await newOrder.save();
+  } catch (saveErr: any) {
+    // Roll back stock deductions on failure
+    await Promise.all(
+      deductedStock.map((d) =>
+        Product.findByIdAndUpdate(d.productId, {
+          $inc: { sold: -d.quantity, countInStock: d.quantity },
+        }),
+      ),
+    );
 
-  const stockUpdates = prepared.verifiedProducts.map((item) =>
-    Product.findByIdAndUpdate(item.productId, {
-      $inc: { sold: item.quantity, countInStock: -item.quantity },
-    }),
-  );
+    if (saveErr?.code === 11000 && extras.paymentId) {
+      const existing = await Order.findOne({ paymentId: extras.paymentId });
+      if (existing) return existing;
+    }
+    throw saveErr;
+  }
 
   const extrasUpdates: Promise<unknown>[] = [];
   if (prepared.couponCode) {
@@ -101,7 +163,7 @@ export async function placeOrderRecord(
     extrasUpdates.push(Cart.findOneAndDelete({ userId: userToUpdate._id }));
   }
 
-  await Promise.all([...stockUpdates, ...extrasUpdates]);
+  await Promise.all(extrasUpdates);
 
   const orderId = newOrder._id.toString();
   const customerEmail = prepared.email;

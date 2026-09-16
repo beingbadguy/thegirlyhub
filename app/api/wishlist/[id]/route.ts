@@ -29,6 +29,13 @@ export async function POST(
   await databaseConnection();
   try {
     const decoded = await fetchTokenDetails(request);
+    if (!decoded?.userId) {
+      return NextResponse.json(
+        { message: "You must log in to manage your wishlist.", success: false },
+        { status: 401 }
+      );
+    }
+
     const { id } = await context.params;
     if (!id) {
       return NextResponse.json(
@@ -36,41 +43,28 @@ export async function POST(
         { status: 400 }
       );
     }
-    const user = await User.findOne({ _id: decoded?.userId });
-    const wishlist = await Wishlist.findOne({ userId: decoded?.userId });
-    if (!wishlist) {
-      const newWishlist = new Wishlist({
-        userId: decoded?.userId,
-        products: {
-          productId: id,
-        },
-      });
-      user.wishlist.push(newWishlist);
-      await newWishlist.save();
-      await user.save();
 
-      return NextResponse.json({ message: "Product added to wishlist" });
-    } else {
-      const product = wishlist.products.find(
-        (product: WishlistProduct) => product.productId.toString() === id
-      );
-      if (product) {
-        return NextResponse.json({ message: "Product already in wishlist" });
-      }
+    // Atomic update or insert with $addToSet to avoid duplicates and race conditions
+    const existing = await Wishlist.findOne({
+      userId: decoded.userId,
+      "products.productId": id,
+    }).select("_id").lean();
 
-      wishlist.products.push({
-        productId: id,
-      });
-      await wishlist.save();
-
-      return NextResponse.json({ message: "Product added to wishlist" });
+    if (existing) {
+      return NextResponse.json({ message: "Product already in wishlist", success: true });
     }
 
-    // return NextResponse.json(
+    await Wishlist.findOneAndUpdate(
+      { userId: decoded.userId },
+      { $push: { products: { productId: id } } },
+      { upsert: true, new: true }
+    );
+
+    return NextResponse.json({ message: "Product added to wishlist", success: true });
   } catch (error) {
     console.log(error);
     return NextResponse.json(
-      { message: "Error fetching product", success: false },
+      { message: "Error updating wishlist", success: false },
       { status: 500 }
     );
   }
@@ -83,6 +77,13 @@ export async function DELETE(
   await databaseConnection();
   try {
     const decoded = await fetchTokenDetails(request);
+    if (!decoded?.userId) {
+      return NextResponse.json(
+        { message: "You must log in to manage your wishlist.", success: false },
+        { status: 401 }
+      );
+    }
+
     const { id } = await context.params;
     if (!id) {
       return NextResponse.json(
@@ -90,21 +91,22 @@ export async function DELETE(
         { status: 400 }
       );
     }
-    // const user = await User.findOne({ _id: userId });
-    const wishlist = await Wishlist.findOne({ userId: decoded?.userId });
-    if (!wishlist) {
-      return NextResponse.json({ message: "Product not found." });
-    } else {
-      wishlist.products = wishlist.products.filter(
-        (product: WishlistProduct) => product.productId.toString() !== id
-      );
-      await wishlist.save();
-      return NextResponse.json({ message: "Product removed from wishlist" });
+
+    const updated = await Wishlist.findOneAndUpdate(
+      { userId: decoded.userId },
+      { $pull: { products: { productId: id } } },
+      { new: true }
+    );
+
+    if (!updated) {
+      return NextResponse.json({ message: "Wishlist not found.", success: false }, { status: 404 });
     }
+
+    return NextResponse.json({ message: "Product removed from wishlist", success: true });
   } catch (error) {
     console.log(error);
     return NextResponse.json(
-      { message: "Error fetching product", success: false },
+      { message: "Error removing from wishlist", success: false },
       { status: 500 }
     );
   }

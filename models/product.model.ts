@@ -189,6 +189,8 @@ productSchema.index({ slug: 1 }, { unique: true, sparse: true });
 productSchema.index({ category: 1, status: 1, createdAt: -1 });
 productSchema.index({ isFeatured: 1, isNewArrival: 1, status: 1 });
 productSchema.index({ averageRating: -1, status: 1 });
+productSchema.index({ discountedPrice: 1, status: 1 });
+productSchema.index({ createdAt: -1 });
 productSchema.index({
   name: "text",
   shortDescription: "text",

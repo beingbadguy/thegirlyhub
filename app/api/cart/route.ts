@@ -13,9 +13,13 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-    const cart = await Cart.findOne({ userId: decoded?.userId }).populate(
-      "products.productId"
-    );
+    const cart = await Cart.findOne({ userId: decoded?.userId })
+      .populate({
+        path: "products.productId",
+        select:
+          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug",
+      })
+      .lean();
     if (!cart) {
       return NextResponse.json(
         { message: "Cart not found", success: false, data: [] },

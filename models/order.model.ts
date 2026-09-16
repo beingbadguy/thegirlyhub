@@ -98,5 +98,13 @@ const orderSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
+orderSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
+orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ email: 1, createdAt: -1 });
+orderSchema.index({ phone: 1, createdAt: -1 });
+orderSchema.index({ createdAt: -1 });
+
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 export default Order;
+

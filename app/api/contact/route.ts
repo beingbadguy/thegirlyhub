@@ -7,11 +7,61 @@ import {
 } from "@/services/sendMail";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import { getPagination, paginationResult } from "@/lib/pagination";
+import { verifyRecaptcha } from "@/lib/captcha";
+import {
+  checkRateLimit,
+  getClientIp,
+  getUserAgent,
+  recordFailedAttempt,
+} from "@/lib/rateLimiter";
 
 export async function POST(request: NextRequest) {
   await databaseConnection();
   try {
-    const { name, email, phone, message } = await request.json();
+    const ip = getClientIp(request);
+    const userAgent = getUserAgent(request);
+
+    // Rate Limiting: Max 5 contact messages per IP per hour
+    const rateLimit = checkRateLimit(`contact_${ip}`, 5, 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      console.warn(
+        `[POST /api/contact] Rate limit exceeded for IP: ${ip} | User-Agent: ${userAgent}`,
+      );
+      return NextResponse.json(
+        {
+          message:
+            "Too many messages sent from this address. Please try again later.",
+          success: false,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
+    const body = await request.json();
+    const { name, email, phone, message, captchaToken } = body;
+
+    // CAPTCHA Verification
+    const captchaResult = await verifyRecaptcha(captchaToken, ip);
+    if (!captchaResult.success) {
+      recordFailedAttempt(
+        ip,
+        userAgent,
+        `Contact form captcha failed: ${captchaResult.reason}`,
+      );
+      return NextResponse.json(
+        {
+          message:
+            "Security check failed. Please complete the CAPTCHA and try again.",
+          success: false,
+        },
+        { status: 400 },
+      );
+    }
 
     if (!name || !message) {
       return NextResponse.json(
@@ -94,7 +144,7 @@ export async function GET(request: NextRequest) {
 
     const { page, limit, skip } = getPagination(request);
     const [contacts, total] = await Promise.all([
-      Contact.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Contact.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Contact.countDocuments(),
     ]);
     return NextResponse.json(

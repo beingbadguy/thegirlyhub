@@ -48,9 +48,20 @@ export async function POST(request: NextRequest) {
       await user.save();
     }
 
+    const incomingIds = (products as IncomingItem[])
+      .map((item) => item?.productId)
+      .filter(Boolean);
+
+    const dbProducts = await Product.find({ _id: { $in: incomingIds } })
+      .select("countInStock stock totalStock isActive status")
+      .lean();
+    const productMap = new Map(
+      dbProducts.map((p: any) => [p._id.toString(), p]),
+    );
+
     for (const item of products as IncomingItem[]) {
       if (!item?.productId) continue;
-      const dbProduct = await Product.findById(item.productId);
+      const dbProduct = productMap.get(String(item.productId));
       if (!dbProduct || !isProductInStock(dbProduct)) continue;
 
       const size = item.size || "";
@@ -76,9 +87,13 @@ export async function POST(request: NextRequest) {
     }
 
     await userCart.save();
-    const populated = await Cart.findById(userCart._id).populate(
-      "products.productId",
-    );
+    const populated = await Cart.findById(userCart._id)
+      .populate({
+        path: "products.productId",
+        select:
+          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug",
+      })
+      .lean();
 
     return NextResponse.json({
       success: true,

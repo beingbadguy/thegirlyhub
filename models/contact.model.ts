@@ -11,6 +11,9 @@ const contactSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+contactSchema.index({ createdAt: -1 });
+contactSchema.index({ email: 1, createdAt: -1 });
+
 if (mongoose.models.Contact) {
   delete mongoose.models.Contact;
 }

@@ -9,8 +9,16 @@ import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 
 export async function POST(request: NextRequest) {
   await databaseConnection();
-  cloudinaryConnection();
   try {
+    const decoded = await fetchTokenDetails(request);
+    if (!decoded || decoded.role !== "admin") {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized. Admin privileges required." },
+        { status: 401 },
+      );
+    }
+
+    cloudinaryConnection();
     const formData = await request.formData();
     const name = formData.get("name") as string;
     const categoryImage = formData.get("image") as File;
@@ -81,18 +89,13 @@ export async function GET(request: NextRequest) {
       filter = { isActive: true, isDeleted: { $ne: true } };
     }
     const [categories, total] = await Promise.all([
-      Category.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Category.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Category.countDocuments(filter),
     ]);
     const categoryNames = categories.map((category) => category.name);
-    const productData = await Product.aggregate([
+    
+    const aggregationPipeline: any[] = [
       { $match: { category: { $in: categoryNames } } },
-      {
-        $project: {
-          category: 1,
-          image: 1,
-        },
-      },
       {
         $group: {
           _id: "$category",
@@ -102,7 +105,18 @@ export async function GET(request: NextRequest) {
             : {}),
         },
       },
-    ]);
+    ];
+
+    if (includeProductImages) {
+      aggregationPipeline.push({
+        $project: {
+          productCount: 1,
+          productImages: { $slice: ["$productImages", 4] },
+        },
+      });
+    }
+
+    const productData = await Product.aggregate(aggregationPipeline);
     const counts = new Map(
       productData.map((item) => [
         item._id,
@@ -112,8 +126,8 @@ export async function GET(request: NextRequest) {
         },
       ]),
     );
-    const categoriesWithCounts = categories.map((category) => ({
-      ...category.toObject(),
+    const categoriesWithCounts = categories.map((category: any) => ({
+      ...category,
       productCount: counts.get(category.name)?.productCount || 0,
       ...(includeProductImages
         ? { productImages: counts.get(category.name)?.productImages || [] }
@@ -129,6 +143,12 @@ export async function GET(request: NextRequest) {
       },
       {
         status: 200,
+        headers: isAdmin
+          ? {}
+          : {
+              "Cache-Control":
+                "public, s-maxage=120, stale-while-revalidate=600",
+            },
       },
     );
   } catch (error) {

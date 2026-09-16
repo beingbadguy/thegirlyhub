@@ -9,5 +9,7 @@ const faqSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+faqSchema.index({ isActive: 1, createdAt: 1 });
+
 const Faq = mongoose.models.Faq || mongoose.model("Faq", faqSchema);
 export default Faq;

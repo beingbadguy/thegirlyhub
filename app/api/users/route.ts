@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databaseConnection } from "@/config/databseConnection";
 import User from "@/models/user.model";
-import "@/models/wishlist.model";
-import "@/models/product.model";
-import "@/models/category.model";
-import "@/models/cart.model";
-import "@/models/order.model";
-import "@/models/coupon.model";
-import "@/models/contact.model";
-import "@/models/newsletter.model";
-import "@/models/user.model";
-import "@/models/promo.model";
+import Wishlist from "@/models/wishlist.model";
+import Cart from "@/models/cart.model";
+import Order from "@/models/order.model";
+import Product from "@/models/product.model";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import { getPagination, paginationResult } from "@/lib/pagination";
 
@@ -19,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const decoded = await fetchTokenDetails(request);
-    if (!decoded || decoded.role != "admin") {
+    if (!decoded || decoded.role !== "admin") {
       return NextResponse.json(
         {
           message: "Unauthorised Access, you must be admin",
@@ -31,25 +25,33 @@ export async function GET(request: NextRequest) {
     const { page, limit, skip } = getPagination(request);
     const [users, total] = await Promise.all([
       User.find({})
-        .select("-password -pass")
-        .sort({ createdAt: -1 }) // optional: most recent users first
+        .select("-password -pass -verificationToken -verificationTokenExpiry -forgetToken -forgetTokenExpiry")
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate({
           path: "wishlist",
+          select: "products",
           populate: {
             path: "products.productId",
             model: "Product",
+            select: "title image images price discountedPrice category stock countInStock",
           },
         })
         .populate({
           path: "cart",
+          select: "products",
           populate: {
             path: "products.productId",
             model: "Product",
+            select: "title image images price discountedPrice category stock countInStock",
           },
         })
-        .populate("order"),
+        .populate({
+          path: "order",
+          select: "totalAmount status createdAt recipientName paymentMethod",
+        })
+        .lean(),
       User.countDocuments(),
     ]);
 

@@ -24,7 +24,18 @@ export async function GET(request: NextRequest) {
       .sort({ displayOrder: 1, createdAt: -1 })
       .lean();
 
-    return NextResponse.json({ success: true, banners });
+    return NextResponse.json(
+      { success: true, banners },
+      {
+        status: 200,
+        headers: isAdmin
+          ? {}
+          : {
+              "Cache-Control":
+                "public, s-maxage=300, stale-while-revalidate=1800",
+            },
+      },
+    );
   } catch (error) {
     console.error("Error fetching banners:", error);
     return NextResponse.json(

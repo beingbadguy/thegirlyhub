@@ -14,6 +14,9 @@ const couponSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+couponSchema.index({ code: 1, isActive: 1 });
+couponSchema.index({ createdAt: -1 });
+
 if (mongoose.models.Coupon) {
   delete mongoose.models.Coupon;
 }

@@ -26,22 +26,21 @@ export async function POST(
 
     const user = await User.findOne({
       forgetToken: token,
+      forgetTokenExpiry: { $gt: new Date() },
     });
     if (!user) {
       return NextResponse.json(
-        { message: "Invalid or expired token", success: false },
+        { message: "Invalid or expired reset link. Please request a new password reset.", success: false },
         { status: 400 }
       );
     }
 
     user.password = await bcrypt.hash(password, 10);
-    user.pass = password;
     user.forgetToken = null;
     user.forgetTokenExpiry = null;
     await user.save();
 
     user.password = undefined;
-    user.pass = undefined;
 
     await passwordResetSuccessMail(user.email);
 

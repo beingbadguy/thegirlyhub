@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
     const { page, limit, skip } = getPagination(request);
     const [newsletters, total] = await Promise.all([
-      Newsletter.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Newsletter.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Newsletter.countDocuments(),
     ]);
     return NextResponse.json(

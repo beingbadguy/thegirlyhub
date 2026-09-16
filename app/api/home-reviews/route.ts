@@ -33,8 +33,10 @@ export async function GET() {
         "reviews.0": { $exists: true },
       })
         .select("title image images reviews")
+        .sort({ updatedAt: -1 })
+        .limit(12)
         .lean(),
-      HomeReview.find({ isVisible: true }).sort({ createdAt: -1 }).lean(),
+      HomeReview.find({ isVisible: true }).sort({ createdAt: -1 }).limit(10).lean(),
     ])) as unknown as [
       ProductWithReviews[],
       Array<{
@@ -97,7 +99,15 @@ export async function GET() {
       )
       .slice(0, 6);
 
-    return NextResponse.json({ success: true, reviews });
+    return NextResponse.json(
+      { success: true, reviews },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=180, stale-while-revalidate=900",
+        },
+      },
+    );
   } catch (error) {
     console.error("Error loading homepage reviews:", error);
     return NextResponse.json(

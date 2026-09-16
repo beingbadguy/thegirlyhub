@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
       userId: prepared.data.userId,
       isGuest: prepared.data.isGuest,
       orderPayload: body,
+      snapshot: prepared.data,
       status: "pending",
     });
 

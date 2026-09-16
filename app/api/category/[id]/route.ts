@@ -1,4 +1,5 @@
 import { databaseConnection } from "@/config/databseConnection";
+import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import Category from "@/models/category.model";
 import Product from "@/models/product.model";
 import { NextRequest, NextResponse } from "next/server";
@@ -11,6 +12,14 @@ export async function DELETE(
 ) {
   await databaseConnection();
   try {
+    const decoded = await fetchTokenDetails(request);
+    if (!decoded || decoded.role !== "admin") {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized. Admin privileges required." },
+        { status: 401 },
+      );
+    }
+
     const { id } = await context.params;
     if (!id) {
       return NextResponse.json(
@@ -78,13 +87,20 @@ export async function DELETE(
   }
 }
 
-// FIXME: single category update
 export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   await databaseConnection();
   try {
+    const decoded = await fetchTokenDetails(request);
+    if (!decoded || decoded.role !== "admin") {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized. Admin privileges required." },
+        { status: 401 },
+      );
+    }
+
     const { id } = await context.params;
     const contentType = request.headers.get("content-type") || "";
 
@@ -176,3 +192,4 @@ export async function PUT(
     );
   }
 }
+

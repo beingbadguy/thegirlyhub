@@ -12,6 +12,8 @@ const homeReviewSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+homeReviewSchema.index({ isVisible: 1, createdAt: -1 });
+
 const HomeReview =
   mongoose.models.HomeReview || mongoose.model("HomeReview", homeReviewSchema);
 

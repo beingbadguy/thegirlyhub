@@ -41,9 +41,6 @@ const userSchema = new mongoose.Schema({
     // required: true,
     default: null,
   },
-  pass: {
-    type: String,
-  },
   role: {
     type: String,
     required: true,
@@ -104,6 +101,10 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
+
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ verificationToken: 1 }, { sparse: true });
+userSchema.index({ forgetToken: 1 }, { sparse: true });
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 

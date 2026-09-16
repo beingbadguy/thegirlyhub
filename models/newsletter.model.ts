@@ -8,6 +8,9 @@ const newsletterSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+newsletterSchema.index({ email: 1 }, { unique: true });
+newsletterSchema.index({ createdAt: -1 });
+
 const Newsletter =
   mongoose.models.Newsletter || mongoose.model("Newsletter", newsletterSchema);
 export default Newsletter;

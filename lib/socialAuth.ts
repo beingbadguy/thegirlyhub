@@ -19,7 +19,6 @@ type SocialProfile = {
 function publicUser(user: any) {
   const data = user.toObject ? user.toObject() : { ...user };
   delete data.password;
-  delete data.pass;
   delete data.forgetToken;
   delete data.verificationToken;
   return data;

@@ -18,21 +18,19 @@ async function findProductBySlugOrId(identifier: string) {
   if (bySlug) return bySlug;
 
   const idFromSlug = extractIdFromSlug(decoded);
-  if (idFromSlug) {
+  if (idFromSlug && mongoose.Types.ObjectId.isValid(idFromSlug)) {
     const byPartialId = await Product.findById(idFromSlug);
     if (byPartialId) return byPartialId;
   }
 
   const baseSlug = decoded.replace(/-[a-f0-9]{6}$/i, "");
-  const products = await Product.find({});
-  return (
-    products.find(
-      (p) =>
-        p.slug === decoded ||
-        slugify(p.title) === baseSlug ||
-        buildProductSlug(p.title, p._id.toString()) === decoded,
-    ) ?? null
-  );
+  const byBaseSlug = await Product.findOne({
+    $or: [
+      { slug: new RegExp(`^${baseSlug}`, "i") },
+      { title: new RegExp(`^${baseSlug.replace(/-/g, " ")}`, "i") },
+    ],
+  });
+  return byBaseSlug || null;
 }
 
 export class ProductController {
@@ -136,9 +134,12 @@ export class ProductController {
         sortOptions = { ratings: -1 };
       }
 
-      // Query database with lean() for fast performance
+      // Query database with select and lean() for fast performance
       const [products, total] = await Promise.all([
         Product.find(filter)
+          .select(
+            "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug",
+          )
           .sort(sortOptions)
           .skip(skip)
           .limit(limit)
@@ -158,7 +159,12 @@ export class ProductController {
           },
           message: "Products fetched successfully",
         },
-        { status: 200 }
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        }
       );
     } catch (error: any) {
       console.error("Error fetching products:", error);

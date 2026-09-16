@@ -40,6 +40,12 @@
   }
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 * {
   user-select: none;
 }
@@ -48,6 +54,8 @@
     font-family: var(--font-poppins), sans-serif;
     background: #fffafc;
     color: #33272d;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   h1,

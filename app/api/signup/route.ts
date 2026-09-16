@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
       name,
       email,
       password: hashedPassword,
-      pass: password,
       verificationToken,
       verificationTokenExpiry,
       isVerified: false,
@@ -70,7 +69,6 @@ export async function POST(request: NextRequest) {
     await newUser.save();
     const userData = newUser.toObject();
     delete userData.password;
-    delete userData.pass;
     delete userData.verificationToken;
     delete userData.verificationTokenExpiry;
 
@@ -84,9 +82,15 @@ export async function POST(request: NextRequest) {
         status: 200,
       },
     );
-    await sendEmailVerificationMail(newUser.email, verificationToken);
-    await welcomeUserMail(newUser.email, newUser.name);
-    await newUserJoinedNotification(newUser.email, newUser.name);
+
+    // Dispatch emails concurrently in background to avoid blocking HTTP response latency
+    Promise.allSettled([
+      sendEmailVerificationMail(newUser.email, verificationToken),
+      welcomeUserMail(newUser.email, newUser.name),
+      newUserJoinedNotification(newUser.email, newUser.name),
+    ]).catch((err) => {
+      console.error("Error sending registration emails:", err);
+    });
 
     return response;
   } catch (error) {

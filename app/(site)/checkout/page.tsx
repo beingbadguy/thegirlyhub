@@ -21,6 +21,8 @@ import {
 import { calculateShipping } from "@/lib/shipping";
 import { isProductInStock } from "@/lib/productStock";
 import { clearGuestCart } from "@/lib/guestCart";
+import CaptchaWidget from "@/components/CaptchaWidget";
+import { executeCaptcha, loadCaptchaScript } from "@/lib/clientCaptcha";
 import { productUrl } from "@/lib/slug";
 import {
   User,
@@ -29,6 +31,8 @@ import {
   Phone,
   Landmark,
   ClipboardList,
+  ShieldCheck,
+  X,
 } from "lucide-react";
 
 declare global {
@@ -125,6 +129,9 @@ export default function CheckoutPage() {
   const [welcomeCouponRedeemed, setWelcomeCouponRedeemed] = useState(false);
 
   const couponApplied = !!couponDetails;
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [showCodModal, setShowCodModal] = useState(false);
+  const [codModalError, setCodModalError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isCheckingCart, setIsCheckingCart] = useState(true);
   const [orderCompleted, setOrderCompleted] = useState(false);
@@ -132,6 +139,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     document.title = "Checkout | GirlyHub";
     loadRazorpayScript().catch(() => {});
+    loadCaptchaScript().catch(() => {});
     let isMounted = true;
     useAuthStore
       .getState()
@@ -277,23 +285,32 @@ export default function CheckoutPage() {
     return true;
   };
 
-  const placeOrder = async () => {
+  const confirmCodOrder = async (overrideToken?: string) => {
     if (availableCartItems.length === 0) {
       router.replace("/cart");
       return;
     }
-    if (!validateCheckout()) return;
-    // open a modal to confirm the order before placing it
 
-    
+    const token =
+      overrideToken || captchaToken || (await executeCaptcha("cod_checkout"));
+
+    if (!token) {
+      setCodModalError("Please complete the security check before placing your order.");
+      return;
+    }
 
     setPlacingOrder(true);
+    setCodModalError("");
+    setOrderError("");
+
     try {
       const response = await axios.post("/api/order", {
         ...buildOrderPayload(),
+        captchaToken: token,
       });
 
       setOrderCompleted(true);
+      setShowCodModal(false);
       clearGuestCart();
       useAuthStore.setState((prevStore) => {
         if (!prevStore.user) return { userCart: { products: [] } };
@@ -319,7 +336,10 @@ export default function CheckoutPage() {
           error.response?.data?.message ||
           error.response?.data?.errors?.[0] ||
           "Failed to place order.";
+        setCodModalError(msg);
         setOrderError(msg);
+      } else {
+        setCodModalError("Failed to place order. Please try again.");
       }
     } finally {
       setPlacingOrder(false);
@@ -329,7 +349,13 @@ export default function CheckoutPage() {
   const handleOrder = () => {
     setOrderError("");
     if (paymentMode === "cod") {
-      placeOrder();
+      if (availableCartItems.length === 0) {
+        router.replace("/cart");
+        return;
+      }
+      if (!validateCheckout()) return;
+      setCodModalError("");
+      setShowCodModal(true);
     } else {
       placeOnlineOrder();
     }
@@ -1156,6 +1182,103 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* COD SECURITY & CONFIRMATION MODAL */}
+      {showCodModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-3xl border border-rose-100 bg-white p-6 shadow-2xl transition-all sm:p-7">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (!placingOrder) setShowCodModal(false);
+              }}
+              disabled={placingOrder}
+              className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition cursor-pointer"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* Header */}
+            <div className="text-center">
+              <div className="mx-auto mb-3 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
+                <ShieldCheck className="size-4 text-rose-600" />
+                COD Security Verification
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-gray-900">
+                Confirm Your COD Order
+              </h3>
+              <p className="mt-1 text-xs text-gray-500">
+                Please complete the verification below to confirm your Cash on Delivery order.
+              </p>
+            </div>
+
+            {/* Delivery & Total Summary */}
+            <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50/80 p-4 text-xs space-y-2">
+              <div className="flex justify-between font-medium text-gray-700">
+                <span>Amount on Delivery:</span>
+                <span className="font-bold text-rose-700 text-sm">
+                  ₹{finalAmount.toFixed(2)}
+                </span>
+              </div>
+              <div className="border-t border-gray-200/60 pt-2 text-gray-600">
+                <p className="font-semibold text-gray-800">{recipientName}</p>
+                <p className="line-clamp-1 mt-0.5">
+                  {address}
+                  {landmark ? `, ${landmark}` : ""}, {city}, {state} - {zip}
+                </p>
+                <p className="mt-0.5 text-gray-500">Phone: +91 {phone}</p>
+              </div>
+            </div>
+
+            {/* CAPTCHA Widget */}
+            <div className="mt-5">
+              <p className="mb-2 text-center text-xs font-medium text-gray-700">
+                Verify you are human:
+              </p>
+              <CaptchaWidget
+                onVerify={(token) => {
+                  setCaptchaToken(token);
+                  setCodModalError("");
+                }}
+                onExpire={() => setCaptchaToken("")}
+              />
+            </div>
+
+            {/* Error display */}
+            {codModalError && (
+              <p className="mt-3 text-center text-xs font-medium text-red-600">
+                {codModalError}
+              </p>
+            )}
+
+            {/* Action Buttons */}
+            <div className="mt-5 flex flex-col gap-2.5">
+              <Button
+                type="button"
+                disabled={placingOrder || !captchaToken}
+                onClick={() => confirmCodOrder()}
+                className="w-full cursor-pointer rounded-xl bg-rose-600 py-5 text-sm font-semibold text-white shadow-md hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {placingOrder ? (
+                  <VscLoading className="animate-spin text-lg" />
+                ) : (
+                  `Confirm & Place Order · ₹${finalAmount.toFixed(2)}`
+                )}
+              </Button>
+
+              <button
+                type="button"
+                disabled={placingOrder}
+                onClick={() => setShowCodModal(false)}
+                className="text-xs font-semibold text-gray-500 hover:text-gray-700 py-1 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

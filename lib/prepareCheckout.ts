@@ -86,9 +86,9 @@ export async function prepareCheckout(
     couponCode,
   } = body as OrderInput;
 
-  let user = null;
+  let user: any = null;
   if (decodedUserId) {
-    user = await User.findById(decodedUserId);
+    user = (await User.findById(decodedUserId).select("_id name email firstPurchase").lean()) as any;
     if (!user) {
       return { ok: false, status: 404, message: "User account not found" };
     }
@@ -96,9 +96,13 @@ export async function prepareCheckout(
 
   const dbProducts = await Product.find({
     _id: { $in: products.map((item) => item.productId) },
-  });
+  })
+    .select(
+      "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive",
+    )
+    .lean();
   const productsById = new Map(
-    dbProducts.map((product) => [product._id.toString(), product]),
+    dbProducts.map((product: any) => [product._id.toString(), product]),
   );
 
   let subtotal = 0;

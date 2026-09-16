@@ -102,12 +102,14 @@ export async function POST(
       );
     }
 
-    // Run DB queries in parallel
-    const [product, user, cart] = await Promise.all([
-      Product.findById(id),
-      User.findById(decoded.userId),
+    // Run DB queries in parallel with lean projection
+    const [product, user, cart] = (await Promise.all([
+      Product.findById(id)
+        .select("title countInStock stock totalStock isActive status")
+        .lean(),
+      User.findById(decoded.userId).select("_id cart"),
       Cart.findOne({ userId: decoded.userId }),
-    ]);
+    ])) as [any, any, any];
 
     if (!id) {
       return NextResponse.json(
@@ -140,7 +142,7 @@ export async function POST(
       });
       await Promise.all([
         newCart.save(),
-        user.updateOne({ $push: { cart: newCart._id } }),
+        user ? user.updateOne({ $push: { cart: newCart._id } }) : Promise.resolve(),
       ]);
 
       return NextResponse.json({ message: "Product added to cart" });
@@ -192,10 +194,12 @@ export async function PUT(
       );
     }
 
-    const [cart, dbProduct] = await Promise.all([
+    const [cart, dbProduct] = (await Promise.all([
       Cart.findOne({ userId: decoded?.userId }),
-      Product.findById(id),
-    ]);
+      Product.findById(id)
+        .select("countInStock stock totalStock isActive status")
+        .lean(),
+    ])) as [any, any];
 
     if (!cart) {
       return NextResponse.json(

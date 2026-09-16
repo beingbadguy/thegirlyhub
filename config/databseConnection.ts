@@ -17,26 +17,15 @@ export const databaseConnection = async () => {
   if (!cached.promise) {
     cached.promise = mongoose
       .connect(MONGODB_URI, {
-        dbName: "Basics", // optional
+        dbName: "Basics",
         bufferCommands: false,
+        maxPoolSize: 50,
+        minPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        maxIdleTimeMS: 30000,
       })
-      .then(async (mongooseInstance) => {
-        console.log("🔌 MongoDB Connected");
-        try {
-          const db = mongooseInstance.connection.db;
-          if (db) {
-            const productCollection = db.collection("products");
-            const indexes = await productCollection.indexes();
-            for (const idx of indexes) {
-              if (idx.name === "tenantId_1_variants.sku_1") {
-                await productCollection.dropIndex(idx.name).catch(() => {});
-                console.log(`Dropped problematic index: ${idx.name}`);
-              }
-            }
-          }
-        } catch {
-          // Ignore index cleanup error
-        }
+      .then((mongooseInstance) => {
         return mongooseInstance;
       });
   }

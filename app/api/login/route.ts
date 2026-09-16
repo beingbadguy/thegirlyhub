@@ -39,8 +39,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = (await User.findOne({ email: normalizedEmail })
+      .select("_id name email password role isVerified")
+      .lean()) as any;
+
+    // Constant-time dummy hash to mitigate user enumeration timing attacks
+    const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ123456";
+    const passwordToCompare = user?.password || DUMMY_HASH;
+
+    const isMatched = await bcrypt.compare(password, passwordToCompare);
+    if (!user || !isMatched) {
       return NextResponse.json(
         {
           success: false,
@@ -49,22 +58,22 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     }
-    const isMatched = await bcrypt.compare(password, user.password);
-    if (!isMatched) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid credentials",
-        },
-        { status: 401 },
-      );
-    }
+
     if (!user.isVerified) {
       const verificationToken = crypto.randomInt(100000, 999999).toString();
-      user.verificationToken = verificationToken;
-      user.verificationTokenExpiry = Date.now() + 24 * 60 * 60 * 1000;
-      await user.save();
-      await sendEmailVerificationMail(user.email, verificationToken);
+      const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      
+      // Update DB asynchronously
+      User.updateOne(
+        { _id: user._id },
+        { $set: { verificationToken, verificationTokenExpiry } },
+      ).catch(() => {});
+
+      // Fire-and-forget email dispatch
+      sendEmailVerificationMail(user.email, verificationToken).catch((err) => {
+        console.error("Error sending verification mail on login:", err);
+      });
+
       return NextResponse.json(
         {
           success: false,
@@ -76,27 +85,31 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
-    user.pass = password;
-    await user.save();
+
+    const authUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+    };
 
     const response = NextResponse.json({
       success: true,
       message: "Logged in successfully",
-      data: user,
+      data: authUser,
     });
 
-    user.password = undefined;
-    user.pass = undefined;
     generateTokenAndSetCookie(user._id, user.isVerified, user.role, response);
     return response;
   } catch (error) {
-    console.log(error);
+    console.error("Login error:", error);
     return NextResponse.json(
       {
         success: false,
         message: "Failed to log in user",
       },
-      { status: 404 },
+      { status: 500 },
     );
   }
 }

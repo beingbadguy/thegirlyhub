@@ -23,8 +23,12 @@ export async function POST(request: NextRequest) {
     const ids = products
       .map((item: CartLine) => item.productId)
       .filter(Boolean);
-    const dbProducts = await Product.find({ _id: { $in: ids } });
-    const byId = new Map(dbProducts.map((p) => [p._id.toString(), p]));
+    const dbProducts = await Product.find({ _id: { $in: ids } })
+      .select(
+        "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug",
+      )
+      .lean();
+    const byId = new Map(dbProducts.map((p: any) => [p._id.toString(), p]));
 
     const hydrated = products
       .map((item: CartLine) => {

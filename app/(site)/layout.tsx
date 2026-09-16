@@ -136,7 +136,7 @@ export default function RootLayout({
         <JsonLd data={webSiteSchema} />
       </head>
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar`}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar overflow-x-hidden`}
       >
         <AnnouncementBand />
         <SmoothScroll />

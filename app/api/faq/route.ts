@@ -10,8 +10,19 @@ export async function GET(request: NextRequest) {
     const decoded = await fetchTokenDetails(request);
     const isAdmin = decoded?.role === "admin" && isAdminQuery;
     const filter = isAdmin ? {} : { isActive: true };
-    const faqs = await Faq.find(filter).sort({ createdAt: 1 });
-    return NextResponse.json({ success: true, faqs });
+    const faqs = await Faq.find(filter).sort({ createdAt: 1 }).lean();
+    return NextResponse.json(
+      { success: true, faqs },
+      {
+        status: 200,
+        headers: isAdmin
+          ? {}
+          : {
+              "Cache-Control":
+                "public, s-maxage=300, stale-while-revalidate=1800",
+            },
+      },
+    );
   } catch (error) {
     console.error(error);
     return NextResponse.json(

@@ -19,7 +19,12 @@ export async function GET(request: NextRequest) {
     }
     const { page, limit, skip } = getPagination(request);
     const [coupons, total] = await Promise.all([
-      Coupon.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Coupon.find()
+        .select("-usersAvailed")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       Coupon.countDocuments(),
     ]);
     return NextResponse.json(

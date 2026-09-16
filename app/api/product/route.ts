@@ -72,7 +72,14 @@ export async function GET(request: NextRequest) {
     }
 
     const [products, total] = await Promise.all([
-      Product.find(filter).sort(sortOption).skip(skip).limit(limit),
+      Product.find(filter)
+        .select(
+          "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug",
+        )
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       Product.countDocuments(filter),
     ]);
 
@@ -83,7 +90,12 @@ export async function GET(request: NextRequest) {
         products,
         pagination: paginationResult(page, limit, total),
       },
-      { status: 200 },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      },
     );
   } catch (error) {
     console.log(error);

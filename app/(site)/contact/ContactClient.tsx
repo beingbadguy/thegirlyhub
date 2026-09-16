@@ -1,8 +1,10 @@
 "use client";
 
 import axios, { AxiosError } from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
+import CaptchaWidget from "@/components/CaptchaWidget";
+import { executeCaptcha, loadCaptchaScript } from "@/lib/clientCaptcha";
 import {
   FaEnvelope,
   FaPaperPlane,
@@ -20,9 +22,14 @@ export default function ContactClient() {
     message: "",
   });
 
+  const [captchaToken, setCaptchaToken] = useState<string>("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadCaptchaScript().catch(() => {});
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -64,7 +71,11 @@ export default function ContactClient() {
     setLoading(true);
 
     try {
-      await axios.post("/api/contact", data);
+      const finalToken = captchaToken || (await executeCaptcha("contact_form"));
+      await axios.post("/api/contact", {
+        ...data,
+        captchaToken: finalToken,
+      });
 
       setSuccess("Message sent successfully 💌");
       setData({
@@ -73,6 +84,7 @@ export default function ContactClient() {
         phone: "",
         message: "",
       });
+      setCaptchaToken("");
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error.response?.data?.message || "Failed to send message.");
@@ -186,6 +198,12 @@ export default function ContactClient() {
               onChange={handleChange}
               placeholder="Write your message..."
               className="w-full px-4 py-3 rounded-xl border border-pink-200 bg-pink-50 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+            />
+
+            {/* CAPTCHA WIDGET */}
+            <CaptchaWidget
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken("")}
             />
 
             {/* BUTTON */}
