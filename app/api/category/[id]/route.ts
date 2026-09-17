@@ -108,6 +108,7 @@ export async function PUT(
     let isActive: boolean | undefined;
     let isDeleted: boolean | undefined;
     let categoryImage: File | null = null;
+    let directImageUrl: string | undefined;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
@@ -123,22 +124,28 @@ export async function PUT(
         isDeleted = isDeletedStr === "true";
       }
 
-      categoryImage = formData.get("image") as File;
+      const rawImg = formData.get("image") || formData.get("categoryImage") || formData.get("imageUrl");
+      if (rawImg instanceof File && rawImg.size > 0) {
+        categoryImage = rawImg;
+      } else if (typeof rawImg === "string" && rawImg.trim() !== "") {
+        directImageUrl = rawImg.trim();
+      }
     } else {
       const body = await request.json();
       name = body.name;
       isActive = body.isActive;
       isDeleted = body.isDeleted;
+      directImageUrl = body.categoryImage || body.image || body.imageUrl;
     }
 
-    if (!id || (!name && typeof isActive !== "boolean" && typeof isDeleted !== "boolean" && !categoryImage)) {
+    if (!id || (!name && typeof isActive !== "boolean" && typeof isDeleted !== "boolean" && !categoryImage && !directImageUrl)) {
       return NextResponse.json(
         { success: false, message: "Category id, name or status is required" },
         { status: 400 },
       );
     }
 
-    let imageUrl: string | undefined;
+    let imageUrl: string | undefined = directImageUrl;
     if (categoryImage && categoryImage.size > 0) {
       cloudinaryConnection();
       const arrayBuffer = await categoryImage.arrayBuffer();
@@ -150,6 +157,7 @@ export async function PUT(
       });
       imageUrl = categoryImageResponse.secure_url;
     }
+
 
     const oldCategory = await Category.findById(id);
     const oldName = oldCategory?.name;

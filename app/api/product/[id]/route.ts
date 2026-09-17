@@ -198,39 +198,41 @@ export async function PUT(
         formInput.weight !== undefined ? Number(formInput.weight) : weight;
 
       // Extract new image files and existing image URLs
-      const imagesField = formData.getAll("images");
       const imageFiles: File[] = [];
       const existingUrls: string[] = [];
 
-      imagesField.forEach((item) => {
-        if (item instanceof File) {
-          if (item.size > 0) {
-            imageFiles.push(item);
+      // Collect existing image URLs without duplicating
+      if (formData.has("existingImages")) {
+        const existingImagesField = formData.getAll("existingImages");
+        existingImagesField.forEach((item) => {
+          if (typeof item === "string" && item.trim() !== "") {
+            existingUrls.push(item.trim());
           }
-        } else if (typeof item === "string" && item.trim() !== "") {
-          existingUrls.push(item);
-        }
-      });
-
-      const imageSingleField = formData.getAll("image");
-      imageSingleField.forEach((item) => {
-        if (item instanceof File) {
-          if (item.size > 0) {
-            imageFiles.push(item);
+        });
+      } else {
+        const imagesField = formData.getAll("images");
+        imagesField.forEach((item) => {
+          if (typeof item === "string" && item.trim() !== "") {
+            existingUrls.push(item.trim());
           }
-        } else if (typeof item === "string" && item.trim() !== "") {
-          existingUrls.push(item);
+        });
+        const imageSingleField = formData.getAll("image");
+        imageSingleField.forEach((item) => {
+          if (typeof item === "string" && item.trim() !== "") {
+            existingUrls.push(item.trim());
+          }
+        });
+      }
+
+      // Collect new File uploads
+      const allFiles = [...formData.getAll("images"), ...formData.getAll("image")];
+      allFiles.forEach((item) => {
+        if (item instanceof File && item.size > 0) {
+          imageFiles.push(item);
         }
       });
 
-      const existingImagesField = formData.getAll("existingImages");
-      existingImagesField.forEach((item) => {
-        if (typeof item === "string" && item.trim() !== "") {
-          existingUrls.push(item);
-        }
-      });
-
-      // Upload new files
+      // Upload new files to Cloudinary
       const uploadPromises = imageFiles.map(async (file) => {
         const arrayBuffer = await file.arrayBuffer();
         const base64String = Buffer.from(arrayBuffer).toString("base64");
@@ -243,17 +245,21 @@ export async function PUT(
 
       const newUploadedUrls = await Promise.all(uploadPromises);
 
-      // Merge existing and new URLs
-      const finalImages = [...existingUrls, ...newUploadedUrls];
+      // Merge and deduplicate existing and new URLs
+      const finalImages = Array.from(
+        new Set([...existingUrls, ...newUploadedUrls].filter(Boolean)),
+      );
 
       const hasImageFields =
         formData.has("images") ||
         formData.has("image") ||
-        formData.has("existingImages");
+        formData.has("existingImages") ||
+        formData.has("imagesPayloadSent");
 
       if (hasImageFields) {
         imagesToSave = finalImages;
       }
+
     } else {
       const body = await request.json();
       title = body.title !== undefined ? body.title : title;
@@ -282,31 +288,35 @@ export async function PUT(
     const discountPercentage =
       ((Number(price) - Number(discountedPrice)) / Number(price)) * 100;
 
-    Object.assign(
-      product,
-      normalizeProductPayload(
-        {
-          ...formInput,
-          title,
-          description,
-          price,
-          category,
-          countInStock,
-          stock: countInStock,
-          discountedPrice,
-          discountPrice: discountedPrice,
-          discountPercentage,
-          info,
-          weight,
-          images: imagesToSave,
-        },
-        product.toObject(),
-      ),
+    const normalized = normalizeProductPayload(
+      {
+        ...formInput,
+        title,
+        description,
+        price,
+        category,
+        countInStock,
+        stock: countInStock,
+        discountedPrice,
+        discountPrice: discountedPrice,
+        discountPercentage,
+        info,
+        weight,
+        images: imagesToSave,
+      },
+      product.toObject(),
     );
+
+    Object.assign(product, normalized);
+    product.images = normalized.images;
+    product.mainImage = normalized.mainImage;
+    product.image = normalized.image;
+    product.markModified("images");
 
     product.slug = buildProductSlug(title, product._id.toString());
 
     await product.save();
+
     return NextResponse.json(
       { product, success: true, message: "Product updated successfully" },
       { status: 200 },

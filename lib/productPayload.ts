@@ -78,7 +78,7 @@ export function normalizeProductPayload(
   const weight = Number(input.weight ?? source.weight ?? 0) || 0;
   const lowStockThreshold =
     Number(input.lowStockThreshold ?? source.lowStockThreshold ?? 10) || 10;
-  const images = Array.isArray(input.images)
+  const rawImages = Array.isArray(input.images)
     ? input.images.filter(Boolean)
     : input.image
       ? [input.image]
@@ -87,6 +87,7 @@ export function normalizeProductPayload(
         : source.image
           ? [source.image]
           : [];
+  const images = Array.from(new Set(rawImages.map((img: any) => String(img).trim()).filter(Boolean)));
 
   const totalStock = Number(
     input.totalStock ??
@@ -141,14 +142,8 @@ export function normalizeProductPayload(
       input.shortDescription ?? source.shortDescription ?? description,
     longDescription:
       input.longDescription ?? source.longDescription ?? description,
-    mainImage: input.mainImage ?? source.mainImage ?? images[0] ?? "",
-    image:
-      input.mainImage ??
-      input.image ??
-      source.mainImage ??
-      source.image ??
-      images[0] ??
-      "",
+    mainImage: input.mainImage ?? images[0] ?? "",
+    image: input.mainImage ?? input.image ?? images[0] ?? "",
     images,
     costPrice,
     weight,
@@ -170,4 +165,5 @@ export function normalizeProductPayload(
     isNewArrival: input.isNewArrival ?? Boolean(source.isNewArrival),
   };
 }
+
 

@@ -136,10 +136,16 @@ productSchema.pre("validate", function syncProductFields(next) {
   this.name = this.name || this.title || "Product";
   this.title = this.title || this.name;
   this.category = this.category || "jewellery";
-  this.mainImage = this.mainImage || this.image || this.images?.[0] || "";
-  this.image = this.image || this.mainImage;
-  if (!this.images) this.images = [];
-  if (!this.images.length && this.mainImage) this.images = [this.mainImage];
+  if (Array.isArray(this.images)) {
+    this.images = Array.from(new Set(this.images.filter(Boolean)));
+  } else {
+    this.images = [];
+  }
+  this.mainImage = this.images[0] || this.mainImage || this.image || "";
+  this.image = this.mainImage;
+  if (!this.images.length && this.mainImage) {
+    this.images = [this.mainImage];
+  }
 
   this.shortDescription = this.shortDescription || this.description || "";
   this.description = this.description || this.shortDescription || "";

@@ -228,18 +228,27 @@ export async function POST(request: NextRequest) {
     const height =
       formInput.height !== undefined ? Number(formInput.height) : undefined;
 
-    // Retrieve files from 'images' or 'image' field(s)
-    let imageFiles = formData.getAll("images") as File[];
-    if (
-      imageFiles.length === 0 ||
-      (imageFiles.length === 1 && (imageFiles[0] as any).size === 0)
-    ) {
-      imageFiles = formData.getAll("image") as File[];
+    // Retrieve string image URLs and File uploads
+    const existingUrls: string[] = [];
+    if (formData.has("existingImages")) {
+      formData.getAll("existingImages").forEach((item) => {
+        if (typeof item === "string" && item.trim() !== "") {
+          existingUrls.push(item.trim());
+        }
+      });
     }
-    // Filter out any invalid/empty file entries
-    imageFiles = imageFiles.filter(
-      (file) => file && typeof file !== "string" && file.size > 0,
-    );
+
+    let imageFiles: File[] = [];
+    const allImages = [...formData.getAll("images"), ...formData.getAll("image")];
+    allImages.forEach((item) => {
+      if (item instanceof File && item.size > 0) {
+        imageFiles.push(item);
+      } else if (typeof item === "string" && item.trim() !== "" && !formData.has("existingImages")) {
+        existingUrls.push(item.trim());
+      }
+    });
+
+    const uniqueExistingUrls = Array.from(new Set(existingUrls));
 
     const metadataValidation = productCreateSchema.safeParse({
       ...formInput,
@@ -251,7 +260,10 @@ export async function POST(request: NextRequest) {
         .trim()
         .toLowerCase(),
       stock: Number(countInStock),
-      images: imageFiles.length > 0 ? ["pending-upload"] : [],
+      images:
+        imageFiles.length > 0 || uniqueExistingUrls.length > 0
+          ? ["pending-upload"]
+          : [],
       info,
     });
     if (!metadataValidation.success) {
@@ -273,6 +285,9 @@ export async function POST(request: NextRequest) {
     });
 
     const uploadedUrls = await Promise.all(uploadPromises);
+    const finalImages = Array.from(
+      new Set([...uniqueExistingUrls, ...uploadedUrls].filter(Boolean)),
+    );
 
     const product = new Product(
       normalizeProductPayload({
@@ -280,14 +295,15 @@ export async function POST(request: NextRequest) {
         title,
         description,
         price,
-        image: uploadedUrls[0] || "",
-        images: uploadedUrls,
+        image: finalImages[0] || "",
+        images: finalImages,
         category,
         countInStock,
         discountedPrice,
         discountPercentage,
         info,
         weight,
+
         length,
         breadth,
         height,

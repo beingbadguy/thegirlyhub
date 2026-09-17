@@ -1,9 +1,11 @@
 import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
 
-interface DecodeType {
+export interface DecodeType {
   userId: string;
   role: string;
+  email?: string;
+  name?: string;
 }
 
 export async function fetchTokenDetails(request: NextRequest) {

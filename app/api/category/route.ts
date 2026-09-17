@@ -19,36 +19,57 @@ export async function POST(request: NextRequest) {
     }
 
     cloudinaryConnection();
-    const formData = await request.formData();
-    const name = formData.get("name") as string;
-    const categoryImage = formData.get("image") as File;
+    let name = "";
+    let finalImageUrl = "";
 
-    if (!name?.trim() || !categoryImage) {
+    const contentType = request.headers.get("content-type") || "";
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      name = ((formData.get("name") as string) || "").trim();
+      const imageField = formData.get("image") || formData.get("categoryImage") || formData.get("imageUrl");
+
+      if (imageField instanceof File && imageField.size > 0) {
+        const arrayBuffer = await imageField.arrayBuffer();
+        const base64String = Buffer.from(arrayBuffer).toString("base64");
+        const dataURI = `data:${imageField.type};base64,${base64String}`;
+        const categoryImageResponse = await cloudinary.v2.uploader.upload(dataURI, {
+          folder: "girlyhub_categories",
+        });
+        finalImageUrl = categoryImageResponse.secure_url;
+      } else if (typeof imageField === "string" && imageField.trim() !== "") {
+        finalImageUrl = imageField.trim();
+      }
+    } else {
+      const body = await request.json();
+      name = (body.name || "").trim();
+      finalImageUrl = (body.categoryImage || body.image || body.imageUrl || "").trim();
+    }
+
+    if (!name) {
       return NextResponse.json(
-        { success: false, message: "Missing required fields" },
+        { success: false, message: "Category name is required" },
         { status: 400 },
       );
     }
-    const categoryAlreadyExists = await Category.findOne({ name: name });
+
+    const categoryAlreadyExists = await Category.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") },
+      isDeleted: { $ne: true },
+    });
     if (categoryAlreadyExists) {
       return NextResponse.json(
-        { success: false, message: "Category already exists" },
+        { success: false, message: "A category with this name already exists." },
         { status: 400 },
       );
     }
-    // needed to upload file
-    const arrayBuffer = await categoryImage.arrayBuffer();
-    const base64String = Buffer.from(arrayBuffer).toString("base64");
-    const dataURI = `data:${categoryImage.type};base64,${base64String}`;
-
-    const categoryImageResponse = await cloudinary.v2.uploader.upload(dataURI, {
-      folder: "girlyhub_categories",
-    });
 
     const category = await Category.create({
       name: name,
-      categoryImage: categoryImageResponse.secure_url,
+      categoryImage: finalImageUrl || "",
+      isActive: true,
+      isDeleted: false,
     });
+
     return NextResponse.json(
       {
         success: true,
@@ -56,9 +77,10 @@ export async function POST(request: NextRequest) {
         category: category,
       },
       {
-        status: 200,
+        status: 201,
       },
     );
+
   } catch (error) {
     console.log(error);
     return NextResponse.json(
