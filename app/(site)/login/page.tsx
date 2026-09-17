@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/store";
@@ -63,19 +64,17 @@ export default function LoginPage() {
     }
   };
   return (
-    <div className="min-h-[78vh] bg-[#fcfcfb] text-black w-full flex flex-col px-4 py-10">
+    <div className="min-h-[78vh] bg-[#fcfcfb] text-black w-full flex flex-col">
       {/* Breadcrumbs */}
-      <div className="w-full  mx-auto px-4 md:px-8 pb-2 text-left">
-        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
-          <Link
-            href="/"
-            className="cursor-pointer transition-colors hover:text-neutral-800"
-          >
-            Home
-          </Link>
-          <span>/</span>
-          <span className="text-neutral-800 font-bold">Login</span>
-        </div>
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Login</span>
+        </nav>
       </div>
 
       {/* Main content centered */}

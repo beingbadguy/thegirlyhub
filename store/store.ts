@@ -29,6 +29,8 @@ interface AuthState {
   } | null;
   isLoggingOut: boolean;
   userCart: PopulatedCartProduct | null;
+  isCartLoading: boolean;
+  isCartUpdating: boolean;
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -102,6 +104,8 @@ let activeFetchWishlistPromise: Promise<void> | null = null;
 export const useAuthStore = create<AuthState>((set, get) => ({
   userWishlist: null,
   userCart: null,
+  isCartLoading: true,
+  isCartUpdating: false,
   isCartOpen: false,
   user: null,
   isLoggingOut: false,
@@ -149,7 +153,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoggingOut: true });
     try {
       await axios.post("/api/logout");
-      set({ user: null, userCart: null, userWishlist: null });
+      set({ user: null, userCart: null, userWishlist: null, isCartLoading: false });
       await get().fetchUserCart();
     } catch (error) {
       console.error("Failed to logout", error);
@@ -179,15 +183,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fetchUserCart: async () => {
     if (activeFetchCartPromise) return activeFetchCartPromise;
 
+    if (!get().userCart) {
+      set({ isCartLoading: true });
+    }
+
     activeFetchCartPromise = (async () => {
       try {
         if (!get().user) {
           const cart = await hydrateGuestCart();
-          set({ userCart: cart });
+          set({ userCart: cart, isCartLoading: false });
           return;
         }
         const response = await axios.get(`/api/cart`);
-        set({ userCart: response.data.cart });
+        set({ userCart: response.data.cart || { products: [] }, isCartLoading: false });
       } catch (error) {
         if (error instanceof AxiosError) {
           if (error.response?.status !== 401) {
@@ -196,8 +204,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } else {
           console.error("Failed to fetch cart", error);
         }
+        set({ isCartLoading: false });
       } finally {
         activeFetchCartPromise = null;
+        set({ isCartLoading: false });
       }
     })();
 
@@ -230,30 +240,92 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   addToCart: async (productId: string, size = "") => {
-    if (get().user) {
-      await axios.post(`/api/cart/${productId}`, { size });
-    } else {
-      addGuestCartItem(productId, size);
+    set({ isCartUpdating: true });
+    try {
+      if (get().user) {
+        await axios.post(`/api/cart/${productId}`, { size });
+      } else {
+        addGuestCartItem(productId, size);
+      }
+      await get().fetchUserCart();
+    } catch (error) {
+      console.error("Failed to add to cart", error);
+      throw error;
+    } finally {
+      set({ isCartUpdating: false });
     }
-    await get().fetchUserCart();
   },
 
   updateCartQuantity: async (productId: string, quantity: number) => {
-    if (get().user) {
-      await axios.put(`/api/cart/${productId}`, { quantity });
-    } else {
-      updateGuestCartQuantity(productId, quantity);
+    const previousCart = get().userCart;
+
+    // Optimistic UI Update: Update quantity immediately in state
+    if (previousCart?.products) {
+      const updatedProducts = previousCart.products.map((item) => {
+        const id = item.productId?._id?.toString() || item.productId?.toString();
+        if (id === productId) {
+          return { ...item, quantity };
+        }
+        return item;
+      });
+      set({ userCart: { ...previousCart, products: updatedProducts }, isCartUpdating: true });
     }
-    await get().fetchUserCart();
+
+    try {
+      if (get().user) {
+        const response = await axios.put(`/api/cart/${productId}`, { quantity });
+        if (response.data?.cart) {
+          set({ userCart: response.data.cart });
+        }
+      } else {
+        updateGuestCartQuantity(productId, quantity);
+        const cart = await hydrateGuestCart();
+        set({ userCart: cart });
+      }
+    } catch (error) {
+      console.error("Failed to update cart quantity, reverting:", error);
+      // Revert to previous state
+      if (previousCart) {
+        set({ userCart: previousCart });
+      }
+      throw error;
+    } finally {
+      set({ isCartUpdating: false });
+    }
   },
 
   removeFromCart: async (productId: string) => {
-    if (get().user) {
-      await axios.delete(`/api/cart/${productId}`);
-    } else {
-      removeGuestCartItem(productId);
+    const previousCart = get().userCart;
+
+    // Optimistic UI Update: Remove item immediately from state
+    if (previousCart?.products) {
+      const updatedProducts = previousCart.products.filter((item) => {
+        const id = item.productId?._id?.toString() || item.productId?.toString();
+        return id !== productId;
+      });
+      set({ userCart: { ...previousCart, products: updatedProducts }, isCartUpdating: true });
     }
-    await get().fetchUserCart();
+
+    try {
+      if (get().user) {
+        const response = await axios.delete(`/api/cart/${productId}`);
+        if (response.data?.cart) {
+          set({ userCart: response.data.cart });
+        }
+      } else {
+        removeGuestCartItem(productId);
+        const cart = await hydrateGuestCart();
+        set({ userCart: cart });
+      }
+    } catch (error) {
+      console.error("Failed to remove from cart, reverting:", error);
+      if (previousCart) {
+        set({ userCart: previousCart });
+      }
+      throw error;
+    } finally {
+      set({ isCartUpdating: false });
+    }
   },
 
   syncCartAfterAuth: async () => {

@@ -2,12 +2,14 @@
 
 import axios, { AxiosError } from "axios";
 import Image from "next/image";
+import Link from "next/link";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/store";
 import { compressImage } from "@/utils/image";
 import { isProductInStock } from "@/lib/productStock";
 import ProductCard from "@/components/ProductCard";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
@@ -558,27 +560,26 @@ const ProductPageClient = ({
   const distributionSum = ratingDistribution.reduce((a, b) => a + b, 0) || 1;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F9] px-2 py-4 md:px-8 font-sans text-neutral-900">
-      {/* Breadcrumbs */}
-      <div className="mb-6 hidden flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400 md:flex">
-        <span
-          className="cursor-pointer transition-colors hover:text-neutral-800 flex items-center gap-1"
-          onClick={() => router.push("/")}
+    <div className="min-h-screen bg-[#FAF9F9] font-sans text-neutral-900">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Breadcrumbs */}
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-6 flex flex-wrap items-center gap-2 text-xs md:text-sm text-neutral-500"
         >
-          Home
-        </span>
-        <span>/</span>
-        <span
-          className="cursor-pointer transition-colors hover:text-neutral-800 capitalize"
-          onClick={() =>
-            router.push(`/category/${encodeURIComponent(product.category)}`)
-          }
-        >
-          {product.category}
-        </span>
-        <span>/</span>
-        <span className="text-neutral-800 font-bold">{product.title}</span>
-      </div>
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <Link
+            href={`/category/${encodeURIComponent(product.category)}`}
+            className="capitalize hover:text-rose-600 transition-colors"
+          >
+            {product.category}
+          </Link>
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900 line-clamp-1">
+            {product.title}
+          </span>
+        </nav>
 
       {/* Main product display */}
       <div className="grid grid-cols-1 gap-6 lg:gap-12 lg:grid-cols-12  mx-auto bg-white  p-2 md:p-8 border border-neutral-100 ">
@@ -1610,6 +1611,7 @@ const ProductPageClient = ({
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       {/* Sticky Mobile Action Bar */}
       <AnimatePresence>

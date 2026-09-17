@@ -153,15 +153,16 @@ const HeaderSection = () => {
         </AnimatePresence>
       </div> */}
       <nav
-        className={`flex items-center justify-between border-b border-rose-100 bg-white p-4 shadow-xs transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
+        className={`border-b border-rose-100 bg-white shadow-xs transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
       >
-        <div className=" hidden md:block font-bold">
-          <Link href={"/"}>
-            <span className="relative flex h-12 w-44 items-center overflow-visible">
-              <LogoMark />
-            </span>
-          </Link>
-        </div>
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <div className="hidden md:block font-bold">
+            <Link href={"/"}>
+              <span className="relative flex h-12 w-44 items-center overflow-visible">
+                <LogoMark />
+              </span>
+            </Link>
+          </div>
 
         <div
           className={` ${
@@ -365,6 +366,7 @@ const HeaderSection = () => {
           >
             <AlignJustify className="cursor-pointer" />
           </div>
+        </div>
         </div>
       </nav>
       <SearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />

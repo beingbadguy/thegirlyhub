@@ -40,7 +40,16 @@ export async function PUT(
       }
       coupon.code = uppercaseCode;
     }
-    if (body.discount !== undefined) coupon.discount = body.discount;
+    if (body.discount !== undefined) {
+      const numDiscount = Number(body.discount);
+      if (isNaN(numDiscount) || numDiscount <= 0) {
+        return NextResponse.json(
+          { message: "Discount must be a number greater than 0.", success: false },
+          { status: 400 },
+        );
+      }
+      coupon.discount = numDiscount;
+    }
     if (body.isActive !== undefined) coupon.isActive = body.isActive;
     if (body.type !== undefined) {
       if (!["percentage", "flat"].includes(body.type)) {
@@ -50,6 +59,18 @@ export async function PUT(
         );
       }
       coupon.type = body.type;
+    }
+    if (coupon.type === "percentage" && Number(coupon.discount) > 100) {
+      return NextResponse.json(
+        { message: "Percentage discount cannot exceed 100%.", success: false },
+        { status: 400 },
+      );
+    }
+    if (body.maxDiscount !== undefined) {
+      coupon.maxDiscount = body.maxDiscount !== null && Number(body.maxDiscount) > 0 ? Number(body.maxDiscount) : null;
+    }
+    if (body.minOrderAmount !== undefined) {
+      coupon.minOrderAmount = body.minOrderAmount !== null && Number(body.minOrderAmount) > 0 ? Number(body.minOrderAmount) : 0;
     }
     if (body.validTill !== undefined) {
       coupon.validTill = body.validTill ? new Date(body.validTill) : (null as unknown as Date);

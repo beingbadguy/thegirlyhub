@@ -13,25 +13,39 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-    const cart = await Cart.findOne({ userId: decoded?.userId })
+    const cart = await Cart.findOne({ userId: decoded.userId })
+      .select("userId products createdAt")
       .populate({
         path: "products.productId",
         select:
-          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug",
+          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug category",
       })
       .lean();
+
     if (!cart) {
       return NextResponse.json(
-        { message: "Cart not found", success: false, data: [] },
-        { status: 200 }
+        { message: "Cart not found", success: true, cart: { products: [] } },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "private, no-cache, no-store, must-revalidate",
+          },
+        },
       );
     }
-    return NextResponse.json({ cart, success: true });
+    return NextResponse.json(
+      { cart, success: true },
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        },
+      },
+    );
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching cart:", error);
     return NextResponse.json(
       { message: "Error fetching cart", success: false },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

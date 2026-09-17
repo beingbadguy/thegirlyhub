@@ -34,17 +34,26 @@ export default async function NewArrivalsPage() {
   ]);
 
   return (
-    <div className="min-h-[70vh] px-4 py-6 sm:px-6 lg:px-8">
-      <JsonLd data={breadcrumbSchema} />
-      <div className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome /> /{" "}
-        <span className="cursor-pointer hover:text-pink-600">
-          <Link href="/product">Products</Link>
-        </span>{" "}
-        <span>/</span>
-        <span className="text-black font-medium"> New Arrivals</span>
+    <div className="min-h-[70vh] bg-[#fffafb]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <JsonLd data={breadcrumbSchema} />
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <Link
+            href="/product"
+            className="hover:text-rose-600 transition-colors"
+          >
+            Products
+          </Link>
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">New Arrivals</span>
+        </nav>
+        <NewArrivals limit={100} initialProducts={products} />
       </div>
-      <NewArrivals limit={100} initialProducts={products} />
     </div>
   );
 }

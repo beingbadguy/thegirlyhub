@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
-import { Minus, Plus, Trash2, Sparkles } from "lucide-react";
+import { Minus, Plus, Trash2, Sparkles, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AxiosError } from "axios";
@@ -12,10 +12,11 @@ import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 import FreeShippingBar from "@/components/FreeShippingBar";
+import CartSkeleton from "@/components/CartSkeleton";
 import { productUrl } from "@/lib/slug";
 
 const CartPage = () => {
-  const { user, userCart, updateCartQuantity, removeFromCart } = useAuthStore();
+  const { user, userCart, isCartLoading, isCartUpdating, updateCartQuantity, removeFromCart } = useAuthStore();
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -26,35 +27,30 @@ const CartPage = () => {
       .fetchUser()
       .finally(() => setAuthChecked(true));
   }, []);
-  // console.log(user?.firstPurchase);
 
   const handleChangeCartQuantity = async (
     productId: string,
     quantity: number,
   ) => {
-    // console.log("Increase/decrease quantity for:", productId);
-
     try {
       await updateCartQuantity(productId, quantity);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
       } else {
-        console.error("Failed to add to cart", error);
+        console.error("Failed to update cart quantity", error);
       }
     }
   };
 
   const handleDelete = async (productId: string) => {
-    // console.log("Delete product:", productId);
-
     try {
       await removeFromCart(productId);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
       } else {
-        console.error("Failed to add to cart", error);
+        console.error("Failed to remove item from cart", error);
       }
     }
   };
@@ -107,8 +103,9 @@ const CartPage = () => {
     prevSubtotalRef.current = subtotal;
   }, [subtotal]);
 
-  if (!authChecked) {
-    return <div className="min-h-[72vh] bg-[#fffafc]" />;
+  // Show rich animated Skeleton Loader while checking auth or loading cart
+  if (!authChecked || (isCartLoading && !userCart)) {
+    return <CartSkeleton />;
   }
 
   if (!user) {
@@ -121,13 +118,18 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-[90vh] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome /> /{" "}
-        <span className="cursor-pointer text-black">Cart</span>{" "}
-      </div>
+    <div className="min-h-[90vh] bg-[#fffafb]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Cart</span>
+        </nav>
 
-      <h1 className="py-2 font-bold text-pink-700 text-3xl">Your Cart</h1>
+        <h1 className="py-2 font-bold text-pink-700 text-3xl font-serif">Your Cart</h1>
 
       {cartItems.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -419,20 +421,36 @@ const CartPage = () => {
           </div>
         </div>
       ) : (
-        <p className="text-gray-600 my-2 text-sm">
-          You do not have any items in your cart.
-        </p>
-      )}
-
-      {/* Floating Free Shipping Toast */}
-      {showToast && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-green-500 animate-bounce transition-all duration-300">
-          <Sparkles className="w-5 h-5 text-white" />
-          <span className="font-bold text-sm">
-            Congrats! You unlocked FREE shipping 🚀
-          </span>
+        <div className="flex min-h-[50vh] flex-col items-center justify-center text-center p-8 bg-white/60 rounded-3xl border border-rose-100/60 my-6 shadow-xs">
+          <div className="flex size-20 items-center justify-center rounded-full bg-rose-50 text-rose-500 mb-4 ring-8 ring-rose-50/50">
+            <ShoppingBag className="size-9 text-rose-500" strokeWidth={1.75} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Your shopping bag is empty
+          </h2>
+          <p className="text-sm text-gray-500 max-w-md mb-6">
+            Looks like you haven't added anything to your cart yet. Explore our latest arrivals and find something special!
+          </p>
+          <Link
+            href="/newarrivals"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-rose-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-rose-700 hover:shadow-lg active:scale-95"
+          >
+            <Sparkles className="size-4" />
+            Explore New Arrivals
+          </Link>
         </div>
       )}
+
+        {/* Floating Free Shipping Toast */}
+        {showToast && (
+          <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-green-500 animate-bounce transition-all duration-300">
+            <Sparkles className="w-5 h-5 text-white" />
+            <span className="font-bold text-sm">
+              Congrats! You unlocked FREE shipping 🚀
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

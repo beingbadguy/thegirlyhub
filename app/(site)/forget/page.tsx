@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { useState, useEffect } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
@@ -59,19 +60,17 @@ export default function ForgetPage() {
   };
 
   return (
-    <div className="min-h-[80vh] bg-[#FAF9F9] w-full flex flex-col py-6">
+    <div className="min-h-[80vh] bg-[#FAF9F9] w-full flex flex-col">
       {/* Breadcrumbs */}
-      <div className="w-full  mx-auto px-4 md:px-8 pb-2 text-left">
-        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
-          <Link
-            href="/"
-            className="cursor-pointer transition-colors hover:text-neutral-800"
-          >
-            Home
-          </Link>
-          <span>/</span>
-          <span className="text-neutral-800 font-bold">Forgot Password</span>
-        </div>
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Forgot Password</span>
+        </nav>
       </div>
 
       {/* Main content centered */}

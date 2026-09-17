@@ -3,6 +3,7 @@ import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
 import { useAuthStore } from "@/store/store";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import axios, { AxiosError } from "axios";
 import { VscCoffee } from "react-icons/vsc";
@@ -65,26 +66,32 @@ const WishlistPage = () => {
   }
 
   return (
-    <div className="min-h-[70vh] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome /> /{" "}
-        <span
-          className="cursor-pointer hover:text-pink-600"
-          onClick={() => router.push("/product")}
+    <div className="min-h-[70vh] bg-[#fffafb]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
         >
-          Products
-        </span>{" "}
-        / <span className="text-black">Wishlist</span>
-      </div>
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <Link
+            href="/product"
+            className="hover:text-rose-600 transition-colors"
+          >
+            Products
+          </Link>
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Wishlist</span>
+        </nav>
 
-      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-pink-700">Your Wishlist</h1>
-        {totalItems > 0 && (
-          <span className="text-sm text-gray-500">
-            {totalItems} saved item{totalItems !== 1 ? "s" : ""}
-          </span>
-        )}
-      </div>
+        <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold text-pink-700 font-serif">Your Wishlist</h1>
+          {totalItems > 0 && (
+            <span className="text-sm text-gray-500">
+              {totalItems} saved item{totalItems !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
 
       {isWishlistEmpty && (
         <div className="my-2 flex flex-wrap items-center gap-1 text-sm text-gray-600">
@@ -128,6 +135,7 @@ const WishlistPage = () => {
           {totalItems !== 1 ? "s" : ""} in wishlist)
         </p>
       )}
+      </div>
     </div>
   );
 };

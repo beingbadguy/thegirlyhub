@@ -107,6 +107,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("[POST /api/order] Placing COD order:", {
+      email: prepared.data.email,
+      subtotal: prepared.data.subtotal,
+      firstTimeDiscount: prepared.data.firstTimeDiscount,
+      couponCode: prepared.data.couponCode,
+      appliedCouponDiscount: prepared.data.appliedCouponDiscount,
+      shippingCharge: prepared.data.shippingCharge,
+      expectedTotal: prepared.data.expectedTotal,
+    });
+
     const newOrder = await placeOrderRecord(prepared.data, {
       paymentStatus: "unpaid",
     });

@@ -18,6 +18,10 @@ import {
   OrderFieldErrors,
   validateOrderInput,
 } from "@/lib/orderValidation";
+import {
+  calculateCheckout,
+  MIN_PAYABLE_AMOUNT,
+} from "@/lib/checkoutCalculation";
 import { calculateShipping } from "@/lib/shipping";
 import { isProductInStock } from "@/lib/productStock";
 import { clearGuestCart } from "@/lib/guestCart";
@@ -122,6 +126,8 @@ export default function CheckoutPage() {
     discount: number;
     type: "percentage" | "flat";
     code: string;
+    maxDiscount?: number | null;
+    minOrderAmount?: number | null;
   } | null>(null);
 
   const welcomeCouponCode = "NEWGIRLY";
@@ -191,7 +197,7 @@ export default function CheckoutPage() {
     router,
   ]);
 
-  const subtotal = availableCartItems.reduce((acc, item) => {
+  const mappedCartItems = availableCartItems.map((item) => {
     const p = item.productId;
     const price = Number(
       p.discountedPrice ||
@@ -200,30 +206,39 @@ export default function CheckoutPage() {
         (p as any).discountPrice ||
         0,
     );
-    return acc + price * item.quantity;
-  }, 0);
+    return {
+      productId: p._id,
+      quantity: item.quantity,
+      price,
+      title: p.title || (p as any).name || "Product",
+      image: p.image || (p as any).mainImage || "",
+      size: item.size || "",
+    };
+  });
 
-  // Dynamic shipping calculation
-  const shippingResult = calculateShipping(subtotal, paymentMode);
-  const shippingCharge = shippingResult.shippingCharge;
-  const isFreeShipping = shippingResult.isFreeShipping;
+  const calcResult = calculateCheckout({
+    items: mappedCartItems,
+    isFirstOrder: !user?.firstPurchase,
+    coupon: couponDetails
+      ? {
+          code: couponDetails.code,
+          discount: couponDetails.discount,
+          type: couponDetails.type,
+          maxDiscount: couponDetails.maxDiscount,
+          minOrderAmount: couponDetails.minOrderAmount,
+        }
+      : null,
+    paymentMethod: paymentMode,
+    autoAdjustDiscount: true,
+  });
 
-  const firstTimeDiscount =
-    couponApplied || user?.firstPurchase || subtotal <= 0
-      ? 0
-      : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
-  const baseTotal = Math.max(0, subtotal + shippingCharge - firstTimeDiscount);
-
-  let couponDiscount = 0;
-  if (couponDetails) {
-    if (couponDetails.type === "percentage") {
-      couponDiscount =
-        Math.round(((baseTotal * couponDetails.discount) / 100) * 100) / 100;
-    } else {
-      couponDiscount = couponDetails.discount;
-    }
-  }
-  const finalAmount = Math.max(0, baseTotal - couponDiscount);
+  const subtotal = calcResult.subtotal;
+  const shippingCharge = calcResult.shippingCharge;
+  const isFreeShipping = calcResult.isFreeShipping;
+  const firstTimeDiscount = calcResult.firstOrderDiscount;
+  const couponDiscount = calcResult.couponDiscount;
+  const finalAmount = calcResult.finalAmount;
+  const isCouponAdjusted = calcResult.couponDiscountAdjusted;
 
   const buildOrderPayload = () => ({
     totalAmount: finalAmount,
@@ -499,7 +514,7 @@ export default function CheckoutPage() {
       setPromoCodeError("Please enter a valid coupon code.");
       return;
     }
-    if (!availableCartItems.length || !baseTotal) {
+    if (!availableCartItems.length || subtotal <= 0) {
       setPromoCodeError("Your cart is empty.");
       return;
     }
@@ -509,7 +524,7 @@ export default function CheckoutPage() {
     try {
       const response = await axios.post("/api/coupon/apply", {
         code: cleanCode,
-        totalAmount: baseTotal,
+        totalAmount: subtotal,
         email,
       });
       setCouponDetails({
@@ -519,7 +534,7 @@ export default function CheckoutPage() {
       });
       setPromoCode(response.data.code || cleanCode);
       setPromoCodeError(
-        response.data.message || "Coupon applied successfully!",
+        response.data.message || (response.data.discountAdjusted ? "Coupon applied with adjusted discount to maintain minimum ₹1.00 order total." : "Coupon applied successfully!"),
       );
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -549,7 +564,7 @@ export default function CheckoutPage() {
     try {
       const response = await axios.post("/api/coupon/apply", {
         code: welcomeCouponCode,
-        totalAmount: baseTotal,
+        totalAmount: subtotal,
         email,
       });
       setCouponDetails({
@@ -559,7 +574,7 @@ export default function CheckoutPage() {
       });
       setWelcomeCouponRedeemed(true);
       setPromoCodeError(
-        response.data.message || "Welcome coupon applied successfully!",
+        response.data.message || (response.data.discountAdjusted ? "Welcome coupon applied (discount adjusted to maintain minimum ₹1.00 total)." : "Welcome coupon applied successfully!"),
       );
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -618,11 +633,16 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-[80vh] bg-[#fffafb] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-4 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
-          <BreadcrumbHome /> / <span className="text-black">Checkout</span>
-        </div>
+    <div className="min-h-[80vh] bg-[#fffafb]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Checkout</span>
+        </nav>
 
         <div className="mb-6 flex flex-col gap-1">
           <h1 className="text-3xl font-bold text-gray-950">Checkout</h1>
@@ -984,7 +1004,14 @@ export default function CheckoutPage() {
                 )}
                 {couponApplied && (
                   <div className="flex justify-between text-green-600">
-                    <p>Coupon discount ({promoCode.toUpperCase()})</p>
+                    <div>
+                      <p>Coupon discount ({promoCode.toUpperCase()})</p>
+                      {isCouponAdjusted && (
+                        <span className="text-[10px] text-amber-600 font-medium block">
+                          (Adjusted to maintain ₹{MIN_PAYABLE_AMOUNT.toFixed(2)} min order total)
+                        </span>
+                      )}
+                    </div>
                     <p>-₹{couponDiscount.toFixed(2)}</p>
                   </div>
                 )}
@@ -1160,6 +1187,12 @@ export default function CheckoutPage() {
               )}
             </div>
 
+            {finalAmount < MIN_PAYABLE_AMOUNT && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 border border-amber-200">
+                Minimum order amount must be at least ₹{MIN_PAYABLE_AMOUNT.toFixed(2)} to checkout.
+              </p>
+            )}
+
             {orderError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
                 {orderError}
@@ -1167,8 +1200,8 @@ export default function CheckoutPage() {
             )}
 
             <Button
-              disabled={placingOrder}
-              className="w-full cursor-pointer rounded-xl bg-rose-600 py-6 text-base font-semibold text-white shadow-md hover:bg-rose-700"
+              disabled={placingOrder || availableCartItems.length === 0 || finalAmount < MIN_PAYABLE_AMOUNT || !calcResult.isValid}
+              className="w-full cursor-pointer rounded-xl bg-rose-600 py-6 text-base font-semibold text-white shadow-md hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleOrder}
             >
               {placingOrder ? (
@@ -1256,7 +1289,7 @@ export default function CheckoutPage() {
             <div className="mt-5 flex flex-col gap-2.5">
               <Button
                 type="button"
-                disabled={placingOrder || !captchaToken}
+                disabled={placingOrder || !captchaToken || finalAmount < MIN_PAYABLE_AMOUNT || !calcResult.isValid}
                 onClick={() => confirmCodOrder()}
                 className="w-full cursor-pointer rounded-xl bg-rose-600 py-5 text-sm font-semibold text-white shadow-md hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >

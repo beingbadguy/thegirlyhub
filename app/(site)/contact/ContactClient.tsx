@@ -97,13 +97,19 @@ export default function ContactClient() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-10">
-      {/* Breadcrumb */}
-      <div className="mx-auto text-sm text-gray-500 mb-6 flex items-center gap-1.5 flex-wrap">
-        <BreadcrumbHome /> / <span className="text-gray-800 font-medium">Contact</span>
-      </div>
+    <div className="min-h-screen bg-[#fffafb]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-6 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Contact</span>
+        </nav>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* LEFT SIDE */}
         <div className="flex flex-col justify-center space-y-6">
           <div>
@@ -233,6 +239,7 @@ export default function ContactClient() {
             </div>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );

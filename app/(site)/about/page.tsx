@@ -4,6 +4,7 @@ import { FaQuoteLeft } from "react-icons/fa";
 import { HiOutlineSparkles } from "react-icons/hi";
 import type { Metadata } from "next";
 import JsonLd from "@/components/seo/JsonLd";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import { generateBreadcrumbSchema } from "@/lib/seo/schema";
 
@@ -30,9 +31,17 @@ const AboutUs = () => {
   ]);
 
   return (
-    <div className="py-10 md:py-16 lg:py-20 bg-white">
-      <JsonLd data={breadcrumbSchema} />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-6 sm:py-8 bg-[#fffafb] min-h-[70vh]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <JsonLd data={breadcrumbSchema} />
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-6 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">About Us</span>
+        </nav>
         {/* Hero Section */}
         <section className="text-center mb-8 md:mb-12">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 font-serif">

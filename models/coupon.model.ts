@@ -5,6 +5,8 @@ const couponSchema = new mongoose.Schema(
     name: { type: String, required: true },
     code: { type: String, required: true, unique: true },
     discount: { type: Number, required: true },
+    maxDiscount: { type: Number, default: null },
+    minOrderAmount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
     validTill: { type: Date, default: null },
     usersAvailed: { type: [String], default: [] },

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/lib/seo/config";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -11,7 +12,15 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicy() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 md:py-16 min-h-[60vh]">
+    <div className="mx-auto max-w-3xl px-4 py-8 md:py-12 min-h-[60vh]">
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+      >
+        <BreadcrumbHome />
+        <span className="text-neutral-300">/</span>
+        <span className="font-semibold text-neutral-900">Privacy Policy</span>
+      </nav>
       <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900 font-serif">
         Privacy Policy
       </h1>

@@ -1,3 +1,5 @@
+import { MIN_PAYABLE_AMOUNT, MIN_ITEM_PRICE } from "./checkoutCalculation";
+
 export interface OrderProductInput {
   productId: string;
   quantity: number;
@@ -143,8 +145,8 @@ export function getOrderFieldErrors(
   }
 
   const total = Number(data.totalAmount);
-  if (data.totalAmount !== undefined && (isNaN(total) || total <= 0)) {
-    fieldErrors.totalAmount = "Order total must be greater than zero.";
+  if (data.totalAmount !== undefined && (isNaN(total) || total < MIN_PAYABLE_AMOUNT)) {
+    fieldErrors.totalAmount = `Order total must be at least ₹${MIN_PAYABLE_AMOUNT.toFixed(2)}.`;
   }
 
   return fieldErrors;
@@ -156,18 +158,20 @@ export function validateOrderInput(data: Partial<OrderInput>): ValidationResult 
 
   if (Array.isArray(data.products) && data.products.length > 0) {
     data.products.forEach((item, index) => {
+      const itemTitle = item.title?.trim() ? `"${item.title}"` : `Product ${index + 1}`;
       if (!item.productId) {
-        errors.push(`Product ${index + 1}: missing product ID.`);
+        errors.push(`${itemTitle}: missing product ID.`);
       }
-      if (!item.quantity || Number(item.quantity) < 1) {
-        errors.push(`Product ${index + 1}: quantity must be at least 1.`);
+      const qty = Number(item.quantity);
+      if (isNaN(qty) || !Number.isInteger(qty) || qty < 1) {
+        errors.push(`${itemTitle}: quantity must be a whole number of at least 1.`);
       }
       if (!item.title?.trim()) {
         errors.push(`Product ${index + 1}: title is required.`);
       }
       const p = Number(item.price);
-      if (isNaN(p) || p <= 0) {
-        errors.push(`Product ${index + 1}: invalid price.`);
+      if (isNaN(p) || p < MIN_ITEM_PRICE) {
+        errors.push(`${itemTitle}: invalid price (must be greater than ₹0).`);
       }
     });
   }

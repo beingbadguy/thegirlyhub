@@ -25,16 +25,23 @@ export default async function CategoriesPage() {
   ]);
 
   return (
-    <div className="min-h-[70vh] px-4 py-6 sm:px-6 lg:px-8">
-      <JsonLd data={breadcrumbSchema} />
-      <div className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-gray-500">
-        <BreadcrumbHome /> / <span className="text-black font-medium">Categories</span>
+    <div className="min-h-[70vh] bg-[#fffafb]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <JsonLd data={breadcrumbSchema} />
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Categories</span>
+        </nav>
+        <StaggeringCategories
+          limit={100}
+          showViewAll={false}
+          initialCategories={categories}
+        />
       </div>
-      <StaggeringCategories
-        limit={100}
-        showViewAll={false}
-        initialCategories={categories}
-      />
     </div>
   );
 }

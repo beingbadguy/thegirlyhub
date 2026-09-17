@@ -12,6 +12,7 @@ export default function CartDrawer() {
     isCartOpen,
     closeCart,
     userCart,
+    isCartLoading,
     updateCartQuantity,
     removeFromCart,
   } = useAuthStore();
@@ -63,7 +64,20 @@ export default function CartDrawer() {
         </header>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {items.length === 0 ? (
+          {isCartLoading && !userCart ? (
+            <div className="space-y-4 animate-pulse">
+              {[1, 2, 3].map((idx) => (
+                <div key={idx} className="flex gap-4 border-b border-neutral-100 pb-5">
+                  <div className="size-20 shrink-0 rounded-xl bg-rose-100/60" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                    <div className="h-3.5 w-1/3 bg-rose-100/80 rounded" />
+                    <div className="h-6 w-20 bg-gray-100 rounded-full mt-2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center text-center">
               <ShoppingBag
                 className="size-10 text-rose-300"

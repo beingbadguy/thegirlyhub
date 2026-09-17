@@ -2,11 +2,20 @@
 
 import Link from "next/link";
 import React from "react";
+import { Home } from "lucide-react";
 
-export default function BreadcrumbHome() {
+export default function BreadcrumbHome({
+  className = "",
+}: {
+  className?: string;
+}) {
   return (
-    <span className="inline-flex items-center gap-1 cursor-pointer hover:text-pink-600">
-      <Link href="/">Home</Link>
-    </span>
+    <Link
+      href="/"
+      className={`inline-flex items-center gap-1 font-medium text-neutral-500 transition-colors hover:text-rose-600 ${className}`}
+    >
+      <Home className="size-3.5 shrink-0" />
+      <span>Home</span>
+    </Link>
   );
 }

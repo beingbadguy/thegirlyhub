@@ -27,10 +27,17 @@ export default async function Home() {
     ]);
 
   return (
-    <main className="mx-auto px-4 md:px-6">
-      <div>
+    <main className="w-full">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <StaggeringCategories initialCategories={categories} />
+      </div>
+
+      {/* Full Width Hero Banner across ALL screen sizes */}
+      <div className="w-full">
         <HeroBannerSlider />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <BudgetPriceZone />
         <NewArrivals
           limit={12}

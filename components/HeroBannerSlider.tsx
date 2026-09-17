@@ -54,7 +54,7 @@ export default function HeroBannerSlider() {
   const banner = banners[activeIndex];
 
   return (
-    <section className="relative w-[calc(100%+2rem)] -mx-4 md:w-[calc(100%+3rem)] md:-mx-6 overflow-hidden">
+    <section className="relative w-full overflow-hidden">
       <div className="relative w-full">
         {/* LOADING */}
         {!banner ? (

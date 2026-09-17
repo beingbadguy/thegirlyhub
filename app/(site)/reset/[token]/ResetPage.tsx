@@ -3,6 +3,7 @@ import axios, { AxiosError } from "axios";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Lock, Check, X } from "lucide-react";
@@ -54,19 +55,17 @@ export default function ResetPage({ token }: { token: string }) {
   };
 
   return (
-    <div className="min-h-[75vh] bg-neutral-50/50 w-full flex flex-col py-6">
+    <div className="min-h-[75vh] bg-neutral-50/50 w-full flex flex-col">
       {/* Breadcrumbs */}
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 pb-2 text-left">
-        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-400">
-          <Link
-            href="/"
-            className="cursor-pointer transition-colors hover:text-neutral-800"
-          >
-            Home
-          </Link>
-          <span>/</span>
-          <span className="text-neutral-800 font-bold">Reset Password</span>
-        </div>
+      <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Reset Password</span>
+        </nav>
       </div>
 
       {/* Main content centered */}

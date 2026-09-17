@@ -1,4 +1,9 @@
-import { FIRST_ORDER_DISCOUNT_RATE, calculateShipping } from "@/lib/shipping";
+import {
+  calculateCheckout,
+  logCheckoutCalculation,
+  MIN_PAYABLE_AMOUNT,
+  CouponLike,
+} from "@/lib/checkoutCalculation";
 import {
   OrderInput,
   validateOrderInput,
@@ -105,7 +110,6 @@ export async function prepareCheckout(
     dbProducts.map((product: any) => [product._id.toString(), product]),
   );
 
-  let subtotal = 0;
   const verifiedProducts = [];
 
   for (const item of products) {
@@ -141,10 +145,17 @@ export async function prepareCheckout(
         0,
     );
 
-    subtotal += productPrice * item.quantity;
+    if (productPrice <= 0) {
+      return {
+        ok: false,
+        status: 400,
+        message: `Invalid price for product "${dbProduct.title}".`,
+      };
+    }
+
     verifiedProducts.push({
       productId: dbProduct._id,
-      quantity: item.quantity,
+      quantity: Number(item.quantity),
       title: dbProduct.title || (dbProduct as any).name || item.title || "Product",
       price: productPrice,
       image: dbProduct.image || (dbProduct as any).mainImage || item.image || "",
@@ -172,64 +183,50 @@ export async function prepareCheckout(
     alreadyPurchased = Boolean(previousOrder);
   }
 
-  const shipping = calculateShipping(subtotal, paymentMethod);
-  const shippingCharge = shipping.shippingCharge;
-  const firstTimeDiscount = alreadyPurchased
-    ? 0
-    : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
-
-  let expectedTotal = Math.max(
-    0,
-    Math.round((subtotal + shippingCharge - firstTimeDiscount) * 100) / 100,
-  );
-  let appliedCouponDiscount = 0;
-  const normalizedCoupon = couponCode
-    ? String(couponCode).toUpperCase()
-    : null;
   const couponClaimKey = (decodedUserId || checkoutEmail).toString();
+  const normalizedCoupon = couponCode ? String(couponCode).trim().toUpperCase() : null;
+  let dbCoupon: CouponLike | null = null;
 
   if (normalizedCoupon) {
-    const coupon = await Coupon.findOne({ code: normalizedCoupon });
-    if (!coupon) {
+    const foundCoupon = await Coupon.findOne({ code: normalizedCoupon }).lean();
+    if (!foundCoupon) {
       return { ok: false, status: 400, message: "Invalid coupon code." };
     }
-    if (!coupon.isActive) {
-      return {
-        ok: false,
-        status: 400,
-        message: "This coupon is currently inactive.",
-      };
-    }
-    if (coupon.validTill && new Date() > new Date(coupon.validTill)) {
-      return { ok: false, status: 400, message: "This coupon has expired." };
-    }
-    if (
-      coupon.usersAvailed &&
-      coupon.usersAvailed.includes(couponClaimKey)
-    ) {
-      return {
-        ok: false,
-        status: 400,
-        message: "You have already availed this coupon.",
-      };
-    }
-    appliedCouponDiscount =
-      coupon.type === "percentage"
-        ? Math.round(((expectedTotal * coupon.discount) / 100) * 100) / 100
-        : coupon.discount;
-    expectedTotal = Math.max(
-      0,
-      Math.round((expectedTotal - appliedCouponDiscount) * 100) / 100,
-    );
+    dbCoupon = foundCoupon as unknown as CouponLike;
   }
 
-  if (expectedTotal <= 0) {
+  // Execute pipeline through Checkout Calculation Engine
+  const calcResult = calculateCheckout({
+    items: verifiedProducts,
+    isFirstOrder: !alreadyPurchased,
+    coupon: dbCoupon,
+    paymentMethod,
+    autoAdjustDiscount: true,
+    userClaimKey: couponClaimKey,
+  });
+
+  if (!calcResult.isValid) {
     return {
       ok: false,
       status: 400,
-      message: "Order total must be greater than zero.",
+      message: calcResult.errors[0] || "Invalid order calculation.",
+      errors: calcResult.errors,
     };
   }
+
+  if (calcResult.finalAmount < MIN_PAYABLE_AMOUNT) {
+    return {
+      ok: false,
+      status: 400,
+      message: `Order total must be at least ₹${MIN_PAYABLE_AMOUNT.toFixed(2)}.`,
+    };
+  }
+
+  logCheckoutCalculation("prepareCheckout", calcResult, {
+    email: checkoutEmail,
+    userId: decodedUserId || null,
+    isGuest,
+  });
 
   return {
     ok: true,
@@ -238,12 +235,12 @@ export async function prepareCheckout(
       userId: decodedUserId || null,
       isGuest,
       couponClaimKey,
-      subtotal,
-      shippingCharge,
-      firstTimeDiscount: Math.round(firstTimeDiscount * 100) / 100,
-      appliedCouponDiscount,
-      expectedTotal,
-      expectedAmountInPaise: Math.round(expectedTotal * 100),
+      subtotal: calcResult.subtotal,
+      shippingCharge: calcResult.shippingCharge,
+      firstTimeDiscount: calcResult.firstOrderDiscount,
+      appliedCouponDiscount: calcResult.couponDiscount,
+      expectedTotal: calcResult.finalAmount,
+      expectedAmountInPaise: calcResult.amountInPaise,
       verifiedProducts,
       recipientName: recipientName.trim(),
       email: checkoutEmail,

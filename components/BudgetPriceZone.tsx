@@ -37,7 +37,7 @@ const PRICE_TIERS: PriceTier[] = [
   {
     id: "under-199",
     price: 199,
-    badge: "Most Loved & Trending",
+    badge: " Loved & Trending",
     badgeIcon: Flame,
     title: "Under ₹199",
     description: "Korean stud earrings, silk scrunchies, pearl hoops & pastel clips",

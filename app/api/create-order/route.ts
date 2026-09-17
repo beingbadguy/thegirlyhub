@@ -50,6 +50,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log("[POST /api/create-order] Initiating Razorpay order:", {
+      email: prepared.data.email,
+      subtotal: prepared.data.subtotal,
+      firstTimeDiscount: prepared.data.firstTimeDiscount,
+      couponCode: prepared.data.couponCode,
+      appliedCouponDiscount: prepared.data.appliedCouponDiscount,
+      shippingCharge: prepared.data.shippingCharge,
+      expectedTotal: prepared.data.expectedTotal,
+      amountInPaise,
+    });
+
     const pending = await PendingPayment.create({
       razorpayOrderId: `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       amountInPaise,

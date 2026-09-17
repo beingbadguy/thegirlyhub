@@ -342,7 +342,7 @@ export default function ProfilePage() {
 
   return (
     <div className="bg-[#fdf7f9]">
-      <div className="mx-auto flex max-w-7xl flex-col px-4 py-4 md:h-[calc(100dvh-5.5rem)] md:flex-row md:gap-6 md:overflow-hidden md:py-6">
+      <div className="mx-auto flex max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8 md:h-[calc(100dvh-5.5rem)] md:flex-row md:gap-6 md:overflow-hidden md:py-6">
         <aside className="hidden h-full w-64 shrink-0 flex-col overflow-y-auto rounded-2xl border border-rose-100 bg-white p-4 shadow-sm md:flex">
           <div className="mb-4 flex items-center gap-3 border-b border-rose-50 pb-4">
             <div className="relative size-12 overflow-hidden rounded-full bg-rose-50">
