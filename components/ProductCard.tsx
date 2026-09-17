@@ -54,10 +54,12 @@ export default function ProductCard({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const images =
+  const rawImages =
     product.images && product.images.length > 0
       ? product.images
-      : [product.image];
+      : [product.image || (product as any).mainImage || "/placeholder.png"];
+  const images = rawImages.filter(Boolean);
+  if (images.length === 0) images.push("/placeholder.png");
 
   useEffect(() => {
     if (!isHovered || images.length <= 1) return;

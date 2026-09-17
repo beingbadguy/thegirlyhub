@@ -13,6 +13,7 @@ interface NewArrivalsProps {
   paginated?: boolean;
   showSeeMore?: boolean;
   featured?: boolean;
+  initialProducts?: React.ComponentProps<typeof ProductCard>["product"][];
 }
 
 const NewArrivals = ({
@@ -20,16 +21,25 @@ const NewArrivals = ({
   paginated = false,
   showSeeMore = false,
   featured = false,
+  initialProducts,
 }: NewArrivalsProps) => {
+  const hasInitial = Array.isArray(initialProducts) && initialProducts.length > 0;
   const [products, setProducts] = useState<
     React.ComponentProps<typeof ProductCard>["product"][]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  >(hasInitial ? (initialProducts as any[]) : []);
+  const [loading, setLoading] = useState(!hasInitial);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(
+    hasInitial ? initialProducts!.length : 0,
+  );
 
   useEffect(() => {
+    // If we already have initial products and we are on page 1, skip client fetch
+    if (hasInitial && page === 1 && !paginated) {
+      return;
+    }
+
     let active = true;
     const fetchAllProducts = async () => {
       try {
@@ -61,7 +71,7 @@ const NewArrivals = ({
     return () => {
       active = false;
     };
-  }, [featured, limit, paginated, page]);
+  }, [featured, limit, paginated, page, hasInitial]);
 
   if (featured && !loading && products.length === 0) {
     return null;

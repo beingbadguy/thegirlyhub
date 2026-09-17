@@ -13,21 +13,34 @@ type Product = React.ComponentProps<typeof ProductCard>["product"];
 
 interface CategoryPageClientProps {
   categoryName: string;
+  initialProducts?: Product[];
+  initialTotal?: number;
+  initialTotalPages?: number;
 }
 
-export default function CategoryPageClient({ categoryName }: CategoryPageClientProps) {
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+export default function CategoryPageClient({
+  categoryName,
+  initialProducts,
+  initialTotal = 0,
+  initialTotalPages = 1,
+}: CategoryPageClientProps) {
+  const hasInitial = Array.isArray(initialProducts) && initialProducts.length > 0;
+  const [isInitialLoading, setIsInitialLoading] = useState(!hasInitial);
   const [isFetching, setIsFetching] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(
+    hasInitial ? (initialProducts as Product[]) : [],
+  );
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(
+    hasInitial ? initialTotalPages : 1,
+  );
+  const [total, setTotal] = useState(hasInitial ? initialTotal : 0);
   const [showFilter, setShowFilter] = useState(false);
   const [maxValue, setMaxValue] = useState(100000);
   const [debouncedMaxPrice, setDebouncedMaxPrice] = useState(100000);
   const [sortBy, setSortBy] = useState("default");
   const router = useRouter();
-  const hasLoadedOnce = useRef(false);
+  const hasLoadedOnce = useRef(hasInitial);
 
   // Debounce max price slider
   useEffect(() => {
@@ -68,10 +81,15 @@ export default function CategoryPageClient({ categoryName }: CategoryPageClientP
   };
 
   useEffect(() => {
-    setPage(1);
-  }, [categoryName]);
-
-  useEffect(() => {
+    // If we have initial products and default filters on page 1, skip re-fetching
+    if (
+      hasInitial &&
+      page === 1 &&
+      debouncedMaxPrice === 100000 &&
+      sortBy === "default"
+    ) {
+      return;
+    }
     fetchProducts(page);
   }, [categoryName, page, debouncedMaxPrice, sortBy]);
 

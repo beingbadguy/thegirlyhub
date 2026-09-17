@@ -42,7 +42,11 @@ export async function GET(request: NextRequest) {
     const sortParam = request.nextUrl.searchParams.get("sort");
     const featured = request.nextUrl.searchParams.get("featured");
 
-    const filter: any = {};
+    const filter: any = {
+      isActive: { $ne: false },
+      status: { $nin: ["draft", "archived"] },
+    };
+
     if (query) {
       const searchRegex = new RegExp(
         query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
@@ -54,8 +58,17 @@ export async function GET(request: NextRequest) {
         { category: searchRegex },
       ];
     }
-    if (category) filter.category = category;
-    if (featured === "true") filter.isFeatured = true;
+    if (category) {
+      filter.category = {
+        $regex: new RegExp(
+          `^${category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          "i",
+        ),
+      };
+    }
+    if (featured === "true") {
+      filter.$or = [{ isFeatured: true }, { status: "featured" }];
+    }
     if (minPrice || maxPrice) {
       filter.discountedPrice = {};
       if (minPrice) filter.discountedPrice.$gte = Number(minPrice);
@@ -83,11 +96,63 @@ export async function GET(request: NextRequest) {
       Product.countDocuments(filter),
     ]);
 
+    const normalizedProducts = products.map((p: any) => {
+      const idStr = p._id ? p._id.toString() : "";
+      const title = p.title || p.name || "Product";
+      const image =
+        p.mainImage ||
+        p.image ||
+        (Array.isArray(p.images) && p.images[0]) ||
+        "/placeholder.png";
+      const images =
+        Array.isArray(p.images) && p.images.length > 0
+          ? p.images.filter(Boolean)
+          : image
+            ? [image]
+            : [];
+      const price = Number(p.price ?? p.sellingPrice ?? 0);
+      const discountedPrice = Number(
+        p.discountedPrice ?? p.discountPrice ?? p.sellingPrice ?? price,
+      );
+      const discountPercentage =
+        p.discountPercentage ??
+        (price > 0 && price > discountedPrice
+          ? Math.round(((price - discountedPrice) / price) * 100)
+          : 0);
+      const countInStock = Number(
+        p.countInStock ?? p.stock ?? p.totalStock ?? 0,
+      );
+
+      return {
+        ...p,
+        _id: idStr,
+        title,
+        name: title,
+        image,
+        mainImage: image,
+        images,
+        price,
+        sellingPrice: discountedPrice,
+        discountedPrice,
+        discountPrice: discountedPrice,
+        discountPercentage,
+        countInStock,
+        stock: countInStock,
+        totalStock: countInStock,
+        slug: p.slug || idStr,
+        category: p.category || "jewellery",
+        isActive:
+          p.isActive !== false &&
+          p.status !== "draft" &&
+          p.status !== "archived",
+      };
+    });
+
     return NextResponse.json(
       {
         success: true,
         message: "Products fetched successfully",
-        products,
+        products: normalizedProducts,
         pagination: paginationResult(page, limit, total),
       },
       {

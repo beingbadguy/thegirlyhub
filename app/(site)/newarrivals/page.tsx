@@ -6,6 +6,9 @@ import BreadcrumbHome from "@/components/BreadcrumbHome";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import { generateBreadcrumbSchema } from "@/lib/seo/schema";
+import { getSSRProducts } from "@/lib/ssrData";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "New Arrivals | Latest Hair Accessories & Jewellery",
@@ -23,7 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function NewArrivalsPage() {
+export default async function NewArrivalsPage() {
+  const { products } = await getSSRProducts({ limit: 100 });
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: "Home", url: "/" },
     { name: "New Arrivals", url: "/newarrivals" },
@@ -40,7 +44,8 @@ export default function NewArrivalsPage() {
         <span>/</span>
         <span className="text-black font-medium"> New Arrivals</span>
       </div>
-      <NewArrivals limit={100} />
+      <NewArrivals limit={100} initialProducts={products} />
     </div>
   );
 }
+

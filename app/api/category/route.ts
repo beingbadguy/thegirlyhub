@@ -86,16 +86,22 @@ export async function GET(request: NextRequest) {
     if (isAdmin) {
       filter = deleted ? { isDeleted: true } : { isDeleted: { $ne: true } };
     } else {
-      filter = { isActive: true, isDeleted: { $ne: true } };
+      filter = { isActive: { $ne: false }, isDeleted: { $ne: true } };
     }
     const [categories, total] = await Promise.all([
       Category.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Category.countDocuments(filter),
     ]);
     const categoryNames = categories.map((category) => category.name);
+    const lowerCategoryNames = categoryNames.map((n) => n.toLowerCase());
     
     const aggregationPipeline: any[] = [
-      { $match: { category: { $in: categoryNames } } },
+      {
+        $match: {
+          category: { $in: [...categoryNames, ...lowerCategoryNames] },
+          isActive: { $ne: false },
+        },
+      },
       {
         $group: {
           _id: "$category",
@@ -119,20 +125,25 @@ export async function GET(request: NextRequest) {
     const productData = await Product.aggregate(aggregationPipeline);
     const counts = new Map(
       productData.map((item) => [
-        item._id,
+        String(item._id).toLowerCase(),
         {
           productCount: item.productCount,
-          productImages: item.productImages,
+          productImages: (item.productImages || []).filter(Boolean),
         },
       ]),
     );
-    const categoriesWithCounts = categories.map((category: any) => ({
-      ...category,
-      productCount: counts.get(category.name)?.productCount || 0,
-      ...(includeProductImages
-        ? { productImages: counts.get(category.name)?.productImages || [] }
-        : {}),
-    }));
+    const categoriesWithCounts = categories.map((category: any) => {
+      const match =
+        counts.get(category.name.toLowerCase()) ||
+        counts.get(category.name) || { productCount: 0, productImages: [] };
+      return {
+        ...category,
+        productCount: match.productCount || 0,
+        ...(includeProductImages
+          ? { productImages: match.productImages || [] }
+          : {}),
+      };
+    });
 
     return NextResponse.json(
       {

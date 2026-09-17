@@ -13,12 +13,41 @@ type CacheOptions = {
   ttlMs?: number; // Time-to-live in milliseconds (default: 3 minutes)
   persistSession?: boolean; // Persist in sessionStorage for instant page navigations
   staleWhileRevalidate?: boolean; // Return stale cache immediately, revalidate in background
+  forceRefresh?: boolean;
 };
 
+const CACHE_PREFIX = "__gh_v3_cache_";
 const DEFAULT_TTL_MS = 3 * 60 * 1000; // 3 minutes
 const memoryCache = new Map<string, CacheEntry<any>>();
 const inFlightRequests = new Map<string, Promise<any>>();
 const cacheListeners = new Map<string, Set<(data: any) => void>>();
+
+// Cleanup any legacy cache entries on browser init
+if (typeof window !== "undefined") {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const k = window.sessionStorage.key(i);
+      if (k && (k.startsWith("__gh_cache_") || k.startsWith("__gh_v2_cache_"))) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
+  } catch {
+    // Ignore sessionStorage errors
+  }
+}
+
+/**
+ * Check if payload contains non-empty usable data
+ */
+function isNonEmptyData(data: any): boolean {
+  if (!data || typeof data !== "object") return false;
+  if (Array.isArray(data) && data.length === 0) return false;
+  if (Array.isArray(data.categories) && data.categories.length === 0) return false;
+  if (Array.isArray(data.products) && data.products.length === 0) return false;
+  return true;
+}
 
 /**
  * Generate a deterministic cache key from URL and query params
@@ -46,19 +75,24 @@ function getFromCache<T>(key: string): { data: T; isStale: boolean } | null {
   const memoryEntry = memoryCache.get(key);
   if (memoryEntry) {
     const isStale = now - memoryEntry.timestamp > memoryEntry.ttl;
-    return { data: memoryEntry.data as T, isStale };
+    if (isNonEmptyData(memoryEntry.data)) {
+      return { data: memoryEntry.data as T, isStale };
+    }
   }
 
   // 2. Check sessionStorage if in browser
   if (typeof window !== "undefined") {
     try {
-      const stored = window.sessionStorage.getItem(`__gh_cache_${key}`);
+      const stored = window.sessionStorage.getItem(`${CACHE_PREFIX}${key}`);
       if (stored) {
         const parsed: CacheEntry<T> = JSON.parse(stored);
         const isStale = now - parsed.timestamp > parsed.ttl;
-        // Populate memory cache
-        memoryCache.set(key, parsed);
-        return { data: parsed.data, isStale };
+        if (isNonEmptyData(parsed.data)) {
+          memoryCache.set(key, parsed);
+          return { data: parsed.data, isStale };
+        } else {
+          window.sessionStorage.removeItem(`${CACHE_PREFIX}${key}`);
+        }
       }
     } catch {
       // Ignore sessionStorage parsing or quota errors
@@ -71,7 +105,12 @@ function getFromCache<T>(key: string): { data: T; isStale: boolean } | null {
 /**
  * Save to memory and sessionStorage cache
  */
-function setInCache<T>(key: string, data: T, ttlMs: number, persistSession = false): void {
+function setInCache<T>(key: string, data: T, ttlMs: number, persistSession = true): void {
+  // Never persist empty or error datasets
+  if (!isNonEmptyData(data)) {
+    return;
+  }
+
   const entry: CacheEntry<T> = {
     data,
     timestamp: Date.now(),
@@ -81,7 +120,7 @@ function setInCache<T>(key: string, data: T, ttlMs: number, persistSession = fal
 
   if (persistSession && typeof window !== "undefined") {
     try {
-      window.sessionStorage.setItem(`__gh_cache_${key}`, JSON.stringify(entry));
+      window.sessionStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(entry));
     } catch {
       // Ignore quota errors
     }
@@ -105,7 +144,9 @@ export function invalidateApiCache(keyOrPrefix?: string): void {
         const keysToRemove: string[] = [];
         for (let i = 0; i < window.sessionStorage.length; i++) {
           const k = window.sessionStorage.key(i);
-          if (k?.startsWith("__gh_cache_")) keysToRemove.push(k);
+          if (k?.startsWith(CACHE_PREFIX) || k?.startsWith("__gh_cache_")) {
+            keysToRemove.push(k);
+          }
         }
         keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
       } catch {}
@@ -126,7 +167,7 @@ export function invalidateApiCache(keyOrPrefix?: string): void {
       const keysToRemove: string[] = [];
       for (let i = 0; i < window.sessionStorage.length; i++) {
         const k = window.sessionStorage.key(i);
-        if (k?.startsWith(`__gh_cache_${keyOrPrefix}`)) keysToRemove.push(k);
+        if (k?.startsWith(`${CACHE_PREFIX}${keyOrPrefix}`)) keysToRemove.push(k);
       }
       keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
     } catch {}
@@ -134,7 +175,7 @@ export function invalidateApiCache(keyOrPrefix?: string): void {
 }
 
 /**
- * Core cached GET fetcher with in-flight request deduplication and SWR support
+ * Core cached GET fetcher with in-flight request deduplication
  */
 export async function cachedApiGet<T = any>(
   url: string,
@@ -144,21 +185,18 @@ export async function cachedApiGet<T = any>(
   const key = buildCacheKey(url, params);
   const ttlMs = options?.ttlMs ?? DEFAULT_TTL_MS;
   const persistSession = options?.persistSession ?? true;
-  const staleWhileRevalidate = options?.staleWhileRevalidate ?? true;
+  const forceRefresh = options?.forceRefresh ?? false;
 
-  const cached = getFromCache<T>(key);
-
-  // Return fresh cache directly
-  if (cached && !cached.isStale) {
-    return cached.data;
+  if (!forceRefresh) {
+    const cached = getFromCache<T>(key);
+    // If we have fresh, non-empty data in cache, return it immediately
+    if (cached && !cached.isStale && isNonEmptyData(cached.data)) {
+      return cached.data;
+    }
   }
 
   // If in-flight request already exists, reuse the exact same promise!
   if (inFlightRequests.has(key)) {
-    if (cached && staleWhileRevalidate) {
-      // If we have stale data, return it immediately while in-flight finishes
-      return cached.data;
-    }
     return inFlightRequests.get(key) as Promise<T>;
   }
 
@@ -170,7 +208,9 @@ export async function cachedApiGet<T = any>(
         ...options,
       });
       const data = response.data;
-      setInCache(key, data, ttlMs, persistSession);
+      if (isNonEmptyData(data)) {
+        setInCache(key, data, ttlMs, persistSession);
+      }
       return data;
     } finally {
       inFlightRequests.delete(key);
@@ -178,17 +218,11 @@ export async function cachedApiGet<T = any>(
   })();
 
   inFlightRequests.set(key, requestPromise);
-
-  // If stale cache exists and SWR is enabled, return stale data immediately
-  if (cached && staleWhileRevalidate) {
-    return cached.data;
-  }
-
   return requestPromise;
 }
 
 /**
- * React Hook for cached API calls with instant 0ms mount from cache + SWR
+ * React Hook for cached API calls with instant mount from cache
  */
 export function useCachedApi<T = any>(
   url: string | null,
@@ -213,7 +247,10 @@ export function useCachedApi<T = any>(
 
       try {
         if (!data) setLoading(true);
-        const result = await cachedApiGet<T>(url, params, options);
+        const result = await cachedApiGet<T>(url, params, {
+          ...options,
+          forceRefresh: forceFresh,
+        });
         if (mountedRef.current) {
           setData(result);
           setError(null);
@@ -240,12 +277,12 @@ export function useCachedApi<T = any>(
       return;
     }
 
-    // Subscribe to cache updates from other components
+    // Subscribe to cache updates
     if (!cacheListeners.has(key)) {
       cacheListeners.set(key, new Set());
     }
     const listener = (updatedData: T) => {
-      if (mountedRef.current) {
+      if (mountedRef.current && isNonEmptyData(updatedData)) {
         setData(updatedData);
         setLoading(false);
       }
@@ -271,3 +308,4 @@ export function useCachedApi<T = any>(
     refetch: () => executeFetch(true),
   };
 }
+

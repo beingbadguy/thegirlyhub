@@ -8,6 +8,9 @@ import {
   generateBreadcrumbSchema,
   generateCollectionSchema,
 } from "@/lib/seo/schema";
+import { getSSRProducts } from "@/lib/ssrData";
+
+export const revalidate = 60;
 
 interface CategoryPageProps {
   params: Promise<{ name: string }>;
@@ -75,6 +78,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const categoryName = decodeURIComponent(name);
   const canonicalUrl = `${SITE_CONFIG.url}/category/${encodeURIComponent(name)}`;
 
+  const [ssrResult] = await Promise.all([
+    getSSRProducts({ category: categoryName, limit: 12, page: 1 }),
+  ]);
+
   const breadcrumbsSchema = generateBreadcrumbSchema([
     { name: "Home", url: "/" },
     { name: "Categories", url: "/category" },
@@ -91,7 +98,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     <>
       <JsonLd data={breadcrumbsSchema} />
       <JsonLd data={collectionSchema} />
-      <CategoryPageClient categoryName={categoryName} />
+      <CategoryPageClient
+        categoryName={categoryName}
+        initialProducts={ssrResult.products}
+        initialTotal={ssrResult.total}
+        initialTotalPages={ssrResult.totalPages}
+      />
     </>
   );
 }
+

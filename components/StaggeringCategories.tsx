@@ -13,7 +13,7 @@ interface Category {
   _id: string;
   name: string;
   categoryImage: string;
-  productImages: string[];
+  productImages?: string[];
 }
 
 const containerVariants: Variants = {
@@ -79,18 +79,25 @@ const CategoryImageSlider = ({ category }: { category: Category }) => {
 type StaggeringCategoriesProps = {
   limit?: number;
   showViewAll?: boolean;
+  initialCategories?: Category[];
 };
 
 const StaggeringCategories = ({
   limit = 6,
   showViewAll = true,
+  initialCategories,
 }: StaggeringCategoriesProps) => {
   const categoryLimit = limit;
-  const [catLoading, setCatLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const hasInitial = Array.isArray(initialCategories) && initialCategories.length > 0;
+  const [catLoading, setCatLoading] = useState(!hasInitial);
+  const [categories, setCategories] = useState<Category[]>(
+    hasInitial ? (initialCategories as Category[]) : [],
+  );
   const router = useRouter();
 
   useEffect(() => {
+    if (hasInitial) return;
+
     let active = true;
     const fetchCategories = async () => {
       try {
@@ -118,7 +125,7 @@ const StaggeringCategories = ({
     return () => {
       active = false;
     };
-  }, [categoryLimit]);
+  }, [categoryLimit, hasInitial]);
 
   if (catLoading) {
     return (

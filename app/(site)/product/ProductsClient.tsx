@@ -21,7 +21,19 @@ interface Category {
   name: string;
 }
 
-export default function ProductsClient() {
+interface ProductsClientProps {
+  initialProducts?: Product[];
+  initialTotal?: number;
+  initialTotalPages?: number;
+  initialCategories?: Category[];
+}
+
+export default function ProductsClient({
+  initialProducts,
+  initialTotal = 0,
+  initialTotalPages = 1,
+  initialCategories,
+}: ProductsClientProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -30,20 +42,37 @@ export default function ProductsClient() {
   const qSort = searchParams.get("sort") || "default";
   const qPage = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const isDefaultQuery =
+    !qCategory && qMaxPrice === 100000 && qSort === "default" && qPage === 1;
+  const hasInitial =
+    isDefaultQuery &&
+    Array.isArray(initialProducts) &&
+    initialProducts.length > 0;
+
+  const [products, setProducts] = useState<Product[]>(
+    hasInitial ? (initialProducts as Product[]) : [],
+  );
+  const [isInitialLoading, setIsInitialLoading] = useState(!hasInitial);
   const [isFetching, setIsFetching] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(
+    Array.isArray(initialCategories) && initialCategories.length > 0
+      ? initialCategories
+      : [],
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>(qCategory);
   const [maxValue, setMaxValue] = useState(qMaxPrice);
   const [debouncedMaxPrice, setDebouncedMaxPrice] = useState(qMaxPrice);
   const [page, setPage] = useState(qPage);
-  const [totalPages, setTotalPages] = useState(1);
-  const [serverTotal, setServerTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(
+    hasInitial ? initialTotalPages : 1,
+  );
+  const [serverTotal, setServerTotal] = useState(
+    hasInitial ? initialTotal : 0,
+  );
   const [sortBy, setSortBy] = useState<string>(qSort);
 
-  const hasLoadedOnce = useRef(false);
+  const hasLoadedOnce = useRef(hasInitial);
 
   // Sync state when URL searchParams change
   useEffect(() => {
@@ -68,6 +97,7 @@ export default function ProductsClient() {
   }, [maxValue]);
 
   const fetchCategories = async () => {
+    if (Array.isArray(initialCategories) && initialCategories.length > 0) return;
     try {
       const data = await cachedApiGet<{ categories?: Category[] }>(
         "/api/category",
@@ -117,6 +147,9 @@ export default function ProductsClient() {
 
   // Fetch products when filters or page change
   useEffect(() => {
+    if (hasInitial && isDefaultQuery && page === 1) {
+      return;
+    }
     fetchAllProducts(page);
   }, [page, selectedCategory, debouncedMaxPrice, sortBy]);
 

@@ -4,6 +4,9 @@ import ProductsClient from "./ProductsClient";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import { generateBreadcrumbSchema } from "@/lib/seo/schema";
+import { getSSRHomeCategories, getSSRProducts } from "@/lib/ssrData";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Shop All Products | Hair Accessories, Jewellery & More",
@@ -21,7 +24,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const [productsRes, categories] = await Promise.all([
+    getSSRProducts({ limit: 12, page: 1 }),
+    getSSRHomeCategories(100),
+  ]);
+
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: "Home", url: "/" },
     { name: "Products", url: "/product" },
@@ -31,8 +39,14 @@ export default function ProductsPage() {
     <>
       <JsonLd data={breadcrumbSchema} />
       <Suspense fallback={<div className="min-h-screen bg-neutral-50/40" />}>
-        <ProductsClient />
+        <ProductsClient
+          initialProducts={productsRes.products}
+          initialTotal={productsRes.total}
+          initialTotalPages={productsRes.totalPages}
+          initialCategories={categories}
+        />
       </Suspense>
     </>
   );
 }
+

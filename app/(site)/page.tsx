@@ -13,18 +13,42 @@ import OfferBanner from "@/components/OfferBanner";
 import HomeConnect from "@/components/HomeConnect";
 import StaggeringCategories from "@/components/StaggeringCategories";
 import InstagramShowcase from "@/components/InstagramShowcase";
+import { getSSRHomeCategories, getSSRProducts } from "@/lib/ssrData";
 
-export default function Home() {
+export const revalidate = 60; // Revalidate every 60 seconds (ISR / SSR hybrid)
+
+export default async function Home() {
+  const [categories, newArrivalsRes, featuredRes, allProductsRes] =
+    await Promise.all([
+      getSSRHomeCategories(12),
+      getSSRProducts({ limit: 12 }),
+      getSSRProducts({ limit: 12, featured: true }),
+      getSSRProducts({ limit: 100 }),
+    ]);
+
   return (
     <main className="mx-auto px-4 md:px-6">
       <div>
-        <StaggeringCategories />
+        <StaggeringCategories initialCategories={categories} />
         <HeroBannerSlider />
         <BudgetPriceZone />
-        <NewArrivals limit={12} showSeeMore />
-        <NewArrivals limit={12} featured />
+        <NewArrivals
+          limit={12}
+          showSeeMore
+          initialProducts={newArrivalsRes.products}
+        />
+        {featuredRes.products.length > 0 && (
+          <NewArrivals
+            limit={12}
+            featured
+            initialProducts={featuredRes.products}
+          />
+        )}
         <HomeAdSlots />
-        <CategoryProductSections />
+        <CategoryProductSections
+          initialCategories={categories}
+          initialProducts={allProductsRes.products}
+        />
         <OfferBanner />
         <TrustStrip />
         <HomeReviews />
@@ -38,3 +62,4 @@ export default function Home() {
     </main>
   );
 }
+

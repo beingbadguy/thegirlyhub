@@ -14,12 +14,32 @@ type Category = {
 
 type Product = React.ComponentProps<typeof ProductCard>["product"];
 
-const CategoryProductSections = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+interface CategoryProductSectionsProps {
+  initialCategories?: Category[];
+  initialProducts?: Product[];
+}
+
+const CategoryProductSections = ({
+  initialCategories,
+  initialProducts,
+}: CategoryProductSectionsProps) => {
+  const hasInitial =
+    Array.isArray(initialCategories) &&
+    initialCategories.length > 0 &&
+    Array.isArray(initialProducts) &&
+    initialProducts.length > 0;
+
+  const [categories, setCategories] = useState<Category[]>(
+    hasInitial ? (initialCategories as Category[]) : [],
+  );
+  const [products, setProducts] = useState<Product[]>(
+    hasInitial ? (initialProducts as Product[]) : [],
+  );
+  const [loading, setLoading] = useState(!hasInitial);
 
   useEffect(() => {
+    if (hasInitial) return;
+
     let active = true;
     const fetchCategoryProducts = async () => {
       try {
@@ -51,7 +71,7 @@ const CategoryProductSections = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [hasInitial]);
 
   const productsByCategory = useMemo(() => {
     return products.reduce<Record<string, Product[]>>((groups, product) => {
