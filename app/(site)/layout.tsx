@@ -4,6 +4,8 @@ import {
   Instrument_Serif,
   Bodoni_Moda,
   Poppins,
+  Caveat,
+  Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
 import HeaderSection from "@/components/HeaderSection";
@@ -47,6 +49,20 @@ const darkerGrotesque = Darker_Grotesque({
   subsets: ["latin"],
   display: "swap",
   weight: ["400", "500", "600", "700"],
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -136,7 +152,7 @@ export default function RootLayout({
         <JsonLd data={webSiteSchema} />
       </head>
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} antialiased custom-scrollbar overflow-x-hidden`}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} ${caveat.variable} ${playfair.variable} antialiased custom-scrollbar overflow-x-hidden`}
       >
         <AnnouncementBand />
         <SmoothScroll />

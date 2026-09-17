@@ -33,20 +33,64 @@ const userSchema = new mongoose.Schema({
     default: null,
   },
   zip: {
-    type: Number,
+    type: mongoose.Schema.Types.Mixed,
     default: null,
   },
+  postalCode: {
+    type: String,
+    default: null,
+  },
+  country: {
+    type: String,
+    default: "India",
+  },
   phone: {
-    type: Number,
-    // required: true,
+    type: mongoose.Schema.Types.Mixed,
     default: null,
   },
   role: {
     type: String,
     required: true,
-    enum: ["user", "admin"],
-    default: "user",
+    default: "customer",
   },
+  status: {
+    type: String,
+    enum: ["active", "inactive", "suspended", "pending"],
+    default: "active",
+  },
+  notes: {
+    type: [String],
+    default: [],
+  },
+  tags: {
+    type: [String],
+    default: [],
+  },
+  addresses: [
+    {
+      id: { type: String },
+      type: { type: String, default: "shipping" },
+      isDefault: { type: Boolean, default: false },
+      name: { type: String },
+      phone: { type: String },
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      postalCode: { type: String },
+      country: { type: String, default: "India" },
+      landmark: { type: String },
+    },
+  ],
+  activityLogs: [
+    {
+      id: { type: String },
+      action: { type: String, required: true },
+      description: { type: String, required: true },
+      timestamp: { type: Date, default: Date.now },
+      ipAddress: { type: String },
+      device: { type: String },
+    },
+  ],
   isVerified: {
     type: Boolean,
     default: false,
@@ -103,8 +147,11 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ status: 1 });
+userSchema.index({ email: 1 });
 userSchema.index({ verificationToken: 1 }, { sparse: true });
 userSchema.index({ forgetToken: 1 }, { sparse: true });
+
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 

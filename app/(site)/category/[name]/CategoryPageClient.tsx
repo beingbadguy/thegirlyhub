@@ -8,6 +8,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Sparkles, SlidersHorizontal, ChevronDown } from "lucide-react";
 import FilterSidebar from "@/components/FilterSidebar";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
+import CategoryEmptyState from "@/components/CategoryEmptyState";
 
 type Product = React.ComponentProps<typeof ProductCard>["product"];
 
@@ -116,11 +117,11 @@ export default function CategoryPageClient({
         }`}
       />
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         {/* Breadcrumb Navigation - Aligned with grid */}
         <nav
           aria-label="Breadcrumb"
-          className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+          className="mb-2.5 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
         >
           <BreadcrumbHome />
           <span className="text-neutral-300">/</span>
@@ -138,7 +139,7 @@ export default function CategoryPageClient({
         </nav>
 
         {/* Toolbar: Filter on Left & Professional Sort on Right */}
-        <div className="mb-6 flex items-center justify-between gap-3 border-b border-neutral-200/80 pb-4">
+        <div className="mb-3 flex items-center justify-between gap-3 border-b border-neutral-200/80 pb-3">
           <button
             type="button"
             onClick={() => setShowFilter(true)}
@@ -217,39 +218,7 @@ export default function CategoryPageClient({
             ))}
           </div>
         ) : products.length === 0 ? (
-          /* Empty State */
-          <div className="relative mx-auto mt-8 flex min-h-[400px] max-w-2xl items-center justify-center overflow-hidden rounded-3xl border border-rose-100 bg-gradient-to-br from-rose-50/60 via-white to-amber-50/50 px-6 py-12 text-center shadow-xs">
-            <div className="relative flex max-w-md flex-col items-center">
-              <div className="relative mb-5 grid size-20 place-items-center rounded-full border-4 border-white bg-rose-100 shadow-md shadow-rose-200/50">
-                <Heart className="size-8 fill-rose-500 text-rose-500" />
-              </div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-500">
-                Category Collection
-              </p>
-              <h2 className="mt-2 font-serif text-2xl font-bold text-neutral-900 sm:text-3xl">
-                No products in {categoryName}
-              </h2>
-              <p className="mt-2 text-sm text-neutral-500">
-                We haven&apos;t added any matching pieces in this category yet. Explore our other lovely collections instead.
-              </p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => router.push("/product")}
-                  className="rounded-full bg-rose-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:bg-rose-700 active:scale-95 cursor-pointer"
-                >
-                  All Products
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push("/category")}
-                  className="rounded-full border border-neutral-200 bg-white px-6 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 active:scale-95 cursor-pointer"
-                >
-                  Browse Categories
-                </button>
-              </div>
-            </div>
-          </div>
+          <CategoryEmptyState categoryName={categoryName} />
         ) : (
           /* Products Grid with smooth transition */
           <div
