@@ -102,21 +102,18 @@ export default function SignupPage() {
                 value={data.password}
                 onChange={changeHandler}
               />
-              {showPassword ? (
-                <FiEye
-                  className="absolute top-[10px] right-4 cursor-pointer"
-                  onClick={() => {
-                    setShowPassword(!showPassword);
-                  }}
-                />
-              ) : (
-                <FiEyeOff
-                  className="absolute top-[10px] right-4 cursor-pointer"
-                  onClick={() => {
-                    setShowPassword(!showPassword);
-                  }}
-                />
-              )}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer flex items-center justify-center p-1 focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <FiEyeOff className="size-5" />
+                ) : (
+                  <FiEye className="size-5" />
+                )}
+              </button>
             </div>
             <Button
               disabled={loading}

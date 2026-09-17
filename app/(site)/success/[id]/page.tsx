@@ -25,10 +25,12 @@ import {
   Phone,
   Mail,
   ArrowRight,
+  X,
 } from "lucide-react";
 import { useAuthStore } from "@/store/store";
 import { productUrl } from "@/lib/slug";
 import { SITE_CONFIG } from "@/lib/seo/config";
+import CancelOrderModal from "@/components/CancelOrderModal";
 
 interface OrderProductItem {
   productId?: {
@@ -95,6 +97,7 @@ export default function OrderConfirmedPage() {
   const [copied, setCopied] = useState(false);
   const [trackingOpen, setTrackingOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [recommended, setRecommended] = useState<RecommendedItem[]>([]);
 
   useEffect(() => {
@@ -683,6 +686,22 @@ export default function OrderConfirmedPage() {
               <UserRound className="size-4 text-pink-500" />
               {user ? "View All Orders" : "Track via Phone / ID"}
             </button>
+
+            {order &&
+              order.status !== "shipped" &&
+              order.status !== "delivered" &&
+              order.status !== "completed" &&
+              order.status !== "cancelled" && (
+                <button
+                  id="cancel-order-button"
+                  type="button"
+                  onClick={() => setShowCancelModal(true)}
+                  className="action-button rounded-full border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-700 px-7 py-3.5 font-bold text-sm shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <X className="size-4 text-red-500" />
+                  Cancel Order
+                </button>
+              )}
           </div>
 
           {/* Interactive Multi-Stage Tracking Accordion */}
@@ -882,6 +901,30 @@ export default function OrderConfirmedPage() {
           </p>
         </div>
       </footer>
+
+      {/* Cancel Order Modal */}
+      {order && (
+        <CancelOrderModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          order={{
+            _id: order._id,
+            totalAmount: order.totalAmount || 0,
+            paymentMethod: order.paymentMethod || "online",
+            paymentStatus: order.paymentStatus || "paid",
+            status: order.status || "confirmed",
+            recipientName: order.recipientName,
+            email: order.email,
+          }}
+          onSuccess={(updated) => {
+            if (updated) {
+              setOrder(updated);
+            } else {
+              setOrder((prev) => (prev ? { ...prev, status: "cancelled" } : null));
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

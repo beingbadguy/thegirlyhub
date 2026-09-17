@@ -6,6 +6,8 @@ const statusHistorySchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
+        "pending",
+        "confirmed",
         "processing",
         "reviewing",
         "preparing",
@@ -21,13 +23,37 @@ const statusHistorySchema = new mongoose.Schema(
   { _id: false }
 );
 
+const refundHistorySchema = new mongoose.Schema(
+  {
+    refundId: { type: String, required: true },
+    amount: { type: Number, required: true, min: 0 },
+    status: {
+      type: String,
+      enum: ["pending", "completed", "failed"],
+      default: "pending",
+    },
+    razorpayPaymentId: { type: String, default: null },
+    speed: { type: String, enum: ["normal", "optimum"], default: "optimum" },
+    reason: { type: String, default: null },
+    failureReason: { type: String, default: null },
+    createdAt: { type: Date, default: Date.now },
+    processedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, default: null },
   isGuest: { type: Boolean, default: false },
   paymentStatus: {
     type: String,
-    enum: ["unpaid", "paid", "failed"],
-    default: "unpaid",
+    enum: ["created", "paid", "unpaid", "failed"],
+    default: "created",
+  },
+  refundStatus: {
+    type: String,
+    enum: ["none", "pending", "completed", "failed"],
+    default: "none",
   },
   products: [
     {
@@ -57,8 +83,10 @@ const orderSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    default: "processing",
+    default: "pending",
     enum: [
+      "pending",
+      "confirmed",
       "processing",
       "reviewing",
       "preparing",
@@ -73,6 +101,16 @@ const orderSchema = new mongoose.Schema({
     type: [statusHistorySchema],
     default: [],
   },
+  /** Refund tracking fields */
+  refundId: { type: String, default: null },
+  refundAmount: { type: Number, default: 0, min: 0 },
+  refundReason: { type: String, default: null },
+  refundHistory: {
+    type: [refundHistorySchema],
+    default: [],
+  },
+  cancellationReason: { type: String, default: null },
+  cancelledAt: { type: Date, default: null },
   /** Air Waybill number — required when status is "shipped" */
   awbNumber: { type: String, default: null },
   /** Carrier tracking link — set when status is "shipped" */
@@ -99,12 +137,16 @@ const orderSchema = new mongoose.Schema({
 });
 
 orderSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
+orderSchema.index({ refundId: 1 }, { sparse: true });
+orderSchema.index({ refundStatus: 1, createdAt: -1 });
 orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, createdAt: -1 });
 orderSchema.index({ email: 1, createdAt: -1 });
 orderSchema.index({ phone: 1, createdAt: -1 });
 orderSchema.index({ createdAt: -1 });
 
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 export default Order;
+
 

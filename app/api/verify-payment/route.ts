@@ -197,6 +197,23 @@ export async function POST(req: NextRequest) {
       pending.updatedAt = new Date();
       await pending.save();
 
+      // Record in Payment collection and Transactions ledger
+      try {
+        const { recordPaymentSuccess } = await import("@/services/ledger.service");
+        await recordPaymentSuccess({
+          orderId: newOrder._id,
+          paymentId: razorpay_payment_id,
+          razorpayOrderId: razorpay_order_id,
+          amount: newOrder.totalAmount,
+          userId: newOrder.userId || pending.userId,
+          email: newOrder.email,
+          contact: String(newOrder.phone || ""),
+          method: "online",
+        });
+      } catch (ledgerErr) {
+        console.error("[verify-payment] Non-blocking ledger recording error:", ledgerErr);
+      }
+
       console.log(`[POST /api/verify-payment] Order placed successfully: ${newOrder._id} for payment ${razorpay_payment_id}`);
 
       return NextResponse.json(

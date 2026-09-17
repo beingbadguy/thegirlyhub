@@ -8,6 +8,7 @@ import { MdErrorOutline } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
 import { Check, X, Clock, MapPin, Truck, CreditCard, Tag, Copy, CheckCheck, PackageCheck } from "lucide-react";
 import { productUrl } from "@/lib/slug";
+import CancelOrderModal from "@/components/CancelOrderModal";
 
 type OrderStatus =
   | "processing"
@@ -146,6 +147,14 @@ export default function TrackOrderPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
   const [copied, setCopied]   = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  const isCancellable =
+    order &&
+    order.status !== "shipped" &&
+    order.status !== "delivered" &&
+    order.status !== "completed" &&
+    order.status !== "cancelled";
 
   useEffect(() => {
     document.title = "Track Order | GirlyHub";
@@ -267,7 +276,17 @@ export default function TrackOrderPage() {
                   </button>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right flex items-center gap-2.5">
+                {isCancellable && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelModal(true)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-red-600 bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 transition shadow-xs cursor-pointer active:scale-95"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Cancel Order
+                  </button>
+                )}
                 <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${STATUS_COLORS[order.status].bg} ${STATUS_COLORS[order.status].text}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[order.status].dot}`} />
                   {STATUS_LABELS[order.status]}
@@ -415,10 +434,53 @@ export default function TrackOrderPage() {
 
             </div>
 
+            {/* Cancellation Card */}
+            {isCancellable && (
+              <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Need to cancel this order?</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    You can cancel anytime before your order is shipped. Any online payments are automatically refunded via Razorpay.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCancelModal(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-red-600 bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer shadow-xs shrink-0 active:scale-95"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Cancel Order
+                </button>
+              </div>
+            )}
+
+            {order.status === "cancelled" && (
+              <div className="rounded-2xl border border-red-200 bg-red-50/70 p-4 flex items-center gap-3 text-red-800 text-xs font-semibold">
+                <X className="w-4 h-4 text-red-600 shrink-0" />
+                <span>This order has been cancelled.</span>
+              </div>
+            )}
+
           </div>
         )}
 
       </div>
+
+      {/* Cancel Order Modal */}
+      {order && (
+        <CancelOrderModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          order={order}
+          onSuccess={(updatedOrder) => {
+            if (updatedOrder) {
+              setOrder(updatedOrder);
+            } else {
+              setOrder((prev) => (prev ? { ...prev, status: "cancelled" } : null));
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

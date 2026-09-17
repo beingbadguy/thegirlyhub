@@ -576,3 +576,129 @@ export const replyToUser = async (
     getEmailWrapper(content),
   );
 };
+
+// 14. Order Cancellation Notification Mail
+export const orderCancelledMail = async (
+  email: string,
+  name: string,
+  details: {
+    orderId: string;
+    reason?: string | null;
+    refundAmount?: number;
+    refundStatus?: string;
+    isOnlinePayment?: boolean;
+  },
+) => {
+  const isRefundApplicable = details.isOnlinePayment && (details.refundAmount || 0) > 0;
+  const content = `
+    <h1 style="margin: 0 0 12px 0; font-size: 24px; font-weight: 700; color: #1f2937;">Order Cancelled</h1>
+    <p style="font-size: 15px; margin: 0 0 16px 0; color: #4b5563;">Hi <strong style="color: #111827;">${name}</strong>,</p>
+    <p style="font-size: 15px; margin: 0 0 20px 0; color: #4b5563; line-height: 1.6;">
+      Your order <strong style="color: #111827;">#${details.orderId}</strong> has been cancelled.
+    </p>
+
+    ${
+      details.reason
+        ? `
+    <div style="margin: 20px 0; padding: 16px 20px; background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 8px;">
+      <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #b91c1c; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Reason for Cancellation</span>
+      <p style="margin: 0; font-size: 14px; color: #7f1d1d;">${details.reason}</p>
+    </div>
+    `
+        : ""
+    }
+
+    ${
+      isRefundApplicable
+        ? `
+    <div style="margin: 24px 0; padding: 20px; background-color: ${BRAND_COLOR_SECONDARY}; border-radius: 12px; border: 1px solid #fbcfe8;">
+      <h3 style="margin: 0 0 8px 0; font-size: 16px; color: ${BRAND_COLOR_PRIMARY}; font-weight: 700;">Refund Details</h3>
+      <p style="margin: 0 0 6px 0; font-size: 14px; color: #374151;">
+        Refund Amount: <strong style="font-size: 16px; color: #111827;">₹${Number(details.refundAmount).toFixed(2)}</strong>
+      </p>
+      <p style="margin: 0; font-size: 13px; color: #6b7280;">
+        Status: <strong style="color: #16a34a; text-transform: capitalize;">${details.refundStatus || "Initiated"}</strong>. The refund should reflect in your original payment source within 5–7 business days.
+      </p>
+    </div>
+    `
+        : `
+    <div style="margin: 20px 0; padding: 16px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+      <p style="margin: 0; font-size: 13px; color: #6b7280;">
+        Since this was a Cash on Delivery (COD) order, no payment deduction occurred.
+      </p>
+    </div>
+    `
+    }
+
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${BRAND_URL}" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND_COLOR_PRIMARY}; color: #ffffff; text-decoration: none; border-radius: 50px; font-weight: bold; letter-spacing: 1px; font-size: 13px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(190,24,93,0.15);">
+        Continue Shopping
+      </a>
+    </div>
+  `;
+
+  await sendMail(
+    email,
+    `Order Cancelled #${details.orderId} | ${BRAND_NAME}`,
+    "",
+    getEmailWrapper(content),
+  );
+};
+
+// 15. Refund Status Update Mail
+export const refundStatusUpdateMail = async (
+  email: string,
+  name: string,
+  refund: {
+    orderId: string;
+    refundId: string;
+    amount: number;
+    status: "pending" | "completed" | "failed";
+    reason?: string | null;
+  },
+) => {
+  const isCompleted = refund.status === "completed";
+  const statusColor = isCompleted ? "#16a34a" : refund.status === "failed" ? "#dc2626" : "#d97706";
+  const title = isCompleted ? "Refund Completed 💸" : refund.status === "failed" ? "Refund Processing Issue" : "Refund in Progress ⏳";
+
+  const content = `
+    <h1 style="margin: 0 0 12px 0; font-size: 24px; font-weight: 700; color: #1f2937;">${title}</h1>
+    <p style="font-size: 15px; margin: 0 0 16px 0; color: #4b5563;">Hi <strong style="color: #111827;">${name}</strong>,</p>
+    <p style="font-size: 15px; margin: 0 0 20px 0; color: #4b5563; line-height: 1.6;">
+      Here is the latest update regarding your refund for order <strong style="color: #111827;">#${refund.orderId}</strong>:
+    </p>
+
+    <div style="margin: 24px 0; padding: 22px; background-color: ${BRAND_COLOR_SECONDARY}; border-radius: 14px; border: 1px solid #fbcfe8;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; width: 140px;">Refund ID:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #111827;">${refund.refundId}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280;">Refund Amount:</td>
+          <td style="padding: 6px 0; font-weight: 700; font-size: 16px; color: ${BRAND_COLOR_PRIMARY};">₹${Number(refund.amount).toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280;">Status:</td>
+          <td style="padding: 6px 0; font-weight: 700; color: ${statusColor}; text-transform: uppercase; font-size: 13px;">${refund.status}</td>
+        </tr>
+      </table>
+    </div>
+
+    ${
+      isCompleted
+        ? `<p style="font-size: 14px; color: #16a34a; margin: 16px 0;">The amount has been successfully transferred back to your original source of payment.</p>`
+        : refund.status === "failed"
+          ? `<p style="font-size: 14px; color: #dc2626; margin: 16px 0;">Our system encountered an issue while processing this refund. Our finance team has been alerted and will resolve this promptly.</p>`
+          : `<p style="font-size: 14px; color: #4b5563; margin: 16px 0;">Your refund is being processed by your bank and will be credited to your account shortly.</p>`
+    }
+  `;
+
+  await sendMail(
+    email,
+    `Refund Update for Order #${refund.orderId} | ${BRAND_NAME}`,
+    "",
+    getEmailWrapper(content),
+  );
+};
+

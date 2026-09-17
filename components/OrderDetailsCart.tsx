@@ -259,6 +259,8 @@ function StatusTimeline({ currentStatus }: { currentStatus: OrderStatus }) {
 }
 
 /* ─── Main Component ────────────────────────────────────────────── */
+import CancelOrderModal from "./CancelOrderModal";
+
 export default function OrderDetailsCard({
   order,
   fetchUserOrders,
@@ -272,10 +274,16 @@ export default function OrderDetailsCard({
   const [copied, setCopied]     = useState(false);
   const [updating, setUpdating] = useState(false);
   const [showAwbModal, setShowAwbModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
 
   const statusColor = STATUS_COLORS[order.status];
   const nextStatuses = NEXT_STATUSES[order.status];
+  const isCancellable =
+    order.status !== "shipped" &&
+    order.status !== "delivered" &&
+    order.status !== "completed" &&
+    order.status !== "cancelled";
 
   const getProductTitle = (item: Product) =>
     item.productId?.title || item.title || "Product";
@@ -746,28 +754,48 @@ export default function OrderDetailsCard({
               </section>
             )}
 
+            {/* Customer Cancellation Option */}
+            {isCancellable && !isAdmin && (
+              <section className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-rose-50/40 p-4 rounded-xl border border-rose-100">
+                <div>
+                  <p className="text-xs font-bold text-gray-900">Need to cancel this order?</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    Cancellation is available while your order is being prepared. Any online payments are automatically refunded via Razorpay.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCancelModal(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-red-600 bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer shadow-xs shrink-0 active:scale-95"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Cancel Order
+                </button>
+              </section>
+            )}
+
             {/* Terminal states */}
-            {isAdmin && nextStatuses.length === 0 && (
-              <div
-                className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${
-                  order.status === "completed"
-                    ? "bg-green-50 text-green-700"
-                    : "bg-red-50 text-red-700"
-                }`}
-              >
-                {order.status === "completed" ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <X className="w-4 h-4" />
-                )}
-                {order.status === "completed"
-                  ? "Order completed — no further actions needed."
-                  : "This order has been cancelled."}
+            {order.status === "cancelled" && (
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium bg-red-50 text-red-700 border border-red-100">
+                <X className="w-4 h-4 text-red-500 shrink-0" />
+                <span>This order has been cancelled.</span>
               </div>
             )}
           </div>
         )}
       </article>
+
+      {/* Cancel Order Modal */}
+      <CancelOrderModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        order={order}
+        onSuccess={() => {
+          if (fetchUserOrders) {
+            fetchUserOrders();
+          }
+        }}
+      />
     </>
   );
 }

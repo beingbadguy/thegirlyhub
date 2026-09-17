@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CheckCircle, Copy, Check, Printer, ShoppingBag, Truck, ShieldCheck } from "lucide-react";
+import { CheckCircle, Copy, Check, Printer, ShoppingBag, Truck, ShieldCheck, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import { useAuthStore } from "@/store/store";
+import CancelOrderModal from "@/components/CancelOrderModal";
 
 interface OrderItem {
   productId?: {
@@ -37,6 +38,7 @@ interface OrderData {
   state?: string;
   zip?: string;
   products?: OrderItem[];
+  status?: string;
   createdAt?: string;
 }
 
@@ -49,6 +51,7 @@ export default function OrderConfirmationPage() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [copiedPayId, setCopiedPayId] = useState(false);
   const [copiedOrderId, setCopiedOrderId] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -292,6 +295,53 @@ export default function OrderConfirmationPage() {
             Continue Shopping
           </Link>
         </div>
+
+        {order &&
+          order.status !== "shipped" &&
+          order.status !== "delivered" &&
+          order.status !== "completed" &&
+          order.status !== "cancelled" && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(true)}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition cursor-pointer"
+              >
+                <X className="size-3.5" />
+                Cancel Order
+              </button>
+            </div>
+          )}
+
+        {order && order.status === "cancelled" && (
+          <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-center text-xs font-semibold text-red-700">
+            This order has been cancelled.
+          </div>
+        )}
+
+        {/* Cancel Order Modal */}
+        {order && (
+          <CancelOrderModal
+            isOpen={showCancelModal}
+            onClose={() => setShowCancelModal(false)}
+            order={{
+              _id: order._id,
+              totalAmount: order.totalAmount || 0,
+              paymentMethod: order.paymentMethod || "online",
+              paymentStatus: order.paymentStatus || "paid",
+              status: order.status || "confirmed",
+              recipientName: order.recipientName,
+              email: order.email,
+            }}
+            onSuccess={(updated) => {
+              if (updated) {
+                setOrder(updated);
+              } else {
+                setOrder((prev) => (prev ? { ...prev, status: "cancelled" } : null));
+              }
+            }}
+          />
+        )}
 
         {/* Footer */}
         <footer className="mt-8 text-xs text-gray-500 border-t border-gray-100 pt-4">
