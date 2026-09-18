@@ -137,7 +137,7 @@ const ProductPageClient = ({
   initialRecommendations,
   slug,
 }: ProductPageClientProps) => {
-  const { addToWishlist, user, fetchUserCart, openCart } = useAuthStore();
+  const { addToWishlist, user, userWishlist, fetchUserCart, openCart } = useAuthStore();
   const router = useRouter();
 
   const [product, setProduct] = useState<Product>(initialProduct);
@@ -423,10 +423,12 @@ const ProductPageClient = ({
     setZoomStyle({ display: "none" });
   };
 
-  const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];
+  const allProductsOfWishlist =
+    userWishlist?.products || user?.wishlist?.[0]?.products || [];
 
   type WishlistItem = {
-    productId: string | { _id: string };
+    productId: string | { _id: string; id?: string };
+    _id?: string;
   };
 
   const alreadyInWishlist = (id: string) => {
@@ -434,7 +436,11 @@ const ProductPageClient = ({
       if (typeof item.productId === "string") {
         return item.productId === id;
       }
-      return item.productId?._id === id;
+      return (
+        item.productId?._id === id ||
+        (item.productId as any)?.id === id ||
+        item._id === id
+      );
     });
   };
 
@@ -653,13 +659,21 @@ const ProductPageClient = ({
                   onClick={() =>
                     user ? addToWishlist(product._id) : router.push("/login")
                   }
-                  aria-label="Add to wishlist"
-                  className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-xs border border-neutral-200/60 shadow-sm transition-all hover:bg-white hover:scale-105 active:scale-95 cursor-pointer"
+                  aria-label={
+                    user && alreadyInWishlist(product._id)
+                      ? "In wishlist"
+                      : "Add to wishlist"
+                  }
+                  className={`group/wishlist flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full bg-white/95 backdrop-blur-xs shadow-sm transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border ${
+                    user && alreadyInWishlist(product._id)
+                      ? "border-rose-300 bg-rose-50/80 hover:bg-rose-100 shadow-rose-200/50"
+                      : "border-neutral-200/70 hover:border-rose-300 hover:bg-rose-50/50"
+                  }`}
                 >
                   {user && alreadyInWishlist(product._id) ? (
-                    <Heart className="h-4.5 w-4.5 fill-rose-600 text-rose-600" />
+                    <Heart className="h-4.5 w-4.5 fill-rose-600 text-rose-600 transition-transform duration-200 group-hover/wishlist:scale-110" />
                   ) : (
-                    <Heart className="h-4.5 w-4.5 text-neutral-500 hover:text-neutral-900 transition-colors" />
+                    <Heart className="h-4.5 w-4.5 text-neutral-400 group-hover/wishlist:text-rose-500 group-hover/wishlist:stroke-rose-500 transition-all duration-200" />
                   )}
                 </button>
 

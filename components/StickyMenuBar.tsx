@@ -73,7 +73,14 @@ const StickyMenuBar = () => {
               className="flex min-w-14 flex-col items-center text-xs text-gray-700 relative"
             >
               <div className="relative flex size-7 items-center justify-center">
-                <Icon size={22} />
+                <Icon
+                  size={22}
+                  className={`transition-colors ${
+                    item.name === "Wishlist" && typeof item.badge === "number" && item.badge > 0
+                      ? "fill-rose-500 text-rose-500"
+                      : "text-gray-700 hover:text-rose-500"
+                  }`}
+                />
 
                 {item.badge !== undefined && (
                   <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-pink-500 text-[10px] leading-none text-white">

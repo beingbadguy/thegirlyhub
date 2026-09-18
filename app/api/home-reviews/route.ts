@@ -23,6 +23,9 @@ type ProductWithReviews = {
   reviews?: EmbeddedReview[];
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   try {
     await databaseConnection();
@@ -34,9 +37,12 @@ export async function GET() {
       })
         .select("title image images reviews")
         .sort({ updatedAt: -1 })
-        .limit(12)
+        .limit(20)
         .lean(),
-      HomeReview.find({ isVisible: true }).sort({ createdAt: -1 }).limit(10).lean(),
+      HomeReview.find({ isVisible: { $ne: false } })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean(),
     ])) as unknown as [
       ProductWithReviews[],
       Array<{
@@ -61,6 +67,7 @@ export async function GET() {
           image:
             review.photos?.[0] || product.image || product.images?.[0] || "",
           createdAt: review.createdAt,
+          isFeatured: false,
           product: {
             _id: product._id.toString(),
             title: product.title,
@@ -80,7 +87,7 @@ export async function GET() {
         username: review.username,
         rating: review.rating,
         comment: review.comment,
-        photos: [],
+        photos: review.productImage ? [review.productImage] : [],
         image: review.productImage || "",
         createdAt: review.createdAt,
         isFeatured: true,
@@ -91,20 +98,20 @@ export async function GET() {
         },
       })),
       ...customerReviews,
-    ]
-      .sort(
-        (first, second) =>
-          new Date(second.createdAt || 0).getTime() -
-          new Date(first.createdAt || 0).getTime(),
-      )
-      .slice(0, 6);
+    ].sort(
+      (first, second) =>
+        new Date(second.createdAt || 0).getTime() -
+        new Date(first.createdAt || 0).getTime(),
+    );
 
     return NextResponse.json(
       { success: true, reviews },
       {
         status: 200,
         headers: {
-          "Cache-Control": "public, s-maxage=180, stale-while-revalidate=900",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          Pragma: "no-cache",
+          Expires: "0",
         },
       },
     );
@@ -143,32 +150,35 @@ export async function POST(request: NextRequest) {
       !comment ||
       !Number.isInteger(rating) ||
       rating < 1 ||
-      rating > 5 ||
-      !(image instanceof File) ||
-      image.size === 0
+      rating > 5
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Name, comment, rating, and an image upload are required.",
+          message: "Name, comment, and rating (1-5) are required.",
         },
         { status: 400 },
       );
     }
 
-    if (!image.type.startsWith("image/") || image.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { success: false, message: "Upload an image smaller than 5 MB." },
-        { status: 400 },
-      );
-    }
+    let productImage: string | undefined = undefined;
 
-    await cloudinaryConnection();
-    const arrayBuffer = await image.arrayBuffer();
-    const dataURI = `data:${image.type};base64,${Buffer.from(arrayBuffer).toString("base64")}`;
-    const upload = await cloudinary.v2.uploader.upload(dataURI, {
-      folder: "girlyhub_home_reviews",
-    });
+    if (image instanceof File && image.size > 0) {
+      if (!image.type.startsWith("image/") || image.size > 5 * 1024 * 1024) {
+        return NextResponse.json(
+          { success: false, message: "Upload an image smaller than 5 MB." },
+          { status: 400 },
+        );
+      }
+
+      await cloudinaryConnection();
+      const arrayBuffer = await image.arrayBuffer();
+      const dataURI = `data:${image.type};base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+      const upload = await cloudinary.v2.uploader.upload(dataURI, {
+        folder: "girlyhub_home_reviews",
+      });
+      productImage = upload.secure_url;
+    }
 
     const productTitleValue = formData.get("productTitle");
     const review = await HomeReview.create({
@@ -179,7 +189,7 @@ export async function POST(request: NextRequest) {
         typeof productTitleValue === "string"
           ? productTitleValue.trim()
           : undefined,
-      productImage: upload.secure_url,
+      productImage,
       isVisible: formData.get("isVisible") !== "false",
     });
 

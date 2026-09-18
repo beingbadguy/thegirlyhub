@@ -1,9 +1,8 @@
 "use client";
 
-import { cachedApiGet } from "@/lib/apiCache";
-import { Heart, Quote, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Reveal, Stagger, StaggerItem } from "@/components/MotionEffects";
+import { Reveal, Stagger } from "@/components/MotionEffects";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
 type HomeReview = {
@@ -20,24 +19,30 @@ type HomeReview = {
   };
 };
 
-const borderColors = [
-  "border-rose-200",
-  "border-pink-200",
-  "border-fuchsia-200",
-  "border-violet-200",
-];
-
 export default function HomeReviews() {
   const [reviews, setReviews] = useState<HomeReview[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
-    cachedApiGet<{ reviews?: HomeReview[] }>(
-      "/api/home-reviews",
-      undefined,
-      { ttlMs: 10 * 60 * 1000 },
-    )
+
+    // Purge any stale client-side session cache for home reviews
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem("__gh_v3_cache_/api/home-reviews");
+        sessionStorage.removeItem("__gh_v2_cache_/api/home-reviews");
+        sessionStorage.removeItem("__gh_cache_/api/home-reviews");
+      } catch {}
+    }
+
+    fetch(`/api/home-reviews?_t=${Date.now()}`, {
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    })
+      .then((res) => res.json())
       .then((data) => {
         if (active) setReviews(data.reviews || []);
       })
@@ -87,7 +92,7 @@ export default function HomeReviews() {
       </Reveal>
 
       {!loaded ? (
-        <div className="grid min-w-0 gap-4 md:grid-cols-3">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((item) => (
             <div
               key={item}
@@ -96,59 +101,61 @@ export default function HomeReviews() {
           ))}
         </div>
       ) : (
-        <Stagger className="grid min-w-0 gap-4 md:grid-cols-3">
-          {reviews.slice(0, 6).map((review) => (
+        <Stagger className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {reviews.slice(0, 12).map((review) => (
             <div
               key={review._id}
-              className="flex flex-col justify-between rounded-xl border bg-white p-4"
+              className="flex flex-col justify-between rounded-xl border border-rose-100/80 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
             >
-              {/* Image */}
-              {review.image && (
-                <div className="mb-3 h-24 overflow-hidden rounded-md">
-                  <img
-                    src={review.image}
-                    alt={review.product.title}
-                    className="h-full w-full object-contain"
-                    loading="lazy"
-                  />
-                </div>
-              )}
+              <div>
+                {/* Image */}
+                {review.image ? (
+                  <div className="relative mb-3.5 h-44 w-full overflow-hidden rounded-xl bg-rose-50/40">
+                    <img
+                      src={review.image}
+                      alt={review.product?.title || "Review image"}
+                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null}
 
-              {/* Rating */}
-              <div className="mb-1 flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`size-3 ${
-                      star <= review.rating
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-neutral-200"
-                    }`}
-                  />
-                ))}
+                {/* Rating */}
+                <div className="mb-2 flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`size-3.5 ${
+                        star <= review.rating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-neutral-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Comment */}
+                <p className="line-clamp-4 text-xs leading-relaxed text-neutral-700">
+                  &ldquo;{review.comment}&rdquo;
+                </p>
               </div>
 
-              {/* Comment */}
-              <p className="line-clamp-3 text-xs text-neutral-700">
-                "{review.comment}"
-              </p>
-
               {/* Footer */}
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex size-7 items-center justify-center rounded-full bg-rose-100 text-[10px] font-semibold text-rose-600">
-                  {review.username[0].toUpperCase()}
+              <div className="mt-4 flex items-center gap-2.5 border-t border-rose-50 pt-3">
+                <div className="flex size-7 items-center justify-center rounded-full bg-rose-100 text-[11px] font-semibold text-rose-600">
+                  {review.username?.[0]?.toUpperCase() || "U"}
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold text-neutral-900">
                     {review.username}
                   </p>
                   <p className="truncate text-[10px] text-neutral-500">
-                    {review.product.title}
+                    {review.product?.title || "Our lovely collection"}
                   </p>
                 </div>
 
-                <span className="ml-auto text-[9px] text-green-600 font-medium">
+                <span className="ml-auto rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-medium text-emerald-600">
                   Verified
                 </span>
               </div>

@@ -173,11 +173,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log("You must be logged in to add to wishlist.");
       return;
     }
+    const currentWishlist =
+      get().userWishlist?.products || user?.wishlist?.[0]?.products || [];
+    const isAlreadyIn = currentWishlist.some((item: any) => {
+      const pId =
+        (typeof item.productId === "object" && item.productId !== null
+          ? item.productId._id || item.productId.id
+          : item.productId) || item._id;
+      return pId === id;
+    });
+
     try {
-      await axios.post(`/api/wishlist/${id}`);
+      if (isAlreadyIn) {
+        await axios.delete(`/api/wishlist/${id}`);
+      } else {
+        await axios.post(`/api/wishlist/${id}`);
+      }
       await get().fetchUserWishlist();
     } catch (error) {
-      console.error("Failed to add to wishlist:", error);
+      console.error("Failed to update wishlist:", error);
     }
   },
 

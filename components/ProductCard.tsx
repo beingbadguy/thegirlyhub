@@ -48,7 +48,7 @@ export default function ProductCard({
   onProductClick,
   className = "",
 }: ProductCardProps) {
-  const { addToWishlist, user, fetchUserCart } = useAuthStore();
+  const { addToWishlist, user, userWishlist, fetchUserCart } = useAuthStore();
   const router = useRouter();
   const inStock = isProductInStock(product);
   const [addedText, setAddedText] = useState(false);
@@ -131,13 +131,15 @@ export default function ProductCard({
     router.push(productUrl(product.title, product._id, product.slug));
   };
 
-  const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];
+  const allProductsOfWishlist =
+    userWishlist?.products || user?.wishlist?.[0]?.products || [];
   const alreadyInWishlist = allProductsOfWishlist.some(
     (item: WishlistItemFlexible) => {
-      if (typeof item.productId === "string") {
-        return item.productId === product._id;
-      }
-      return item.productId?._id === product._id;
+      const pId =
+        (typeof item.productId === "object" && item.productId !== null
+          ? item.productId._id || (item.productId as any).id
+          : item.productId) || (item as any)._id;
+      return pId === product._id;
     },
   );
 
@@ -168,8 +170,16 @@ export default function ProductCard({
           {!onRemove && (
             <button
               type="button"
-              aria-label="Add to wishlist"
-              className="flex size-8 items-center justify-center rounded-full bg-white shadow-md hover:bg-white active:scale-95 border border-neutral-100/50 transition-all"
+              aria-label={
+                user && alreadyInWishlist
+                  ? "In wishlist"
+                  : "Add to wishlist"
+              }
+              className={`group/heart flex size-8 items-center justify-center rounded-full bg-white shadow-md active:scale-95 border transition-all duration-200 cursor-pointer ${
+                user && alreadyInWishlist
+                  ? "border-rose-300 bg-rose-50/80 hover:bg-rose-100 shadow-rose-200/50"
+                  : "border-neutral-100/80 hover:border-rose-300 hover:bg-rose-50/40 hover:scale-110"
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (user) {
@@ -180,9 +190,9 @@ export default function ProductCard({
               }}
             >
               {user && alreadyInWishlist ? (
-                <Heart className="size-4 fill-red-500 text-red-500" />
+                <Heart className="size-4 fill-rose-500 text-rose-500 transition-transform duration-200 group-hover/heart:scale-110" />
               ) : (
-                <Heart className="size-4 text-neutral-400 hover:text-neutral-600" />
+                <Heart className="size-4 text-neutral-400 group-hover/heart:text-rose-500 group-hover/heart:stroke-rose-500 transition-all duration-200" />
               )}
             </button>
           )}

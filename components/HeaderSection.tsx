@@ -41,9 +41,10 @@ type Products = {
 };
 
 const HeaderSection = () => {
-  const { user, fetchUser, userCart } = useAuthStore();
+  const { user, fetchUser, userCart, userWishlist } = useAuthStore();
 
   const [totalNumberOfProducts, setTotalNumberOfProducts] = useState(0);
+  const wishlistCount = (userWishlist?.products || user?.wishlist?.[0]?.products || []).length;
   const announcements = [
     "Special offer: 15% off on the first order ✨",
     "Pan India delivery available 🚚",
@@ -333,12 +334,24 @@ const HeaderSection = () => {
             }}
           />
 
-          <Heart
-            className="hidden cursor-pointer md:block"
+          <div
+            className="cursor-pointer relative hidden md:block group"
             onClick={() => {
               router.push("/wishlist");
             }}
-          />
+            title="Wishlist"
+          >
+            <Heart
+              className={`transition-all duration-200 group-hover:text-rose-500 group-hover:scale-105 active:scale-95 ${
+                wishlistCount > 0 ? "fill-rose-500 text-rose-500" : "text-neutral-700 group-hover:text-rose-500"
+              }`}
+            />
+            {wishlistCount > 0 && (
+              <p className="absolute -top-3 -right-3 bg-rose-500 text-white rounded-full size-5 flex items-center text-[10px] font-bold justify-center shadow-xs">
+                {wishlistCount}
+              </p>
+            )}
+          </div>
 
           <div
             className="cursor-pointer relative"

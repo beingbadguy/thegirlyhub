@@ -86,14 +86,42 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Also fetch all orders for this user by userId or email to ensure 100% complete order history
-    const userOrders = await Order.find({
-      $or: [{ userId: user._id }, { email: user.email }],
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    const userId = user._id;
 
-    const serialized = serializeCustomer(user, userOrders);
+    // Concurrently fetch direct Cart, direct Wishlist, and user Orders
+    const [directCart, directWishlist, userOrders] = await Promise.all([
+      Cart.findOne({ userId })
+        .populate({
+          path: "products.productId",
+          model: "Product",
+          select:
+            "title name image mainImage images price discountedPrice discountPrice sellingPrice category stock countInStock totalStock",
+        })
+        .lean(),
+      Wishlist.findOne({ userId })
+        .populate({
+          path: "products.productId",
+          model: "Product",
+          select:
+            "title name image mainImage images price discountedPrice discountPrice sellingPrice category stock countInStock totalStock",
+        })
+        .lean(),
+      Order.find({
+        $or: [{ userId: user._id }, { email: user.email }],
+      })
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
+
+    const userObj = typeof user.toObject === "function" ? user.toObject() : user;
+    if (directCart && directCart.products && directCart.products.length > 0) {
+      userObj.cart = [directCart];
+    }
+    if (directWishlist && directWishlist.products && directWishlist.products.length > 0) {
+      userObj.wishlist = [directWishlist];
+    }
+
+    const serialized = serializeCustomer(userObj, userOrders);
 
     return NextResponse.json(
       {
