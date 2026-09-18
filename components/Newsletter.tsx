@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import axios, { AxiosError } from "axios";
 import { Loader2, Mail, Heart } from "lucide-react";
+import FloralAccent from "./decorations/FloralAccent";
 
 const Newsletter = () => {
   const [email, setEmail] = useState<string>("");
@@ -52,7 +53,15 @@ const Newsletter = () => {
 
   return (
     <section className="mx-auto max-w-3xl py-10 md:py-14">
-      <div className="relative overflow-hidden rounded-3xl border border-rose-100/70 bg-[#FFF9FA] px-6 py-12 text-center  sm:px-12 md:py-16">
+      <div className="relative overflow-hidden rounded-3xl border border-rose-100/70 bg-[#FFF9FA] px-6 py-12 text-center sm:px-12 md:py-16 shadow-xs">
+        {/* Decorative corner flowers */}
+        <div className="pointer-events-none absolute -top-4 -right-4 opacity-50 sm:opacity-70">
+          <FloralAccent flower={1} size="md" variant="float" className="rotate-12" />
+        </div>
+        <div className="pointer-events-none absolute -bottom-5 -left-5 opacity-40 sm:opacity-60">
+          <FloralAccent flower={2} size="md" variant="float-delayed" className="-rotate-12" />
+        </div>
+
         {/* Soft decorative hearts (optional) */}
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-rose-100/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-pink-100/40 blur-3xl" />
@@ -60,7 +69,7 @@ const Newsletter = () => {
         {/* Badge */}
         <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-[11px] font-medium tracking-widest text-rose-500 shadow-sm ring-1 ring-rose-100">
           <Heart className="size-3 fill-rose-400 text-rose-400" />
-          NEWSLETTER
+          VIP GIRLY CLUB
         </div>
 
         {/* Heading */}

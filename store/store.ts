@@ -85,6 +85,7 @@ interface Products {
   discountPercentage: number;
   isActive: boolean;
   category: string;
+  material?: string;
 }
 
 async function hydrateGuestCart() {

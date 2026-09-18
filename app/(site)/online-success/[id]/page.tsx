@@ -7,6 +7,7 @@ import Link from "next/link";
 import confetti from "canvas-confetti";
 import { useAuthStore } from "@/store/store";
 import CancelOrderModal from "@/components/CancelOrderModal";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 interface OrderItem {
   productId?: {
@@ -130,8 +131,15 @@ export default function OrderConfirmationPage() {
   const displayOrderId = order?._id || (!rawId?.startsWith("pay_") ? rawId : undefined);
 
   return (
-    <div className="min-h-[75vh] md:min-h-[85vh] bg-gradient-to-b from-pink-50/50 via-gray-50 to-white text-gray-800 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <main className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-10 relative overflow-hidden">
+    <div className="min-h-[75vh] md:min-h-[85vh] bg-gradient-to-b from-pink-50/50 via-gray-50 to-white text-gray-800 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+      <div className="pointer-events-none absolute top-6 right-6 opacity-40 sm:opacity-75">
+        <FloralAccent flower={2} size="lg" variant="float" />
+      </div>
+      <div className="pointer-events-none absolute bottom-6 left-6 opacity-35 sm:opacity-70">
+        <FloralAccent flower={1} size="lg" variant="float-delayed" />
+      </div>
+
+      <main className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-10 relative overflow-hidden z-10">
         {/* Accent top gradient bar */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 via-emerald-400 to-teal-500" />
 

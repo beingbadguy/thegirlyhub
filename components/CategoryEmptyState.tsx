@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 interface CategoryEmptyStateProps {
   categoryName?: string;
@@ -13,6 +14,14 @@ export default function CategoryEmptyState({
 }: CategoryEmptyStateProps) {
   return (
     <div className="relative mx-auto my-2 sm:my-3 w-full max-w-2xl sm:max-w-3xl overflow-hidden rounded-[24px] sm:rounded-[32px] border border-[#F6DCE2] bg-[#FFFAF9] px-5 py-7 sm:px-10 sm:py-9 text-center shadow-[0_6px_25px_rgba(240,180,195,0.1)]">
+      {/* Corner Floral Accents */}
+      <div className="pointer-events-none absolute -top-4 -left-4 opacity-50 sm:opacity-75">
+        <FloralAccent flower={1} size="md" variant="float" className="-rotate-12" />
+      </div>
+      <div className="pointer-events-none absolute -bottom-5 -right-5 opacity-50 sm:opacity-75">
+        <FloralAccent flower={2} size="md" variant="float-delayed" className="rotate-12" />
+      </div>
+
       {/* Decorative Shopping Bag Illustration */}
       <div className="relative inline-block my-0 sm:my-1">
         {/* Top-Right Cursive Note: "Kuch aur dekho?" */}

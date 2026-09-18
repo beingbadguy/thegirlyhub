@@ -160,6 +160,12 @@ export function normalizeProductPayload(
     stock: totalStock,
     countInStock: totalStock,
     status,
+    material:
+      input.material !== undefined
+        ? String(input.material).trim()
+        : source.material
+          ? String(source.material).trim()
+          : "",
     isActive: status === "active" || status === "out_of_stock",
     isFeatured: input.isFeatured ?? Boolean(source.isFeatured),
     isNewArrival: input.isNewArrival ?? Boolean(source.isNewArrival),

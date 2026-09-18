@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Tag, Flame, Crown, Gem } from "lucide-react";
 import { motion } from "framer-motion";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 interface PriceTier {
   id: string;
@@ -80,15 +81,19 @@ export default function BudgetPriceZone() {
   return (
     <section className="mx-auto my-8 max-w-7xl px-2 sm:my-12 md:my-14">
       {/* Section Header */}
-      <div className="mb-6 flex flex-col items-center text-center sm:mb-9">
+      <div className="mb-6 flex flex-col items-center text-center sm:mb-9 relative">
         <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-rose-200/80 bg-rose-50/80 px-3.5 py-1 text-xs font-semibold tracking-wide text-rose-600 shadow-2xs">
           <Sparkles className="size-3.5 text-rose-500" />
           <span>BUDGET BOUTIQUE</span>
         </div>
 
-        <h2 className="font-serif text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl md:text-4xl">
-          Shop By Budget <span aria-hidden="true">✨</span>
-        </h2>
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
+          <FloralAccent flower={1} size="sm" variant="sway" className="hidden sm:inline-block -scale-x-100 opacity-80" />
+          <h2 className="font-serif text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl md:text-4xl">
+            Shop By Budget <span aria-hidden="true">✨</span>
+          </h2>
+          <FloralAccent flower={2} size="sm" variant="float" className="inline-block opacity-85" />
+        </div>
 
         <p className="mt-2 max-w-lg text-xs leading-relaxed text-neutral-500 sm:text-sm">
           Big style at pocket-friendly prices. Tap any price zone to explore curated finds under your budget.

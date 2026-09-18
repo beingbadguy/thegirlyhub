@@ -8,6 +8,8 @@ import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { useState, useEffect } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
+import FloralFloatingAmbient from "@/components/decorations/FloralFloatingAmbient";
 
 export default function ForgetPage() {
   const [userEmail, setUserEmail] = useState("");
@@ -60,9 +62,12 @@ export default function ForgetPage() {
   };
 
   return (
-    <div className="min-h-[80vh] bg-[#FAF9F9] w-full flex flex-col">
+    <div className="min-h-[80vh] bg-[#fffafb] w-full flex flex-col relative overflow-hidden">
+      {/* Background Floral Accents */}
+      <FloralFloatingAmbient preset="auth" />
+
       {/* Breadcrumbs */}
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 relative z-10">
         <nav
           aria-label="Breadcrumb"
           className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
@@ -74,18 +79,21 @@ export default function ForgetPage() {
       </div>
 
       {/* Main content centered */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="p-0 md:p-2">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-3xl border border-rose-100 shadow-sm p-6 sm:p-8">
+          <div className="p-0">
             {/* Icon */}
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 border border-rose-100 mb-6">
               <Mail className="w-5 h-5 text-rose-500" />
             </div>
 
             {/* Heading */}
-            <h1 className="text-xl md:text-2xl font-bold text-neutral-900 tracking-tight mb-2">
-              Forgot your password?
-            </h1>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="text-xl md:text-2xl font-bold text-neutral-900 tracking-tight font-serif">
+                Forgot your password?
+              </h1>
+              <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+            </div>
             <p className="text-sm text-neutral-500 leading-relaxed mb-7">
               No worries, it happens. Enter the email address linked to your
               account and we&apos;ll send you a link to reset your password.

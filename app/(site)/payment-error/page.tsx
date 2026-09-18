@@ -1,21 +1,28 @@
-// app/payment-failed/page.tsx
 "use client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { XCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 export default function PaymentFailed() {
   const router = useRouter();
 
   return (
-    <div className="min-h-[70vh] bg-gray-50 flex items-center justify-center px-4 py-8">
-      <div className="max-w-md w-full">
+    <div className="min-h-[70vh] bg-[#fffafb] flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      <div className="pointer-events-none absolute top-8 right-8 opacity-30 sm:opacity-50">
+        <FloralAccent flower={1} size="lg" variant="float" />
+      </div>
+      <div className="pointer-events-none absolute bottom-8 left-8 opacity-30 sm:opacity-50">
+        <FloralAccent flower={3} size="md" variant="sway" />
+      </div>
+
+      <div className="max-w-md w-full relative z-10">
         {/* Main Error Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+        <div className="bg-white rounded-3xl shadow-sm border border-rose-100 p-8 text-center">
           {/* Error Icon */}
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-gray-100 rounded-full">
-              <XCircle className="w-16 h-16 text-gray-600" />
+            <div className="p-4 bg-rose-50 rounded-full border border-rose-100">
+              <XCircle className="w-14 h-14 text-rose-500" />
             </div>
           </div>
 

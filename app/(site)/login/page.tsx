@@ -11,6 +11,8 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { MdArrowRightAlt } from "react-icons/md";
 import SocialAuthButtons from "@/components/SocialAuthButtons";
+import FloralAccent from "@/components/decorations/FloralAccent";
+import FloralFloatingAmbient from "@/components/decorations/FloralFloatingAmbient";
 
 export default function LoginPage() {
   const { setUser, fetchUserCart, syncCartAfterAuth } = useAuthStore();
@@ -64,9 +66,12 @@ export default function LoginPage() {
     }
   };
   return (
-    <div className="min-h-[78vh] bg-[#fcfcfb] text-black w-full flex flex-col">
+    <div className="min-h-[78vh] bg-[#fffafb] text-black w-full flex flex-col relative overflow-hidden">
+      {/* Background Floral Accents */}
+      <FloralFloatingAmbient preset="auth" />
+
       {/* Breadcrumbs */}
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 relative z-10">
         <nav
           aria-label="Breadcrumb"
           className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
@@ -78,13 +83,16 @@ export default function LoginPage() {
       </div>
 
       {/* Main content centered */}
-      <div className="flex-1 flex items-center justify-center gap-4 flex-col px-4">
-        <div className="w-full max-w-[430px] px-0 py-6">
-          <h1 className="text-center text-[27px] font-semibold tracking-[-0.03em]">
-            Welcome back
-          </h1>
-          <p className="mt-2 text-center text-sm text-neutral-500">
-            Sign in to continue to GirlyHub.
+      <div className="flex-1 flex items-center justify-center gap-4 flex-col px-4 relative z-10">
+        <div className="w-full max-w-[430px] px-6 py-8 bg-white/80 backdrop-blur-md rounded-3xl border border-rose-100 shadow-sm">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <h1 className="text-center text-[27px] font-semibold tracking-[-0.03em] font-serif text-rose-950">
+              Welcome back
+            </h1>
+            <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-85" />
+          </div>
+          <p className="text-center text-sm text-neutral-500">
+            Sign in to continue to GirlyHub ✨
           </p>
 
           <form

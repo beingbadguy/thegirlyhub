@@ -22,6 +22,9 @@ export type ProductCardProduct = {
   countInStock: number;
   isActive: boolean;
   category?: string;
+  status?: string;
+  stock?: number;
+  totalStock?: number;
 };
 
 type ProductCardProps = {
@@ -98,19 +101,34 @@ export default function ProductCard({
       useAuthStore.getState().openCart();
       setAddedText(true);
       setTimeout(() => setAddedText(false), 2000);
-    } catch (err: unknown) {
-      console.error("Failed to add to cart from card:", err);
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
     }
   };
 
   const handleCardBuyNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await useAuthStore.getState().addToCart(product._id, "One Size");
+      let defaultSize = "M";
+      const cat = product.category || "";
+      if (["Shoes", "Slippers", "shoes", "flats"].includes(cat)) {
+        defaultSize = "7";
+      } else if (
+        !["Lowers", "Jeans", "Shirts", "dresses", "suits"].includes(cat)
+      ) {
+        defaultSize = "One Size";
+      }
+
+      await useAuthStore.getState().addToCart(product._id, defaultSize);
       router.push("/checkout");
     } catch (error) {
-      console.error("Failed to buy product:", error);
+      console.error("Failed to buy now:", error);
     }
+  };
+
+  const goToProduct = () => {
+    onProductClick?.();
+    router.push(productUrl(product.title, product._id, product.slug));
   };
 
   const allProductsOfWishlist = user?.wishlist?.[0]?.products || [];
@@ -119,32 +137,31 @@ export default function ProductCard({
       if (typeof item.productId === "string") {
         return item.productId === product._id;
       }
-      return item.productId._id === product._id;
+      return item.productId?._id === product._id;
     },
   );
 
-  const goToProduct = () => {
-    onProductClick?.();
-    router.push(productUrl(product.title, product._id, product.slug));
-  };
-
   return (
     <div
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-neutral-100 bg-white p-0 transition-all duration-300 hover:border-neutral-200 md:rounded-3xl md:p-4 ${className}`}
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-neutral-100/80 shadow-xs hover:shadow-md transition-all duration-300 md:p-3 p-1.5 ${className}`}
     >
-      {/* Image area with overlays */}
+      {/* Image Container */}
       <div
-        className="relative mb-3 aspect-square w-full cursor-pointer overflow-hidden bg-neutral-100/85 md:mb-4 md:rounded-2xl md:border md:border-neutral-100/50"
+        className="relative aspect-square w-full overflow-hidden rounded-xl bg-neutral-50 cursor-pointer"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={goToProduct}
       >
-        {/* Discount Badge on the top left */}
-        {product.discountPercentage > 0 && (
+        {/* Out of Stock or Discount Badge on the top left */}
+        {!inStock ? (
+          <div className="absolute left-3 top-3 z-10 rounded-full bg-neutral-900/85 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white shadow-xs uppercase tracking-wider">
+            Out of Stock
+          </div>
+        ) : product.discountPercentage > 0 ? (
           <div className="absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-semibold text-rose-600 shadow-sm border border-neutral-100/50 uppercase tracking-wider">
             {Math.floor(product.discountPercentage)}% Off
           </div>
-        )}
+        ) : null}
 
         {/* Wishlist/Close Button on the top right */}
         <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
@@ -185,7 +202,7 @@ export default function ProductCard({
         </div>
 
         {/* Product image using smooth crossfade */}
-        <div className="relative size-full overflow-hidden">
+        <div className={`relative size-full overflow-hidden transition-opacity duration-300 ${!inStock ? "opacity-80 grayscale-[20%]" : ""}`}>
           {images.map((imgSrc, idx) => (
             <Image
               key={`${imgSrc}-${idx}`}

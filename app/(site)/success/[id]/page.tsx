@@ -31,6 +31,7 @@ import { useAuthStore } from "@/store/store";
 import { productUrl } from "@/lib/slug";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import CancelOrderModal from "@/components/CancelOrderModal";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 interface OrderProductItem {
   productId?: {
@@ -359,7 +360,14 @@ export default function OrderConfirmedPage() {
       {/* Main Container */}
       <main className="mx-auto w-full max-w-5xl px-4 pt-8 sm:px-8">
         {/* Hero Celebration Section */}
-        <section className="reveal mx-auto max-w-2xl text-center">
+        <section className="reveal mx-auto max-w-2xl text-center relative">
+          <div className="pointer-events-none absolute -top-8 -right-8 opacity-60 sm:opacity-80">
+            <FloralAccent flower={2} size="lg" variant="float" className="rotate-12" />
+          </div>
+          <div className="pointer-events-none absolute -bottom-8 -left-8 opacity-60 sm:opacity-80">
+            <FloralAccent flower={1} size="lg" variant="float-delayed" className="-rotate-12" />
+          </div>
+
           <div className="success-orb mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-500 text-white transition-transform duration-300 hover:scale-105">
             <Check className="size-10 stroke-[2.5]" />
           </div>

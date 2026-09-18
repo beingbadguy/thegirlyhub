@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type Category = {
   _id: string;
@@ -126,9 +127,12 @@ const CategoryProductSections = ({
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-rose-500">
                     Curated collection
                   </p>
-                  <h2 className="mt-1 font-serif text-2xl capitalize text-rose-950 sm:text-3xl">
-                    {category.name}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="mt-1 font-serif text-2xl capitalize text-rose-950 sm:text-3xl">
+                      {category.name}
+                    </h2>
+                    <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+                  </div>
                   <p className="mt-1 text-sm text-rose-900/60">
                     Discover pieces selected for your everyday style.
                   </p>

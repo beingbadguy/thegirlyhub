@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import PaginationControls from "./PaginationControls";
 import { Skeleton } from "./ui/skeleton";
 import ProductCard from "./ProductCard";
+import FloralAccent from "./decorations/FloralAccent";
 
 interface NewArrivalsProps {
   limit?: number;
@@ -99,14 +100,18 @@ const NewArrivals = ({
 
   return (
     <section className="mx-auto max-w-7xl py-10 md:py-14">
-      <div className="mb-12 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1.5 text-[11px] font-medium tracking-widest text-rose-500 ring-1 ring-rose-100">
+      <div className="mb-12 text-center relative">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1.5 text-[11px] font-medium tracking-widest text-rose-500 ring-1 ring-rose-100 shadow-xs">
           <Heart className="size-3 fill-rose-400 text-rose-400" />
-          NEW IN
+          {featured ? "CURATED PICKS" : "NEW IN"}
         </div>
-        <h2 className="font-serif text-3xl font-medium tracking-tight text-rose-950 sm:text-4xl">
-          {featured ? "Featured Products" : "New Arrivals"}
-        </h2>
+        <div className="flex items-center justify-center gap-3">
+          <FloralAccent flower={featured ? 2 : 1} size="sm" variant="sway" className="hidden sm:inline-block -scale-x-100 opacity-80" />
+          <h2 className="font-serif text-3xl font-medium tracking-tight text-rose-950 sm:text-4xl">
+            {featured ? "Featured Products" : "New Arrivals"}
+          </h2>
+          <FloralAccent flower={featured ? 3 : 1} size="sm" variant="float" className="inline-block opacity-80" />
+        </div>
         <p className="mx-auto mt-3 max-w-md text-[15px] text-rose-900/60">
           {featured
             ? "Handpicked favourites chosen to make every look feel special."

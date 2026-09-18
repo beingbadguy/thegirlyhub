@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .select(
-          "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug",
+          "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand material countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug",
         )
         .sort(sortOption)
         .skip(skip)
@@ -136,9 +136,11 @@ export async function GET(request: NextRequest) {
         discountedPrice,
         discountPrice: discountedPrice,
         discountPercentage,
-        countInStock,
-        stock: countInStock,
-        totalStock: countInStock,
+        material: p.material || "",
+        countInStock: p.status === "out_of_stock" ? 0 : countInStock,
+        stock: p.status === "out_of_stock" ? 0 : countInStock,
+        totalStock: p.status === "out_of_stock" ? 0 : countInStock,
+        status: p.status || (countInStock === 0 ? "out_of_stock" : "active"),
         slug: p.slug || idStr,
         category: p.category || "jewellery",
         isActive:

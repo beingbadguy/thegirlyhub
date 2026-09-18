@@ -38,6 +38,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 declare global {
   interface Window {
@@ -645,7 +646,10 @@ export default function CheckoutPage() {
         </nav>
 
         <div className="mb-6 flex flex-col gap-1">
-          <h1 className="text-3xl font-bold text-gray-950">Checkout</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-950 font-serif">Checkout</h1>
+            <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+          </div>
           <p className="text-sm text-gray-500">
             Review your delivery details and order items before placing the
             order.

@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 const features = [
   { icon: Sparkles, title: "Trending Styles" },
@@ -38,15 +39,26 @@ export default function TrustStrip() {
   }, []);
 
   return (
-    <section ref={ref} className="bg-white px-4 py-10 sm:px-6 lg:py-12">
-      <div className="mx-auto max-w-4xl text-center">
+    <section ref={ref} className="bg-white px-4 py-10 sm:px-6 lg:py-12 rounded-3xl border border-rose-100/60 my-6 relative overflow-hidden shadow-xs">
+      <div className="pointer-events-none absolute -top-4 -right-4 opacity-30">
+        <FloralAccent flower={1} size="md" variant="float" />
+      </div>
+      <div className="pointer-events-none absolute -bottom-4 -left-4 opacity-30">
+        <FloralAccent flower={3} size="md" variant="sway" />
+      </div>
+
+      <div className="mx-auto max-w-4xl text-center relative z-10">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-[#b28a50]">
           Quality
         </p>
 
-        <h2 className="mt-2 text-2xl font-semibold text-[#5b102d] sm:text-3xl">
-          GirlyHub Promise
-        </h2>
+        <div className="flex items-center justify-center gap-2">
+          <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+          <h2 className="mt-1 text-2xl font-semibold text-[#5b102d] sm:text-3xl font-serif">
+            GirlyHub Promise
+          </h2>
+          <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+        </div>
 
         {/* Desktop */}
         <div className="relative mt-10 hidden sm:block">

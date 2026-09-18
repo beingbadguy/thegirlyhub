@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import JsonLd from "@/components/seo/JsonLd";
 import { generateFaqSchema } from "@/lib/seo/schema";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 const Faqs = () => {
   const [faqs, setFaqs] = useState<
@@ -57,17 +58,20 @@ const Faqs = () => {
         />
 
         {/* Left Content */}
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center relative">
           <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-[11px] font-medium tracking-widest text-rose-500 shadow-sm ring-1 ring-rose-100">
             <Heart className="size-3 fill-rose-400 text-rose-400" />
             FAQ
           </div>
 
-          <h2 className="font-serif text-4xl font-medium leading-[1.15] tracking-tight text-rose-950 sm:text-5xl">
-            Your questions,
-            <br />
-            answered with love.
-          </h2>
+          <div className="flex items-start gap-3">
+            <h2 className="font-serif text-4xl font-medium leading-[1.15] tracking-tight text-rose-950 sm:text-5xl">
+              Your questions,
+              <br />
+              answered with love.
+            </h2>
+            <FloralAccent flower={3} size="md" variant="sway" className="opacity-80 hidden sm:inline-block" />
+          </div>
 
           <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-rose-900/60">
             Everything you need to know about your order, delivery, and your

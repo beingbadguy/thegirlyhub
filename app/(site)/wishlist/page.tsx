@@ -8,6 +8,7 @@ import BreadcrumbHome from "@/components/BreadcrumbHome";
 import axios, { AxiosError } from "axios";
 import { VscCoffee } from "react-icons/vsc";
 import { useEffect, useState } from "react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 
 const WishlistPage = () => {
@@ -66,8 +67,13 @@ const WishlistPage = () => {
   }
 
   return (
-    <div className="min-h-[70vh] bg-[#fffafb]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-[70vh] bg-[#fffafb] relative overflow-hidden">
+      {/* Background floral flourishes */}
+      <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-25 lg:block select-none">
+        <FloralAccent flower={1} size="xl" animation="float" />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 relative z-10">
         <nav
           aria-label="Breadcrumb"
           className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
@@ -84,19 +90,38 @@ const WishlistPage = () => {
           <span className="font-semibold text-neutral-900">Wishlist</span>
         </nav>
 
-        <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold text-pink-700 font-serif">Your Wishlist</h1>
+        <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-rose-100/70 pb-4">
+          <div className="flex items-center gap-3">
+            <FloralAccent flower={1} size="sm" animation="pulse" />
+            <h1 className="text-2xl md:text-3xl font-bold text-pink-700 font-serif">Your Wishlist</h1>
+          </div>
           {totalItems > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm font-medium text-rose-800 bg-rose-50 px-3 py-1 rounded-full border border-rose-100 self-start sm:self-auto">
               {totalItems} saved item{totalItems !== 1 ? "s" : ""}
             </span>
           )}
         </div>
 
       {isWishlistEmpty && (
-        <div className="my-2 flex flex-wrap items-center gap-1 text-sm text-gray-600">
-          <VscCoffee className="animate-pulse" />
-          Your wishlist is empty. Add some items to your wishlist!
+        <div className="my-10 flex flex-col items-center justify-center text-center p-8 bg-white rounded-3xl border border-rose-100 shadow-xs max-w-md mx-auto relative overflow-hidden">
+          <div className="relative mb-4">
+            <FloralAccent flower={2} size="lg" animation="float" />
+            <div className="absolute -top-2 -right-2">
+              <FloralAccent flower={1} size="xs" animation="pulse" />
+            </div>
+          </div>
+          <h2 className="font-serif text-xl font-semibold text-rose-950 mb-1">
+            Your Wishlist is Empty
+          </h2>
+          <p className="text-sm text-gray-500 mb-6 max-w-xs">
+            Save pieces you love by clicking the heart icon on any product!
+          </p>
+          <Link
+            href="/product"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-medium text-sm shadow-sm hover:shadow-md transition-all hover:scale-[1.02]"
+          >
+            Explore Collections ✨
+          </Link>
         </div>
       )}
 
@@ -114,6 +139,7 @@ const WishlistPage = () => {
               countInStock: item.productId.countInStock,
               isActive: item.productId.isActive,
               category: item.productId.category,
+              status: (item.productId as any).status,
             }}
             onRemove={() => handleRemoveFromWishlist(item.productId._id)}
           />

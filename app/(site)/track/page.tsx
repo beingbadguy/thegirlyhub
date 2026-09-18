@@ -9,6 +9,7 @@ import { BsBoxSeam } from "react-icons/bs";
 import { Check, X, Clock, MapPin, Truck, CreditCard, Tag, Copy, CheckCheck, PackageCheck } from "lucide-react";
 import { productUrl } from "@/lib/slug";
 import CancelOrderModal from "@/components/CancelOrderModal";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type OrderStatus =
   | "processing"
@@ -218,14 +219,21 @@ export default function TrackOrderPage() {
         {/* Search Header */}
         <div className="relative overflow-hidden rounded-[1.75rem] bg-[#3d071e] px-5 py-7 text-white shadow-[0_18px_50px_rgba(91,13,55,0.16)] sm:px-8">
           <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full border-[24px] border-white/10" />
-          <div className="relative">
+          <div className="pointer-events-none absolute -bottom-8 -right-8 opacity-25">
+            <FloralAccent flower={1} size="lg" variant="float" />
+          </div>
+
+          <div className="relative z-10">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-pink-200">Delivery desk</p>
-                <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
-                  <BsBoxSeam className="h-6 w-6 text-pink-300" />
-                  Track your order
-                </h1>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl font-serif">
+                    <BsBoxSeam className="h-6 w-6 text-pink-300" />
+                    Track your order
+                  </h1>
+                  <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+                </div>
                 <p className="mt-2 max-w-md text-sm text-pink-100/75">Follow your parcel from preparation to your doorstep.</p>
               </div>
               <PackageCheck className="hidden h-12 w-12 text-pink-200/40 sm:block" />

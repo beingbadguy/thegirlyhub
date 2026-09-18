@@ -26,6 +26,7 @@ export type SSRProduct = {
   images: string[];
   category: string;
   brand?: string;
+  material?: string;
   countInStock: number;
   stock?: number;
   totalStock?: number;
@@ -85,15 +86,16 @@ function normalizeSSRProduct(p: any): SSRProduct {
     images,
     category: p.category || "jewellery",
     brand: p.brand || "GirlyHub",
-    countInStock,
-    stock: countInStock,
-    totalStock: countInStock,
+    material: p.material || "",
+    countInStock: p.status === "out_of_stock" ? 0 : countInStock,
+    stock: p.status === "out_of_stock" ? 0 : countInStock,
+    totalStock: p.status === "out_of_stock" ? 0 : countInStock,
     rating: p.averageRating ?? p.rating ?? p.ratings ?? 0,
     ratings: p.averageRating ?? p.rating ?? p.ratings ?? 0,
     averageRating: p.averageRating ?? p.rating ?? p.ratings ?? 0,
     numReviews: p.totalReviews ?? p.numReviews ?? 0,
     totalReviews: p.totalReviews ?? p.numReviews ?? 0,
-    status: p.status || "active",
+    status: p.status || (countInStock === 0 ? "out_of_stock" : "active"),
     isFeatured: Boolean(p.isFeatured),
     isNewArrival: Boolean(p.isNewArrival),
     isActive: p.isActive !== false && p.status !== "draft" && p.status !== "archived",
@@ -227,7 +229,7 @@ export async function getSSRProducts(options: {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .select(
-          "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug",
+          "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand material countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug",
         )
         .sort(sortOption)
         .skip(skip)

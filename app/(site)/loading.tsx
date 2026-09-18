@@ -1,11 +1,16 @@
+import FloralAccent from "@/components/decorations/FloralAccent";
+
 export default function SiteLoading() {
   return (
     <main
       aria-label="Loading page"
-      className="min-h-[70vh] animate-pulse bg-[#fffafc] px-4 py-6 sm:px-6 lg:px-8"
+      className="min-h-[70vh] animate-pulse bg-[#fffafc] px-4 py-6 sm:px-6 lg:px-8 relative overflow-hidden"
     >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 h-4 w-40 rounded-full bg-rose-100" />
+        <div className="mb-4 flex items-center gap-2">
+          <FloralAccent flower={1} size="xs" animation="pulse" />
+          <div className="h-4 w-32 rounded-full bg-rose-100" />
+        </div>
         <div className="mb-8 h-10 w-56 rounded-lg bg-rose-100" />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (

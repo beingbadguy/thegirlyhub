@@ -40,6 +40,61 @@
   }
 }
 
+@keyframes floral-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+@keyframes floral-float-delayed {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(-3deg);
+  }
+}
+
+@keyframes floral-sway {
+  0%, 100% {
+    transform: rotate(-3deg) scale(1);
+  }
+  50% {
+    transform: rotate(3deg) scale(1.02);
+  }
+}
+
+@keyframes floral-pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+.floral-float {
+  animation: floral-float 6s ease-in-out infinite;
+}
+
+.floral-float-delayed {
+  animation: floral-float-delayed 7.5s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.floral-sway {
+  animation: floral-sway 5s ease-in-out infinite;
+}
+
+.floral-pulse {
+  animation: floral-pulse-soft 4s ease-in-out infinite;
+}
+
 html,
 body {
   max-width: 100%;

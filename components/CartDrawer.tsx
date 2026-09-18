@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { calculateShipping } from "@/lib/shipping";
 import { productUrl } from "@/lib/slug";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 export default function CartDrawer() {
   const {
@@ -46,12 +47,15 @@ export default function CartDrawer() {
         aria-label="Shopping cart"
         className={`fixed right-0 top-0 z-[1101] flex h-dvh w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}
       >
-        <header className="flex items-center justify-between border-b border-neutral-100 px-6 py-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-400">
-              Your selection
-            </p>
-            <h2 className="mt-1 text-2xl font-bold text-neutral-900">Cart</h2>
+        <header className="relative flex items-center justify-between border-b border-neutral-100 px-6 py-5 overflow-hidden">
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-400">
+                Your selection ✨
+              </p>
+              <h2 className="mt-1 text-2xl font-bold text-neutral-900 font-serif">Cart</h2>
+            </div>
+            <FloralAccent flower={1} size="xs" variant="pulse" className="ml-1 opacity-90" />
           </div>
           <button
             type="button"
@@ -78,16 +82,15 @@ export default function CartDrawer() {
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center text-center">
-              <ShoppingBag
-                className="size-10 text-rose-300"
-                strokeWidth={1.5}
-              />
-              <p className="mt-4 font-semibold text-neutral-900">
-                Your cart is empty
+            <div className="flex min-h-64 flex-col items-center justify-center text-center px-4">
+              <div className="relative mb-3">
+                <FloralAccent flower={2} size="md" variant="sway" />
+              </div>
+              <p className="font-semibold text-neutral-900 font-serif text-lg">
+                Your bag is empty
               </p>
-              <p className="mt-1 text-sm text-neutral-500">
-                Add something beautiful to your bag.
+              <p className="mt-1 text-sm text-neutral-500 max-w-xs">
+                Add something cute & beautiful to your collection ✨
               </p>
             </div>
           ) : (

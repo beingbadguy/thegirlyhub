@@ -4,6 +4,7 @@ import { cachedApiGet } from "@/lib/apiCache";
 import { Heart, Quote, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Reveal, Stagger, StaggerItem } from "@/components/MotionEffects";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type HomeReview = {
   _id: string;
@@ -56,7 +57,7 @@ export default function HomeReviews() {
 
   return (
     <section
-      className="mx-auto w-full min-w-0 max-w-7xl py-12 md:py-16"
+      className="mx-auto w-full min-w-0 max-w-7xl py-12 md:py-16 relative"
       aria-labelledby="reviews-heading"
     >
       <Reveal className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -65,12 +66,15 @@ export default function HomeReviews() {
             <Heart className="size-3.5 fill-rose-300 text-rose-400" />
             LOVE NOTES
           </div>
-          <h2
-            id="reviews-heading"
-            className="font-serif text-3xl text-rose-950 sm:text-4xl"
-          >
-            Little words, big smiles
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2
+              id="reviews-heading"
+              className="font-serif text-3xl text-rose-950 sm:text-4xl"
+            >
+              Little words, big smiles
+            </h2>
+            <FloralAccent flower={3} size="sm" variant="sway" className="opacity-80" />
+          </div>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-rose-900/60">
             The sweetest part of making beautiful things is hearing how they
             made your day.

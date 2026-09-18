@@ -2,15 +2,21 @@
 
 import Image from "next/image";
 import { Instagram, ArrowUpRight } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 export default function InstagramShowcase() {
     return (
-        <section className="relative overflow-hidden px-6 py-16 md:px-12 lg:px-20 bg-[#f7f3ec]">
+        <section className="relative overflow-hidden px-6 py-16 md:px-12 lg:px-20 bg-[#f7f3ec] rounded-3xl my-6">
 
             {/* background grid */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(82,106,85,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(82,106,85,0.07)_1px,transparent_1px)] bg-[size:34px_34px]" />
 
-            <div className="relative max-w-7xl mx-auto">
+            {/* Subtle background floral accent */}
+            <div className="pointer-events-none absolute -bottom-8 -right-8 opacity-25">
+                <FloralAccent flower={1} size="xl" variant="float" />
+            </div>
+
+            <div className="relative max-w-7xl mx-auto z-10">
 
                 {/* HEADER */}
                 <div className="mb-10 flex flex-col gap-7 border-b border-[#ded8cc] pb-8 md:flex-row md:items-end md:justify-between">
@@ -21,9 +27,12 @@ export default function InstagramShowcase() {
                             Instagram
                         </p>
 
-                        <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-tight">
-                            Follow Our Style
-                        </h2>
+                        <div className="flex items-center gap-3">
+                            <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-tight font-serif">
+                                Follow Our Style
+                            </h2>
+                            <FloralAccent flower={2} size="sm" variant="sway" className="mt-4 opacity-80" />
+                        </div>
 
                         <p className="mt-5 text-gray-600">
                             Explore our latest looks, styling inspiration, and behind the scenes moments.

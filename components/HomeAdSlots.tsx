@@ -3,6 +3,7 @@
 import { Megaphone, Sparkles, Tag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 /**
  * Reserved home-page slots for ads, promos, and conversion CTAs.
@@ -14,9 +15,12 @@ export default function HomeAdSlots() {
       {/* Slot 1 — Hero-adjacent promo strip */}
       <div
         data-ad-slot="home-promo-strip"
-        className="relative overflow-hidden rounded-2xl border border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 px-6 py-8 md:px-10"
+        className="relative overflow-hidden rounded-2xl border border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 px-6 py-8 md:px-10 shadow-xs"
       >
         <div className="absolute -right-6 -top-6 size-32 rounded-full bg-rose-200/40 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-4 right-10 opacity-30 sm:opacity-50">
+          <FloralAccent flower={1} size="md" variant="float" />
+        </div>
 
         <div className="relative flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-3">

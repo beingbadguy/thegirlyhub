@@ -7,6 +7,8 @@ import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Lock, Check, X } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
+import FloralFloatingAmbient from "@/components/decorations/FloralFloatingAmbient";
 
 export default function ResetPage({ token }: { token: string }) {
   console.log("Token received:", token); // ✅ Debugging
@@ -55,9 +57,12 @@ export default function ResetPage({ token }: { token: string }) {
   };
 
   return (
-    <div className="min-h-[75vh] bg-neutral-50/50 w-full flex flex-col">
+    <div className="min-h-[75vh] bg-[#fffafb] w-full flex flex-col relative overflow-hidden">
+      {/* Background Floral Accents */}
+      <FloralFloatingAmbient preset="auth" />
+
       {/* Breadcrumbs */}
-      <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 relative z-10">
         <nav
           aria-label="Breadcrumb"
           className="mb-4 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
@@ -69,11 +74,14 @@ export default function ResetPage({ token }: { token: string }) {
       </div>
 
       {/* Main content centered */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md p-0 md:p-2">
-          <h2 className="text-xl font-bold text-center text-neutral-900 mb-6 tracking-tight uppercase">
-            Change Password
-          </h2>
+      <div className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-3xl border border-rose-100 shadow-sm p-6 sm:p-8">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <h2 className="text-xl font-bold text-center text-neutral-900 tracking-tight uppercase font-serif">
+              Change Password
+            </h2>
+            <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+          </div>
 
           <form
             onSubmit={changePassword}

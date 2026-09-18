@@ -6,6 +6,7 @@ import axios from "axios";
 import { Heart, LoaderCircle, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type SearchDrawerProps = {
   open: boolean;
@@ -129,13 +130,16 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
         onWheel={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
-        <div className="flex shrink-0 items-center justify-between border-b px-5 py-3.5">
-          <div>
-            <p className="text-xl font-semibold text-rose-600">Search</p>
-            <p className="text-xs text-gray-500">
-              <Heart className="inline size-3.5 mr-1 text-rose-600" />
-              Find something you love
-            </p>
+        <div className="flex shrink-0 items-center justify-between border-b px-5 py-3.5 bg-[#fffafc]">
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="text-xl font-semibold text-rose-600 font-serif">Search</p>
+              <p className="text-xs text-gray-500">
+                <Heart className="inline size-3.5 mr-1 text-rose-600" />
+                Find something you love
+              </p>
+            </div>
+            <FloralAccent flower={1} size="xs" variant="pulse" className="ml-1" />
           </div>
           <button
             onClick={onClose}

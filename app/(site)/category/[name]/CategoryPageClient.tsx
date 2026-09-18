@@ -9,6 +9,7 @@ import { Heart, Sparkles, SlidersHorizontal, ChevronDown } from "lucide-react";
 import FilterSidebar from "@/components/FilterSidebar";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import CategoryEmptyState from "@/components/CategoryEmptyState";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type Product = React.ComponentProps<typeof ProductCard>["product"];
 
@@ -137,6 +138,29 @@ export default function CategoryPageClient({
             {categoryName}
           </span>
         </nav>
+
+        {/* Category Header Banner with Floral Accents */}
+        <div className="mb-6 relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-50 via-rose-50/70 to-pink-50 border border-rose-100/70 px-6 py-6 sm:px-8 sm:py-8 shadow-xs">
+          <div className="pointer-events-none absolute -top-4 -right-4 opacity-40 sm:opacity-70">
+            <FloralAccent flower={1} size="lg" variant="float" className="rotate-12" />
+          </div>
+          <div className="pointer-events-none absolute -bottom-6 -left-4 opacity-30 sm:opacity-50">
+            <FloralAccent flower={2} size="md" variant="float-delayed" className="-rotate-12" />
+          </div>
+
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-xs px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-rose-600 ring-1 ring-rose-200/50 mb-2">
+              <Sparkles className="size-3 text-rose-500" />
+              <span>Curated Category</span>
+            </div>
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold capitalize text-rose-950">
+              {categoryName}
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-rose-900/70 max-w-xl">
+              Explore our boutique collection of {categoryName}, styled to give you effortless glam.
+            </p>
+          </div>
+        </div>
 
         {/* Toolbar: Filter on Left & Professional Sort on Right */}
         <div className="mb-3 flex items-center justify-between gap-3 border-b border-neutral-200/80 pb-3">

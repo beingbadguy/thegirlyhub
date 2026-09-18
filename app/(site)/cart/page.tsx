@@ -14,6 +14,7 @@ import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 import FreeShippingBar from "@/components/FreeShippingBar";
 import CartSkeleton from "@/components/CartSkeleton";
 import { productUrl } from "@/lib/slug";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 const CartPage = () => {
   const { user, userCart, isCartLoading, isCartUpdating, updateCartQuantity, removeFromCart } = useAuthStore();
@@ -129,7 +130,10 @@ const CartPage = () => {
           <span className="font-semibold text-neutral-900">Cart</span>
         </nav>
 
-        <h1 className="py-2 font-bold text-pink-700 text-3xl font-serif">Your Cart</h1>
+        <div className="flex items-center gap-3 py-2">
+          <h1 className="font-bold text-pink-700 text-3xl font-serif">Your Cart</h1>
+          <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+        </div>
 
       {cartItems.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -421,15 +425,22 @@ const CartPage = () => {
           </div>
         </div>
       ) : (
-        <div className="flex min-h-[50vh] flex-col items-center justify-center text-center p-8 bg-white/60 rounded-3xl border border-rose-100/60 my-6 shadow-xs">
-          <div className="flex size-20 items-center justify-center rounded-full bg-rose-50 text-rose-500 mb-4 ring-8 ring-rose-50/50">
-            <ShoppingBag className="size-9 text-rose-500" strokeWidth={1.75} />
+        <div className="flex min-h-[50vh] flex-col items-center justify-center text-center p-8 bg-white/60 rounded-3xl border border-rose-100/60 my-6 shadow-xs relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-4 -right-4 opacity-40">
+            <FloralAccent flower={1} size="lg" variant="float" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="pointer-events-none absolute -bottom-4 -left-4 opacity-35">
+            <FloralAccent flower={3} size="md" variant="sway" />
+          </div>
+
+          <div className="relative mb-3">
+            <FloralAccent flower={2} size="lg" variant="float" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 font-serif">
             Your shopping bag is empty
           </h2>
           <p className="text-sm text-gray-500 max-w-md mb-6">
-            Looks like you haven't added anything to your cart yet. Explore our latest arrivals and find something special!
+            Looks like you haven&apos;t added anything to your cart yet. Explore our latest arrivals and find something special! ✨
           </p>
           <Link
             href="/newarrivals"

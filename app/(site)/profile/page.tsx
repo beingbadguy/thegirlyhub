@@ -24,6 +24,7 @@ import {
   User,
 } from "lucide-react";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type Order = {
   _id: string;
@@ -430,10 +431,14 @@ export default function ProfilePage() {
         <section className="min-w-0 flex-1 md:h-full md:overflow-y-auto md:pb-2">
           {menu === "account" && (
             <div className="space-y-5">
-              <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-sm sm:p-6">
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative overflow-hidden rounded-2xl border border-rose-100 bg-white p-5 shadow-sm sm:p-6">
+                {/* Ambient floral background accent */}
+                <div className="pointer-events-none absolute -right-6 -top-6 opacity-20 select-none">
+                  <FloralAccent flower={1} size="lg" animation="float" />
+                </div>
+                <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="relative size-20 overflow-hidden rounded-full border border-rose-100 bg-rose-50">
+                    <div className="relative size-20 overflow-hidden rounded-full border border-rose-100 bg-rose-50 shadow-xs">
                       {user.image ? (
                         <Image
                           src={user.image}
@@ -448,9 +453,12 @@ export default function ProfilePage() {
                       )}
                     </div>
                     <div>
-                      <h1 className="font-serif text-2xl text-rose-950">
-                        {user.name}
-                      </h1>
+                      <div className="flex items-center gap-2">
+                        <h1 className="font-serif text-2xl text-rose-950">
+                          {user.name}
+                        </h1>
+                        <FloralAccent flower={1} size="xs" animation="pulse" />
+                      </div>
                       <p className="text-sm text-rose-900/60">{user.email}</p>
                       <p className="mt-1 text-xs text-rose-900/50">
                         Member since{" "}
@@ -462,7 +470,7 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50">
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 transition-colors">
                     {uploadingPhoto ? "Uploading…" : "Change photo"}
                     <input
                       type="file"
@@ -723,13 +731,19 @@ export default function ProfilePage() {
                     )}
                   </div>
                   {orders.length === 0 ? (
-                    <p className="text-sm text-rose-900/60">
-                      You have not placed any orders yet.
-                    </p>
+                    <div className="py-8 text-center flex flex-col items-center justify-center">
+                      <FloralAccent flower={2} size="md" animation="float" className="mb-2" />
+                      <p className="font-serif text-lg text-rose-950 font-medium">No orders yet</p>
+                      <p className="text-xs text-rose-900/60 mt-1 max-w-xs">
+                        When you place an order, its real-time tracking and invoice details will appear here.
+                      </p>
+                    </div>
                   ) : filteredOrders.length === 0 ? (
-                    <p className="text-sm text-rose-900/60">
-                      No {orderFilter} orders.
-                    </p>
+                    <div className="py-8 text-center">
+                      <p className="text-sm text-rose-900/60">
+                        No {orderFilter} orders.
+                      </p>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {paginatedOrders.map((order) => (

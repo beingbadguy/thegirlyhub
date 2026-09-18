@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, Loader2, MailCheck } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
+import FloralFloatingAmbient from "@/components/decorations/FloralFloatingAmbient";
 
 function VerifyForm() {
   const router = useRouter();
@@ -89,8 +91,11 @@ function VerifyForm() {
   };
 
   return (
-    <main className="flex min-h-[78vh] items-center justify-center bg-[#fcfcfb] px-4 py-12 text-[#111]">
-      <section className="w-full max-w-[430px] px-0 py-6">
+    <main className="flex min-h-[78vh] items-center justify-center bg-[#fffafb] px-4 py-12 text-[#111] relative overflow-hidden">
+      {/* Background Floral Accents */}
+      <FloralFloatingAmbient preset="auth" />
+
+      <section className="w-full max-w-[430px] px-6 py-8 bg-white/80 backdrop-blur-md rounded-3xl border border-rose-100 shadow-sm relative z-10">
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#f8e8ef] text-[#a71958]">
           <MailCheck className="size-6" />
         </div>
@@ -98,9 +103,12 @@ function VerifyForm() {
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#a71958]">
             One last step
           </p>
-          <h1 className="mt-3 text-[27px] font-semibold tracking-[-0.03em]">
-            Verify your email address
-          </h1>
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <h1 className="text-[26px] font-semibold tracking-[-0.03em] font-serif text-rose-950">
+              Verify your email
+            </h1>
+            <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+          </div>
           <p className="mx-auto mt-3 max-w-[300px] text-sm leading-6 text-black/50">
             Enter the six-digit verification code we sent to{" "}
             <strong className="font-semibold text-black/75">

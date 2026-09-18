@@ -13,6 +13,7 @@ import {
   FaInstagram,
 } from "react-icons/fa";
 import { VscLoading } from "react-icons/vsc";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 export default function ContactClient() {
   const [data, setData] = useState({
@@ -97,8 +98,16 @@ export default function ContactClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffafb]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#fffafb] relative overflow-hidden">
+      {/* Background floral flourishes */}
+      <div className="pointer-events-none absolute right-[-40px] top-20 hidden opacity-20 lg:block select-none">
+        <FloralAccent flower={1} size="xl" animation="float" />
+      </div>
+      <div className="pointer-events-none absolute left-[-30px] bottom-10 hidden opacity-20 lg:block select-none">
+        <FloralAccent flower={2} size="lg" animation="sway" />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 relative z-10">
         {/* Breadcrumb */}
         <nav
           aria-label="Breadcrumb"
@@ -113,9 +122,12 @@ export default function ContactClient() {
         {/* LEFT SIDE */}
         <div className="flex flex-col justify-center space-y-6">
           <div>
-            <h1 className="text-4xl font-semibold text-pink-600 mb-4 tracking-tight font-serif">
-              Let’s Connect 💌
-            </h1>
+            <div className="flex items-center gap-2 mb-2">
+              <FloralAccent flower={1} size="sm" animation="pulse" />
+              <h1 className="text-3xl md:text-4xl font-semibold text-pink-600 tracking-tight font-serif">
+                Let’s Connect 💌
+              </h1>
+            </div>
             <p className="text-gray-600 text-base leading-relaxed">
               We’re here to help you with your orders, questions, and styling advice. Reach out and our team will get back to you promptly!
             </p>
@@ -168,7 +180,10 @@ export default function ContactClient() {
         </div>
 
         {/* RIGHT SIDE FORM */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-rose-100">
+        <div className="relative overflow-hidden bg-white rounded-3xl p-8 shadow-sm border border-rose-100">
+          <div className="pointer-events-none absolute right-3 top-3 opacity-15 select-none hidden sm:block">
+            <FloralAccent flower={1} size="md" animation="pulse" />
+          </div>
           <form onSubmit={handleSubmit} className="space-y-5">
             <input
               type="text"

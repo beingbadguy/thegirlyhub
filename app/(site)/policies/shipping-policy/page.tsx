@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 export const metadata: Metadata = {
   title: "Shipping & Delivery Policy",
@@ -12,21 +13,30 @@ export const metadata: Metadata = {
 
 export default function ShippingPolicy() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 md:py-12 min-h-[60vh]">
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-6 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
-      >
-        <BreadcrumbHome />
-        <span className="text-neutral-300">/</span>
-        <span className="font-semibold text-neutral-900">Shipping & Delivery</span>
-      </nav>
-      <h1 className="mb-2 text-3xl md:text-4xl font-bold text-gray-900 font-serif">
-        Shipping & Delivery Policy
-      </h1>
-      <p className="mb-10 text-sm text-gray-500">
-        Last updated: 29 August 2026
-      </p>
+    <div className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+      {/* Background ambient flower */}
+      <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
+        <FloralAccent flower={1} size="xl" animation="float" />
+      </div>
+
+      <div className="mx-auto max-w-3xl px-4 py-8 md:py-12 relative z-10">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-6 flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900">Shipping & Delivery</span>
+        </nav>
+        <div className="flex items-center gap-2 mb-2">
+          <FloralAccent flower={1} size="sm" animation="pulse" />
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-serif">
+            Shipping & Delivery Policy
+          </h1>
+        </div>
+        <p className="mb-10 text-sm text-gray-500">
+          Last updated: 29 August 2026
+        </p>
 
       <div className="space-y-8 text-gray-700 leading-7">
         <p>
@@ -154,5 +164,6 @@ export default function ShippingPolicy() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

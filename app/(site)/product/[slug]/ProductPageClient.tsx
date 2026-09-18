@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { SiGooglepay, SiPaytm } from "react-icons/si";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type ReviewType = {
   _id?: string;
@@ -528,7 +529,7 @@ const ProductPageClient = ({
   // Fallbacks for display
   const displayPrice = product.price;
   const displayDiscountPrice = product.discountPrice ?? product.discountedPrice;
-  const displayStock = product.stock ?? product.countInStock;
+  const displayStock = inStock ? (product.stock ?? product.countInStock) : 0;
   const displayRatings = product.ratings ?? product.rating;
   const displayImages =
     product.images && product.images.length > 0
@@ -684,9 +685,13 @@ const ProductPageClient = ({
           className="lg:col-span-6 flex flex-col space-y-6 justify-start"
         >
           <div className="space-y-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-800 text-xs font-semibold uppercase tracking-wider">
-              {product.category}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-800 text-xs font-semibold uppercase tracking-wider border border-rose-100">
+                <Sparkles className="size-3 text-rose-500" />
+                {product.category}
+              </span>
+              <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+            </div>
 
             <h1 className="text-2xl md:text-3xl font-bold leading-tight tracking-tight text-neutral-900">
               {product.title}
@@ -809,6 +814,14 @@ const ProductPageClient = ({
                 </div>
               )}
             </div>
+
+            {product.material && (
+              <div className="flex items-center gap-2 text-xs font-medium text-neutral-800 bg-pink-50/40 border border-pink-100/60 rounded-xl px-3.5 py-2">
+                <Sparkles className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                <span className="text-neutral-500 font-medium">Material:</span>
+                <span className="text-neutral-900 font-bold capitalize">{product.material}</span>
+              </div>
+            )}
 
             <p className="text-sm leading-relaxed text-neutral-600">
               {product.shortDescription || product.description}
@@ -1112,6 +1125,16 @@ const ProductPageClient = ({
                             : "Out of Stock"}
                         </span>
                       </div>
+                      {product.material && (
+                        <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
+                          <span className="font-semibold text-neutral-400">
+                            Material
+                          </span>
+                          <span className="text-neutral-800 font-semibold capitalize">
+                            {product.material}
+                          </span>
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 py-1.5 border-b border-neutral-100">
                         <span className="font-semibold text-neutral-400">
                           Weight

@@ -48,7 +48,8 @@ const productSchema = new mongoose.Schema(
 
     material: {
       type: String,
-      lowercase: true,
+      trim: true,
+      default: "",
     },
     plating: {
       type: String,

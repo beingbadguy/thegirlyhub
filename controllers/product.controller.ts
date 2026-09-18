@@ -224,7 +224,7 @@ export class ProductController {
       const [products, total] = await Promise.all([
         Product.find(filter)
           .select(
-            "title name description shortDescription longDescription price costPrice sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category subCategory brand countInStock stock totalStock lowStockThreshold rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival tags metaTitle metaDescription createdAt updatedAt isActive slug"
+            "title name description shortDescription longDescription price costPrice sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category subCategory brand material countInStock stock totalStock lowStockThreshold rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival tags metaTitle metaDescription createdAt updatedAt isActive slug"
           )
           .sort(sortOptions)
           .skip(skip)

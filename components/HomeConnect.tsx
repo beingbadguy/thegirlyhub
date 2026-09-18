@@ -1,4 +1,5 @@
 import { Mail, MessageCircle, Phone } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 const contactOptions = [
   {
@@ -24,15 +25,23 @@ const contactOptions = [
 
 export default function HomeConnect() {
   return (
-    <section className="bg-white px-4 py-10 sm:px-6 lg:py-12">
-      <div className="mx-auto max-w-4xl text-center">
+    <section className="bg-white px-4 py-10 sm:px-6 lg:py-12 rounded-3xl border border-rose-100/60 my-6 relative overflow-hidden shadow-xs">
+      <div className="pointer-events-none absolute -bottom-6 -right-6 opacity-30">
+        <FloralAccent flower={2} size="lg" variant="float" className="rotate-12" />
+      </div>
+
+      <div className="mx-auto max-w-4xl text-center relative z-10">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-400">
-          Available
+          Available 24/7
         </p>
 
-        <h2 className="mt-2 text-2xl font-bold text-black sm:text-3xl">
-          Connect with us
-        </h2>
+        <div className="flex items-center justify-center gap-2">
+          <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+          <h2 className="mt-1 text-2xl font-bold text-black sm:text-3xl font-serif">
+            Connect with us
+          </h2>
+          <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
+        </div>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           {contactOptions.map(

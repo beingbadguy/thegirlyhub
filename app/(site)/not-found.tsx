@@ -3,6 +3,7 @@
 import Link from "next/link";
 import React from "react";
 import { Truck, ShieldCheck, Sprout, Heart, ArrowRight } from "lucide-react";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 /**
  * Detailed Satin Pink Ribbon Bow SVG
@@ -106,10 +107,21 @@ export default function NotFoundPage() {
         aria-hidden="true"
       />
 
+      {/* Subtle Background Floral Accents */}
+      <div className="pointer-events-none absolute -left-6 top-8 hidden opacity-20 lg:block select-none">
+        <FloralAccent flower={1} size="xl" animation="float" />
+      </div>
+      <div className="pointer-events-none absolute -right-6 top-16 hidden opacity-25 lg:block select-none">
+        <FloralAccent flower={2} size="lg" animation="sway" />
+      </div>
+
       {/* Main Hero Center Container */}
       <div className="max-w-6xl w-full mx-auto flex flex-col items-center justify-center relative my-auto py-8 sm:py-12">
         {/* DESKTOP DECORATION: Left Floating Cursive Note & Soft Ribbon Curve */}
         <div className="hidden lg:flex flex-col items-start absolute left-0 xl:left-4 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0">
+          <div className="mb-2 pl-4">
+            <FloralAccent flower={1} size="sm" animation="pulse" />
+          </div>
           {/* Cursive handwritten note */}
           <div
             className="text-[#4A5568] text-2xl xl:text-3xl leading-snug rotate-[-3deg] text-left pl-6"
@@ -156,6 +168,9 @@ export default function NotFoundPage() {
             <p>always</p>
             <p>find you</p>
             <p className="text-xl xl:text-2xl mt-1 text-[#D48B95]">♡</p>
+          </div>
+          <div className="mt-2">
+            <FloralAccent flower={3} size="sm" animation="sway" />
           </div>
         </div>
 

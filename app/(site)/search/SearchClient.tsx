@@ -6,6 +6,7 @@ import axios from "axios";
 import { Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import FloralAccent from "@/components/decorations/FloralAccent";
 
 type Products = React.ComponentProps<typeof ProductCard>["product"];
 
@@ -59,13 +60,13 @@ export default function SearchClient() {
           query.length > 0 ? "" : "h-[45vh]"
         }`}
       >
-        <h1
-          className={`${
-            query.length > 0 ? "hidden" : "block"
-          } mx-4 my-2 w-full text-center text-3xl md:text-4xl font-serif text-rose-950`}
-        >
-          What are you looking for today?
-        </h1>
+        <div className={`${query.length > 0 ? "hidden" : "flex"} items-center justify-center gap-2 mx-4 my-2`}>
+          <FloralAccent flower={1} size="sm" animation="pulse" />
+          <h1 className="text-center text-3xl md:text-4xl font-serif text-rose-950">
+            What are you looking for today?
+          </h1>
+          <FloralAccent flower={1} size="sm" animation="pulse" className="rotate-45" />
+        </div>
         <div className="my-6 flex w-[90%] items-center gap-2 rounded-full border border-rose-200 bg-white px-4 py-1.5 shadow-sm md:w-[50%] focus-within:border-rose-400">
           <Search className="size-5 text-rose-400" />
           <input
@@ -117,10 +118,15 @@ export default function SearchClient() {
                 </p>
               </>
             ) : (
-              <p className="my-8 text-center text-rose-900/60">
-                No products found matching &quot;{query}&quot;. Try another
-                search term!
-              </p>
+              <div className="my-12 text-center flex flex-col items-center justify-center">
+                <FloralAccent flower={2} size="md" animation="float" className="mb-3" />
+                <p className="font-serif text-lg text-rose-950 font-medium">
+                  No products found matching &quot;{query}&quot;
+                </p>
+                <p className="text-sm text-rose-900/60 mt-1 max-w-sm">
+                  Try searching for hair claws, scrunchies, earrings, or necklaces!
+                </p>
+              </div>
             )}
           </>
         )}
