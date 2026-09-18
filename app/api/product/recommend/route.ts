@@ -2,36 +2,7 @@ import { databaseConnection } from "@/config/databseConnection";
 import Product from "@/models/product.model";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
-import { buildProductSlug, extractIdFromSlug, slugify } from "@/lib/slug";
-
-async function findProductBySlugOrId(identifier: string) {
-  const decoded = decodeURIComponent(identifier);
-
-  if (mongoose.Types.ObjectId.isValid(decoded)) {
-    const byId = await Product.findById(decoded);
-    if (byId) return byId;
-  }
-
-  const bySlug = await Product.findOne({ slug: decoded });
-  if (bySlug) return bySlug;
-
-  const idFromSlug = extractIdFromSlug(decoded);
-  if (idFromSlug) {
-    const byPartialId = await Product.findById(idFromSlug);
-    if (byPartialId) return byPartialId;
-  }
-
-  const baseSlug = decoded.replace(/-[a-f0-9]{6}$/i, "");
-  const products = await Product.find({});
-  return (
-    products.find(
-      (p) =>
-        p.slug === decoded ||
-        slugify(p.title) === baseSlug ||
-        buildProductSlug(p.title, p._id.toString()) === decoded,
-    ) ?? null
-  );
-}
+import { findProductBySlugOrId } from "@/controllers/product.controller";
 
 export async function GET(request: NextRequest) {
   await databaseConnection();
@@ -40,19 +11,19 @@ export async function GET(request: NextRequest) {
     const slug = searchParams.get("slug");
     const productId = searchParams.get("productId");
     const limitParam = searchParams.get("limit");
-    const limit = limitParam ? parseInt(limitParam, 10) : 4;
+    const limit = Math.max(1, limitParam ? parseInt(limitParam, 10) : 4);
 
-    let targetProduct = null;
+    let targetProduct: any = null;
 
     if (productId && mongoose.Types.ObjectId.isValid(productId)) {
-      targetProduct = await Product.findById(productId);
+      targetProduct = await Product.findById(productId).lean();
     }
 
     if (!targetProduct && slug) {
       targetProduct = await findProductBySlugOrId(slug);
     }
 
-    let recommendedProducts: unknown[] = [];
+    let recommendedProducts: any[] = [];
 
     if (targetProduct) {
       // 1. Fetch active products in the same category, excluding the current one
@@ -61,34 +32,38 @@ export async function GET(request: NextRequest) {
         category: targetProduct.category,
         _id: { $ne: targetProduct._id },
       })
-        .sort({ rating: -1, createdAt: -1 })
-        .limit(limit);
+        .sort({ ratings: -1, createdAt: -1 })
+        .limit(limit)
+        .lean();
 
       recommendedProducts = [...categoryProducts];
 
       // 2. If we need more products to reach the limit, fetch active products from other categories
       if (recommendedProducts.length < limit) {
-        const excludedIds = [targetProduct._id, ...((recommendedProducts as { _id: unknown }[]).map((p) => p._id))];
+        const excludedIds = [targetProduct._id, ...recommendedProducts.map((p) => p._id)];
         const additionalProducts = await Product.find({
           isActive: true,
           _id: { $nin: excludedIds },
         })
-          .sort({ rating: -1, createdAt: -1 })
-          .limit(limit - recommendedProducts.length);
-        
+          .sort({ ratings: -1, createdAt: -1 })
+          .limit(limit - recommendedProducts.length)
+          .lean();
+
         recommendedProducts = [...recommendedProducts, ...additionalProducts];
       }
     } else {
-      // No reference product: return general recommendations
+      // No reference product: return general top-rated/recent active recommendations
       recommendedProducts = await Product.find({ isActive: true })
-        .sort({ rating: -1, createdAt: -1 })
-        .limit(limit);
+        .sort({ ratings: -1, createdAt: -1 })
+        .limit(limit)
+        .lean();
     }
 
     return NextResponse.json(
       {
         success: true,
         products: recommendedProducts,
+        data: recommendedProducts,
       },
       { status: 200 }
     );
