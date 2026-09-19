@@ -130,15 +130,17 @@ export async function placeOrderRecord(
     );
   }
 
-  const userToUpdate =
-    prepared.user ||
-    (prepared.userId
-      ? await User.findById(prepared.userId)
-      : await User.findOne({ email: prepared.email }));
+  const userIdToFind = prepared.userId || (prepared.user as any)?._id;
+  const userToUpdate = userIdToFind
+    ? await User.findById(userIdToFind)
+    : await User.findOne({ email: prepared.email });
 
   if (userToUpdate) {
     const orderIdStr = newOrder._id.toString();
-    const alreadyHasOrder = userToUpdate.order?.some(
+    if (!Array.isArray(userToUpdate.order)) {
+      userToUpdate.order = [];
+    }
+    const alreadyHasOrder = userToUpdate.order.some(
       (oid: any) => oid?.toString() === orderIdStr,
     );
     if (!alreadyHasOrder) {

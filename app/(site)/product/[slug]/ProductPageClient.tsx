@@ -1216,7 +1216,7 @@ const ProductPageClient = ({
                 </div>
               </div>
 
-              {/* Secure Payments stripe */}
+              {/* Secure Payments bar */}
               {displayStock > 0 && (
                 <div className="pt-1 flex flex-col items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">

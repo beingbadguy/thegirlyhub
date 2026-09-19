@@ -23,15 +23,15 @@ export function serializeCustomer(userDoc: any, ordersList?: any[]) {
   // Cart parsing
   const rawCart = Array.isArray(u.cart) ? u.cart : (u.cart?.products ? [u.cart] : []);
   const cart: any[] = [];
-  rawCart.forEach((cartEntry: any) => {
+  rawCart.filter(Boolean).forEach((cartEntry: any) => {
     const products = Array.isArray(cartEntry?.products)
       ? cartEntry.products
       : Array.isArray(cartEntry)
         ? cartEntry
         : [];
-    products.forEach((p: any) => {
-      const prod = p.productId || p.product || p;
-      if (prod) {
+    products.filter(Boolean).forEach((p: any) => {
+      const prod = p?.productId || p?.product || p;
+      if (prod && typeof prod === "object") {
         cart.push({
           productId: String(prod._id || prod.id || p.productId || ""),
           title: prod.title || prod.name || "Product",
@@ -50,15 +50,15 @@ export function serializeCustomer(userDoc: any, ordersList?: any[]) {
   // Wishlist parsing
   const rawWishlist = Array.isArray(u.wishlist) ? u.wishlist : (u.wishlist?.products ? [u.wishlist] : []);
   const wishlist: any[] = [];
-  rawWishlist.forEach((wishlistEntry: any) => {
+  rawWishlist.filter(Boolean).forEach((wishlistEntry: any) => {
     const products = Array.isArray(wishlistEntry?.products)
       ? wishlistEntry.products
       : Array.isArray(wishlistEntry)
         ? wishlistEntry
         : [];
-    products.forEach((p: any) => {
-      const prod = p.productId || p.product || p;
-      if (prod) {
+    products.filter(Boolean).forEach((p: any) => {
+      const prod = p?.productId || p?.product || p;
+      if (prod && typeof prod === "object") {
         wishlist.push({
           productId: String(prod._id || prod.id || p.productId || ""),
           title: prod.title || prod.name || "Product",
@@ -75,9 +75,24 @@ export function serializeCustomer(userDoc: any, ordersList?: any[]) {
 
   // Orders parsing
   const allOrders = ordersList || (Array.isArray(u.order) ? u.order : []);
-  const orders = allOrders.map((o: any) => {
+  const orders = allOrders.filter(Boolean).map((o: any) => {
+    if (typeof o !== "object") {
+      return {
+        id: String(o || ""),
+        customer: name,
+        email: email,
+        date: new Date().toISOString(),
+        total: 0,
+        status: "processing",
+        items: 1,
+        payment: "COD",
+        delivery: "Standard",
+        raw: { _id: String(o || "") },
+      };
+    }
+
     const itemsCount = Array.isArray(o.products)
-      ? o.products.reduce((sum: number, item: any) => sum + Number(item.quantity || 1), 0)
+      ? o.products.filter(Boolean).reduce((sum: number, item: any) => sum + Number(item?.quantity || 1), 0)
       : 1;
 
     return {
@@ -95,8 +110,8 @@ export function serializeCustomer(userDoc: any, ordersList?: any[]) {
   });
 
   // Metric aggregates
-  const validOrders = orders.filter((o: any) => o.status !== "cancelled");
-  const totalSpent = validOrders.reduce((sum: number, o: any) => sum + Number(o.total || 0), 0);
+  const validOrders = orders.filter((o: any) => o && o.status !== "cancelled");
+  const totalSpent = validOrders.reduce((sum: number, o: any) => sum + Number(o?.total || 0), 0);
   const orderCount = orders.length;
   const avgOrderValue = validOrders.length > 0 ? Math.round(totalSpent / validOrders.length) : 0;
   const cartCount = cart.reduce((sum: number, c: any) => sum + Number(c.quantity || 1), 0);

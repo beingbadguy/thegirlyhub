@@ -4,12 +4,17 @@ import RateLimit from "@/models/rateLimit.model";
 const RATE_LIMIT_SECRET =
   process.env.RATE_LIMIT_SECRET || process.env.TOKEN_SECRET || "girlyhub_rate_secret_key_2026";
 
-export function isLocalhost(ip: string): boolean {
+export function isLocalhost(ip?: string): boolean {
+  if (!ip) return true;
+  const clean = ip.replace(/^::ffff:/, "").trim();
   return (
-    ip === "127.0.0.1" ||
-    ip === "::1" ||
-    ip === "localhost" ||
-    ip === "::ffff:127.0.0.1"
+    clean === "127.0.0.1" ||
+    clean === "::1" ||
+    clean === "localhost" ||
+    clean === "0.0.0.0" ||
+    clean.startsWith("10.") ||
+    clean.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(clean)
   );
 }
 

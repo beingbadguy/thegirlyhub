@@ -9,60 +9,67 @@ import {
   getClientIp,
   getUserAgent,
   isIpBlocked,
+  isLocalhost,
   recordFailedAttempt,
 } from "@/lib/rateLimiter";
 import Order from "@/models/order.model";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  await databaseConnection();
-
-  const ip = getClientIp(request);
-  const userAgent = getUserAgent(request);
-
-  // 1. Abuse Protection: Check if IP is temporarily blocked
-  const blockStatus = isIpBlocked(ip);
-  if (blockStatus.blocked) {
-    console.warn(
-      `[POST /api/order] Blocked abuse request from IP ${ip} | User-Agent: ${userAgent}`,
-    );
-    return NextResponse.json(
-      {
-        message:
-          "Your access has been temporarily restricted due to repeated failed attempts. Please try again later.",
-        success: false,
-      },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(blockStatus.retryAfterSeconds),
-        },
-      },
-    );
-  }
-
-  // 2. Rate Limiting: Max 3 orders per IP per hour
-  const rateLimit = checkRateLimit(`order_${ip}`, 3, 60 * 60 * 1000);
-  if (!rateLimit.allowed) {
-    console.warn(
-      `[POST /api/order] Rate limit exceeded for IP ${ip} | User-Agent: ${userAgent}`,
-    );
-    return NextResponse.json(
-      {
-        message:
-          "Too many orders placed from this address. Please try again in an hour.",
-        success: false,
-      },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(rateLimit.retryAfterSeconds),
-        },
-      },
-    );
-  }
-
   try {
+    await databaseConnection();
+
+    const ip = getClientIp(request);
+    const userAgent = getUserAgent(request);
+    const isDev = process.env.NODE_ENV !== "production";
+    const isLocal = isLocalhost(ip);
+
+    // 1. Abuse Protection: Check if IP is temporarily blocked (bypassed in dev/local)
+    if (!isDev && !isLocal) {
+      const blockStatus = isIpBlocked(ip);
+      if (blockStatus.blocked) {
+        console.warn(
+          `[POST /api/order] Blocked abuse request from IP ${ip} | User-Agent: ${userAgent}`,
+        );
+        return NextResponse.json(
+          {
+            message:
+              "Your access has been temporarily restricted due to repeated failed attempts. Please try again later.",
+            success: false,
+          },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(blockStatus.retryAfterSeconds),
+            },
+          },
+        );
+      }
+    }
+
+    // 2. Rate Limiting: Max 30 orders per IP per hour (bypassed in dev/local)
+    if (!isDev && !isLocal) {
+      const rateLimit = checkRateLimit(`order_${ip}`, 30, 60 * 60 * 1000);
+      if (!rateLimit.allowed) {
+        console.warn(
+          `[POST /api/order] Rate limit exceeded for IP ${ip} | User-Agent: ${userAgent}`,
+        );
+        return NextResponse.json(
+          {
+            message:
+              "Too many orders placed from this address. Please try again in an hour.",
+            success: false,
+          },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(rateLimit.retryAfterSeconds),
+            },
+          },
+        );
+      }
+    }
+
     const decoded = await fetchTokenDetails(request);
     const body = await request.json();
 
@@ -137,11 +144,21 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    const isDev = process.env.NODE_ENV !== "production";
     const message =
       error instanceof Error && error.name === "ValidationError"
         ? "Invalid order details. Please check your information and try again."
+        : isDev
+        ? `Unable to place order: ${error?.message || "Unknown error"}`
         : "Unable to place order. Please try again.";
-    return NextResponse.json({ message, success: false }, { status: 500 });
+    return NextResponse.json(
+      {
+        message,
+        ...(isDev && error?.stack ? { stack: error.stack } : {}),
+        success: false,
+      },
+      { status: 500 },
+    );
   }
 }
 

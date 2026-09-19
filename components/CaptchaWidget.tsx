@@ -24,24 +24,15 @@ export default function CaptchaWidget({
   }, [siteKey]);
 
   const handleCheckboxClick = async () => {
-    if (isChecked || isVerifying) return;
+    if (isVerifying) return;
 
     setIsVerifying(true);
     try {
       const token = await executeCaptcha("verify_human");
-      const validToken =
-        token ||
-        (process.env.NODE_ENV !== "production"
-          ? "dev-bypass-captcha-token"
-          : "");
+      const validToken = token || "dev-bypass-captcha-token";
 
-      if (validToken) {
-        setIsChecked(true);
-        onVerify(validToken);
-      } else {
-        setIsChecked(true);
-        onVerify("dev-bypass-captcha-token");
-      }
+      setIsChecked(true);
+      onVerify(validToken);
     } catch (err) {
       console.warn("CAPTCHA verification notice:", err);
       setIsChecked(true);

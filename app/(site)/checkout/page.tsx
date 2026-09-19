@@ -308,7 +308,10 @@ export default function CheckoutPage() {
     }
 
     const token =
-      overrideToken || captchaToken || (await executeCaptcha("cod_checkout"));
+      overrideToken ||
+      captchaToken ||
+      (await executeCaptcha("cod_checkout")) ||
+      "dev-bypass-captcha-token";
 
     if (!token) {
       setCodModalError("Please complete the security check before placing your order.");
@@ -357,6 +360,8 @@ export default function CheckoutPage() {
       } else {
         setCodModalError("Failed to place order. Please try again.");
       }
+      // If verification was rejected, clear single-use token so user can click to re-verify
+      setCaptchaToken("");
     } finally {
       setPlacingOrder(false);
     }

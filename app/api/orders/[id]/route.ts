@@ -1,6 +1,7 @@
 import { databaseConnection } from "@/config/databseConnection";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import Order from "@/models/order.model";
+import User from "@/models/user.model";
 import { OrderStatusMail } from "@/services/sendMail";
 import { NextRequest, NextResponse } from "next/server";
 
