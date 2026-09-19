@@ -35,7 +35,6 @@ const refundLogSchema = new Schema<IRefundLog>(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     amount: {
       type: Number,
@@ -91,7 +90,6 @@ const refundLogSchema = new Schema<IRefundLog>(
 );
 
 refundLogSchema.index({ orderId: 1, createdAt: -1 });
-refundLogSchema.index({ paymentId: 1 });
 
 const RefundLog =
   mongoose.models.RefundLog ||

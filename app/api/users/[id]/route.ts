@@ -113,12 +113,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         .lean(),
     ]);
 
-    const userObj = typeof user.toObject === "function" ? user.toObject() : user;
-    if (directCart && directCart.products && directCart.products.length > 0) {
-      userObj.cart = [directCart];
+    const userObj: any = typeof user.toObject === "function" ? user.toObject() : user;
+    const cartDoc: any = directCart;
+    const wishlistDoc: any = directWishlist;
+    if (cartDoc && Array.isArray(cartDoc.products) && cartDoc.products.length > 0) {
+      userObj.cart = [cartDoc];
     }
-    if (directWishlist && directWishlist.products && directWishlist.products.length > 0) {
-      userObj.wishlist = [directWishlist];
+    if (wishlistDoc && Array.isArray(wishlistDoc.products) && wishlistDoc.products.length > 0) {
+      userObj.wishlist = [wishlistDoc];
     }
 
     const serialized = serializeCustomer(userObj, userOrders);

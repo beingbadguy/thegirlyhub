@@ -148,7 +148,6 @@ const userSchema = new mongoose.Schema({
 
 userSchema.index({ role: 1, createdAt: -1 });
 userSchema.index({ status: 1 });
-userSchema.index({ email: 1 });
 userSchema.index({ verificationToken: 1 }, { sparse: true });
 userSchema.index({ forgetToken: 1 }, { sparse: true });
 

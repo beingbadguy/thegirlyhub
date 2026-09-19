@@ -21,7 +21,6 @@ const paymentWebhookLogSchema = new Schema<IPaymentWebhookLog>(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     eventType: {
       type: String,

@@ -25,7 +25,6 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     orderId: {
       type: Schema.Types.ObjectId,
@@ -83,7 +82,6 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     balanceAfter: {
       type: Number,
