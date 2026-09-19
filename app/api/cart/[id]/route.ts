@@ -148,9 +148,10 @@ export async function POST(
       return NextResponse.json({ message: "Product added to cart" });
     }
 
-    const productAlreadyExists = cart.products.find(
-      (p: CartProduct) => p.productId.toString() === id,
-    );
+    const productAlreadyExists = cart.products.find((p: any) => {
+      const pId = p.productId?._id?.toString() || p.productId?.toString();
+      return pId === id && (size ? p.size === size : true);
+    });
     if (productAlreadyExists) {
       if (productAlreadyExists.quantity >= product.countInStock) {
         return NextResponse.json(
@@ -234,8 +235,9 @@ export async function PUT(
       );
     }
 
-    const product = cart.products.find((product: Product) => {
-      return product.productId.toString() === id;
+    const product = cart.products.find((p: any) => {
+      const pId = p.productId?._id?.toString() || p.productId?.toString();
+      return pId === id;
     });
 
     if (!product) {
@@ -247,7 +249,23 @@ export async function PUT(
 
     product.quantity = quantity;
     await cart.save();
-    return NextResponse.json({ cart, success: true, message: "Cart updated" });
+
+    const populatedCart = await Cart.findById(cart._id)
+      .select("userId products createdAt")
+      .populate({
+        path: "products.productId",
+        model: Product,
+        strictPopulate: false,
+        select:
+          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug category sizes",
+      })
+      .lean();
+
+    return NextResponse.json({
+      cart: populatedCart,
+      success: true,
+      message: "Cart updated",
+    });
   } catch (error) {
     console.log(error);
     return NextResponse.json(
@@ -278,11 +296,29 @@ export async function DELETE(
         { status: 404 },
       );
     }
-    cart.products = cart.products.filter((product: Product) => {
-      return product.productId.toString() !== id;
+    cart.products = (cart.products || []).filter((p: any) => {
+      const pId = p.productId?._id?.toString() || p.productId?.toString();
+      const lineId = p._id?.toString();
+      return pId && pId !== id && lineId !== id;
     });
     await cart.save();
-    return NextResponse.json({ cart, success: true, message: "Cart updated" });
+
+    const populatedCart = await Cart.findById(cart._id)
+      .select("userId products createdAt")
+      .populate({
+        path: "products.productId",
+        model: Product,
+        strictPopulate: false,
+        select:
+          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug category sizes",
+      })
+      .lean();
+
+    return NextResponse.json({
+      cart: populatedCart,
+      success: true,
+      message: "Cart updated",
+    });
   } catch (error) {
     console.log(error);
     return NextResponse.json(

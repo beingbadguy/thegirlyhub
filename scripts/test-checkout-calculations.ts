@@ -85,13 +85,13 @@ console.log("\n--- Test Suite 2: Coupon Value > Cart Value ---");
     autoAdjustDiscount: true,
   });
 
-  // Subtotal = 200, Shipping = 49 (since 200 < 499), Merchandise discount = 200, Total = 49
+  // Subtotal = 200, Shipping = 29 (since 200 < 399), Merchandise discount = 200, Total = 29
   assert(resultWithShipping.isValid, "Large coupon calculates valid state with shipping");
   assert(resultWithShipping.subtotal === 200, `Subtotal is ₹200 (got ₹${resultWithShipping.subtotal})`);
-  assert(resultWithShipping.shippingCharge === 49, `Shipping charge is ₹49 (got ₹${resultWithShipping.shippingCharge})`);
+  assert(resultWithShipping.shippingCharge === 29, `Shipping charge is ₹29 (got ₹${resultWithShipping.shippingCharge})`);
   assert(resultWithShipping.couponDiscount === 200, `Merchandise discount capped at subtotal ₹200 (got ₹${resultWithShipping.couponDiscount})`);
-  assert(resultWithShipping.finalAmount === 49, `Final payable is ₹49 (merchandise 0 + shipping 49) (got ₹${resultWithShipping.finalAmount})`);
-  assert(resultWithShipping.amountInPaise === 4900, `Amount in paise is 4900 (got ${resultWithShipping.amountInPaise})`);
+  assert(resultWithShipping.finalAmount === 29, `Final payable is ₹29 (merchandise 0 + shipping 29) (got ₹${resultWithShipping.finalAmount})`);
+  assert(resultWithShipping.amountInPaise === 2900, `Amount in paise is 2900 (got ${resultWithShipping.amountInPaise})`);
 
   // 2b: Free shipping cart where discount exceeds subtotal
   const freeShippingItems = [{ productId: "p2", title: "Perfume", price: 600, quantity: 1 }];
@@ -203,7 +203,7 @@ console.log("\n--- Test Suite 5: Multiple Items with Mixed Pricing & Precision -
     { productId: "p2", title: "Item 2", price: 149.5, quantity: 2 },  // 299.00
     { productId: "p3", title: "Item 3", price: 499.0, quantity: 1 },  // 499.00
   ];
-  // Subtotal = 59.97 + 299.00 + 499.00 = 857.97 (>= 499 -> Free shipping)
+  // Subtotal = 59.97 + 299.00 + 499.00 = 857.97 (>= 399 -> Free shipping)
 
   const result = calculateCheckout({
     items: mixedItems,
@@ -212,7 +212,7 @@ console.log("\n--- Test Suite 5: Multiple Items with Mixed Pricing & Precision -
 
   assert(result.isValid, "Mixed pricing cart calculates successfully");
   assert(result.subtotal === 857.97, `Subtotal is exact ₹857.97 (got ₹${result.subtotal})`);
-  assert(result.isFreeShipping === true, "Free shipping applies for subtotal >= ₹499");
+  assert(result.isFreeShipping === true, "Free shipping applies for subtotal >= ₹399");
   assert(result.shippingCharge === 0, "Shipping charge is ₹0 for free shipping");
   // 20% of 857.97 = 171.594 -> 171.59
   assert(result.couponDiscount === 171.59, `20% discount is ₹171.59 (got ₹${result.couponDiscount})`);
@@ -277,7 +277,7 @@ console.log("\n--- Test Suite 7: Strict Invariant - Final Amount is NEVER <= 0 -
 // -------------------------------------------------------------
 console.log("\n--- Test Suite 8: Calculation Order Verification ---");
 {
-  // Subtotal (500) → First-Order Discount 15% (75) → Post-discount base (425) → Shipping (0 since subtotal 500 >= 499) → Final (425)
+  // Subtotal (500) → First-Order Discount 15% (75) → Post-discount base (425) → Shipping (0 since subtotal 500 >= 399) → Final (425)
   const orderTest = calculateCheckout({
     items: [{ productId: "p1", title: "Jacket", price: 500, quantity: 1 }],
     isFirstOrder: true,
@@ -285,7 +285,7 @@ console.log("\n--- Test Suite 8: Calculation Order Verification ---");
 
   assert(orderTest.subtotal === 500, "Subtotal calculated first (₹500)");
   assert(orderTest.firstOrderDiscount === 75, "First order discount calculated from subtotal (₹75)");
-  assert(orderTest.shippingCharge === 0, "Shipping fee calculated from subtotal (Free >= ₹499)");
+  assert(orderTest.shippingCharge === 0, "Shipping fee calculated from subtotal (Free >= ₹399)");
   assert(orderTest.finalAmount === 425, "Final amount matches Subtotal - Discount + Tax + Shipping (₹425)");
 }
 

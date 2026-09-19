@@ -7,7 +7,7 @@ const productBooleanFields = new Set([
   "isActive",
 ]);
 
-const productJsonFields = new Set(["dimensions", "tags", "variants"]);
+const productJsonFields = new Set(["dimensions", "tags", "variants", "sizes"]);
 
 const productNumberFields = new Set([
   "costPrice",
@@ -135,6 +135,20 @@ export function normalizeProductPayload(
           .filter(Boolean)
       : [];
 
+  const rawSizes = input.sizes ?? source.sizes ?? [];
+  const sizes: string[] = Array.isArray(rawSizes)
+    ? Array.from(new Set(rawSizes.map((s: any) => String(s).trim()).filter(Boolean)))
+    : typeof rawSizes === "string"
+      ? Array.from(
+          new Set(
+            rawSizes
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter(Boolean),
+          ),
+        )
+      : [];
+
   return {
     ...source,
     ...input,
@@ -142,6 +156,7 @@ export function normalizeProductPayload(
     title: name,
     category,
     tags,
+    sizes,
     slug:
       input.slug ||
       source.slug ||

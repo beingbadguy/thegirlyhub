@@ -8,7 +8,7 @@ import { Minus, Plus, Trash2, Sparkles, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AxiosError } from "axios";
-import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
+import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 import FreeShippingBar from "@/components/FreeShippingBar";
@@ -96,7 +96,7 @@ const CartPage = () => {
   const prevSubtotalRef = useRef(subtotal);
 
   useEffect(() => {
-    if (subtotal > 0 && prevSubtotalRef.current < 499 && subtotal >= 499) {
+    if (subtotal > 0 && prevSubtotalRef.current < FREE_SHIPPING_THRESHOLD && subtotal >= FREE_SHIPPING_THRESHOLD) {
       setShowToast(true);
       const timer = setTimeout(() => setShowToast(false), 4000);
       return () => clearTimeout(timer);
@@ -179,9 +179,11 @@ const CartPage = () => {
                     <p className="text-sm text-gray-600">
                       Category: {item.productId.category}
                     </p>
-                  {/* <p className="text-sm text-gray-600">
-                    Color: {item.productId.color}
-                  </p> */}
+                    {item.size && (
+                      <p className="text-sm font-medium text-gray-700 mt-0.5">
+                        Size: <span className="font-bold text-rose-600">{item.size}</span>
+                      </p>
+                    )}
 
                   {/* <div className="mt-2 flex items-center gap-4">
                     <p className="text-sm font-medium">Product size</p>
@@ -339,7 +341,7 @@ const CartPage = () => {
                   )}
                 </span>
                 <span className="text-gray-500 font-bold">
-                  ₹{subtotal} / ₹499
+                  ₹{subtotal} / ₹399
                 </span>
               </div>
               <div className="w-full bg-gray-200/80 rounded-full h-2 overflow-hidden">
@@ -351,7 +353,7 @@ const CartPage = () => {
               {isFreeShipping && (
                 <div className="text-[11px] text-green-700 font-medium flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-green-600 animate-pulse" />{" "}
-                  You saved ₹49 on shipping 🎉
+                  You saved ₹29 on shipping 🎉
                 </div>
               )}
             </div> */}
@@ -383,7 +385,7 @@ const CartPage = () => {
               {isFreeShipping ? (
                 <p className="text-green-600 font-bold flex items-center gap-1">
                   <span className="line-through text-xs text-gray-400 font-normal">
-                    ₹49.00
+                    ₹{SHIPPING_CHARGE.toFixed(2)}
                   </span>{" "}
                   FREE
                 </p>

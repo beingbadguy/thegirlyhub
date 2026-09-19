@@ -329,7 +329,7 @@ export class ProductController {
       const [products, total] = await Promise.all([
         Product.find(filter)
           .select(
-            "title name description shortDescription longDescription price costPrice sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category subCategory brand material countInStock stock totalStock lowStockThreshold rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival tags metaTitle metaDescription createdAt updatedAt isActive slug"
+            "title name description shortDescription longDescription price costPrice sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category subCategory brand material sizes countInStock stock totalStock lowStockThreshold rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival tags metaTitle metaDescription createdAt updatedAt isActive slug"
           )
           .sort(sortOptions)
           .skip(skip)
@@ -381,6 +381,7 @@ export class ProductController {
           discountPrice: discountedPrice,
           discountPercentage,
           material: p.material || "",
+          sizes: Array.isArray(p.sizes) ? p.sizes : [],
           countInStock: p.status === "out_of_stock" ? 0 : countInStock,
           stock: p.status === "out_of_stock" ? 0 : countInStock,
           totalStock: p.status === "out_of_stock" ? 0 : countInStock,
@@ -559,7 +560,9 @@ export class ProductController {
       product.images = imagesToSave;
       product.mainImage = imagesToSave[0] || product.mainImage || "";
       product.image = product.mainImage;
+      product.sizes = normalized.sizes || [];
       product.markModified("images");
+      product.markModified("sizes");
 
       // Recalculate slug if title changed or custom slug provided
       if (updateData.title && updateData.title !== product.title) {

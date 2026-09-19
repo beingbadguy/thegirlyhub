@@ -90,8 +90,10 @@ export async function POST(request: NextRequest) {
     const populated = await Cart.findById(userCart._id)
       .populate({
         path: "products.productId",
+        model: Product,
+        strictPopulate: false,
         select:
-          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug",
+          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug sizes",
       })
       .lean();
 

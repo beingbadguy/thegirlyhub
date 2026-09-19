@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/store";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { calculateShipping } from "@/lib/shipping";
+import { calculateShipping, FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGE } from "@/lib/shipping";
 import { productUrl } from "@/lib/slug";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
@@ -142,6 +142,11 @@ export default function CartDrawer() {
                           <Trash2 className="size-4" />
                         </button>
                       </div>
+                      {item.size && (
+                        <p className="mt-0.5 text-xs text-neutral-500 font-medium">
+                          Size: <span className="font-bold text-neutral-800">{item.size}</span>
+                        </p>
+                      )}
                       <p className="mt-1 text-sm font-bold text-neutral-900">
                         ₹{unitPrice.toLocaleString("en-IN")}
                       </p>
@@ -209,7 +214,7 @@ export default function CartDrawer() {
                     </p>
                   </div>
                   <span className="shrink-0 text-xs font-semibold text-rose-600">
-                    ₹{Math.min(subtotal, 499).toLocaleString("en-IN")} / ₹499
+                    ₹{Math.min(subtotal, FREE_SHIPPING_THRESHOLD).toLocaleString("en-IN")} / ₹{FREE_SHIPPING_THRESHOLD}
                   </span>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
@@ -220,7 +225,7 @@ export default function CartDrawer() {
                 </div>
                 {shipping.isFreeShipping && (
                   <p className="mt-2 text-xs font-medium text-emerald-600">
-                    You saved ₹49 on delivery
+                    You saved ₹{SHIPPING_CHARGE} on delivery
                   </p>
                 )}
               </div>

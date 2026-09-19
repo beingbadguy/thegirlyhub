@@ -1,6 +1,7 @@
 import { databaseConnection } from "@/config/databseConnection";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import Cart from "@/models/cart.model";
+import Product from "@/models/product.model";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -17,8 +18,10 @@ export async function GET(request: NextRequest) {
       .select("userId products createdAt")
       .populate({
         path: "products.productId",
+        model: Product,
+        strictPopulate: false,
         select:
-          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug category",
+          "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug category sizes",
       })
       .lean();
 

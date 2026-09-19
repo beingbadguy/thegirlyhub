@@ -79,6 +79,7 @@ const productSchema = new mongoose.Schema(
     },
 
     variants: { type: [variantSchema], default: [] },
+    sizes: { type: [String], default: [] },
     costPrice: { type: Number, min: 0, default: 0 },
     sellingPrice: { type: Number, min: 0, default: 0 },
     discountPercentage: { type: Number, min: 0, default: 0 },
@@ -146,6 +147,27 @@ productSchema.pre("validate", function syncProductFields(next) {
   this.image = this.mainImage;
   if (!this.images.length && this.mainImage) {
     this.images = [this.mainImage];
+  }
+
+  if (Array.isArray(this.sizes)) {
+    this.sizes = Array.from(
+      new Set(
+        this.sizes
+          .map((s: unknown) => (typeof s === "string" ? s.trim() : String(s).trim()))
+          .filter(Boolean),
+      ),
+    );
+  } else if (typeof this.sizes === "string" && (this.sizes as string).trim()) {
+    this.sizes = Array.from(
+      new Set(
+        (this.sizes as string)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    );
+  } else {
+    this.sizes = [];
   }
 
   this.shortDescription = this.shortDescription || this.description || "";

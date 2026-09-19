@@ -22,7 +22,7 @@ import {
   calculateCheckout,
   MIN_PAYABLE_AMOUNT,
 } from "@/lib/checkoutCalculation";
-import { calculateShipping } from "@/lib/shipping";
+import { calculateShipping, SHIPPING_CHARGE } from "@/lib/shipping";
 import { isProductInStock } from "@/lib/productStock";
 import { clearGuestCart } from "@/lib/guestCart";
 import CaptchaWidget from "@/components/CaptchaWidget";
@@ -987,7 +987,7 @@ export default function CheckoutPage() {
                   {isFreeShipping ? (
                     <p className="text-green-600 font-bold flex items-center gap-1">
                       <span className="line-through text-xs text-gray-400 font-normal">
-                        ₹49.00
+                        ₹{SHIPPING_CHARGE.toFixed(2)}
                       </span>{" "}
                       FREE
                     </p>
@@ -997,7 +997,7 @@ export default function CheckoutPage() {
                 </div>
                 {isFreeShipping && (
                   <div className="text-[11px] text-green-700 font-medium">
-                    You saved ₹49 on shipping 🎉
+                    You saved ₹{SHIPPING_CHARGE} on shipping 🎉
                   </div>
                 )}
                 {!user?.firstPurchase && (

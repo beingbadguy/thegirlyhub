@@ -4,10 +4,10 @@
 // ──────────────────────────────────────────────────────────────
 
 /** Minimum cart subtotal for free shipping */
-export const FREE_SHIPPING_THRESHOLD = 499;
+export const FREE_SHIPPING_THRESHOLD = 399;
 
 /** Flat shipping fee when subtotal is below the threshold */
-export const SHIPPING_CHARGE = 49;
+export const SHIPPING_CHARGE = 29;
 
 /** Cash on Delivery does not add any extra fee */
 export const COD_FEE = 0;

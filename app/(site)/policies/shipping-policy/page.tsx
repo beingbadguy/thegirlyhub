@@ -120,11 +120,11 @@ export default function ShippingPolicy() {
           <ul className="list-disc pl-5 space-y-1.5">
             <li>
               <span className="font-medium text-green-600">Free Shipping</span>{" "}
-              on orders above or equal to ₹499.
+              on orders above or equal to ₹399.
             </li>
             <li>
-              For orders below ₹499, a flat shipping fee of{" "}
-              <span className="font-medium">₹49</span> applies.
+              For orders below ₹399, a flat shipping fee of{" "}
+              <span className="font-medium">₹29</span> applies.
             </li>
             <li>
               <span className="font-medium text-pink-700">

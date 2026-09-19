@@ -20,6 +20,7 @@ export const productBaseSchema = z.object({
   subCategory: z.string().optional(),
   brand: z.string().optional(),
   tags: z.array(z.string()).optional().default([]),
+  sizes: z.array(z.string()).optional().default([]),
   material: z.string().optional(),
   plating: z.string().optional(),
   stoneType: z.string().optional(),

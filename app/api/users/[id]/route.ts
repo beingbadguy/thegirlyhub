@@ -94,6 +94,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         .populate({
           path: "products.productId",
           model: "Product",
+          strictPopulate: false,
           select:
             "title name image mainImage images price discountedPrice discountPrice sellingPrice category stock countInStock totalStock",
         })

@@ -54,7 +54,7 @@ const StickyMenuBar = () => {
       href: user ? "/profile" : "/login",
     },
     { name: "Collections", icon: MdDashboard, href: "/category" },
-    { name: "Wishlist", icon: Heart, href: "/wishlist", badge: wishlistCount },
+    { name: "Wishlist", icon: Heart, href: "/wishlist"},
     { name: "Cart", icon: BsBagHeart, href: "/cart", badge: cartCount },
   ];
 
@@ -75,11 +75,10 @@ const StickyMenuBar = () => {
               <div className="relative flex size-7 items-center justify-center">
                 <Icon
                   size={22}
-                  className={`transition-colors ${
-                    item.name === "Wishlist" && typeof item.badge === "number" && item.badge > 0
-                      ? "fill-rose-500 text-rose-500"
-                      : "text-gray-700 hover:text-rose-500"
-                  }`}
+                  className={`transition-colors ${item.name === "Wishlist" && typeof item.badge === "number" && item.badge > 0
+                      ? " "
+                      : ""
+                    }`}
                 />
 
                 {item.badge !== undefined && (

@@ -29,6 +29,7 @@ interface LeanProduct {
   mainImage?: string;
   brand?: string;
   material?: string;
+  sizes?: string[];
   rating?: number;
   ratings?: number;
   averageRating?: number;

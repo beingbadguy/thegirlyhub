@@ -316,7 +316,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (previousCart?.products) {
       const updatedProducts = previousCart.products.filter((item) => {
         const id = item.productId?._id?.toString() || item.productId?.toString();
-        return id !== productId;
+        const lineId = (item as any)?._id?.toString();
+        return id !== productId && lineId !== productId;
       });
       set({ userCart: { ...previousCart, products: updatedProducts }, isCartUpdating: true });
     }
@@ -326,6 +327,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const response = await axios.delete(`/api/cart/${productId}`);
         if (response.data?.cart) {
           set({ userCart: response.data.cart });
+        } else {
+          await get().fetchUserCart();
         }
       } else {
         removeGuestCartItem(productId);

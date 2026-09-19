@@ -29,6 +29,7 @@ import {
   TrendingDown,
   ChevronLeft,
   ChevronRight,
+  Ruler,
 } from "lucide-react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { SiGooglepay, SiPaytm } from "react-icons/si";
@@ -98,6 +99,7 @@ type Product = {
   metaDescription?: string;
   dimensions?: { length?: number; breadth?: number; height?: number };
   variants?: ProductVariant[] | { sizes: string[]; colors: string[] };
+  sizes?: string[];
   reviews?: ReviewType[];
   weight?: number;
   length?: number;
@@ -105,7 +107,76 @@ type Product = {
   height?: number;
 };
 
-function getVariantOptions(variants: Product["variants"]) {
+const BANGLE_SIZE_CHART = [
+  { size: "2.2", diameterIn: "2.12\"", diameterMm: "54.0 mm", wrist: "6.67\" (16.9 cm)", note: "Extra Small" },
+  { size: "2.3", diameterIn: "2.18\"", diameterMm: "55.5 mm", wrist: "6.87\" (17.4 cm)", note: "Petite" },
+  { size: "2.4", diameterIn: "2.25\"", diameterMm: "57.2 mm", wrist: "7.06\" (17.9 cm)", note: "Small" },
+  { size: "2.5", diameterIn: "2.31\"", diameterMm: "58.7 mm", wrist: "7.26\" (18.4 cm)", note: "Small-Med" },
+  { size: "2.6", diameterIn: "2.38\"", diameterMm: "60.3 mm", wrist: "7.46\" (18.9 cm)", note: "Medium (Popular)" },
+  { size: "2.8", diameterIn: "2.50\"", diameterMm: "63.5 mm", wrist: "7.85\" (19.9 cm)", note: "Large (Popular)" },
+  { size: "2.10", diameterIn: "2.63\"", diameterMm: "66.7 mm", wrist: "8.24\" (20.9 cm)", note: "Extra Large" },
+  { size: "Free Size", diameterIn: "Adjustable", diameterMm: "Flexible", wrist: "Fits most wrists", note: "Adjustable" },
+  { size: "2.12", diameterIn: "2.75\"", diameterMm: "69.8 mm", wrist: "8.64\" (21.9 cm)", note: "2X Large" },
+  { size: "2.14", diameterIn: "2.88\"", diameterMm: "73.0 mm", wrist: "9.03\" (22.9 cm)", note: "Custom" },
+  { size: "3", diameterIn: "3.00\"", diameterMm: "76.2 mm", wrist: "9.42\" (23.9 cm)", note: "3X Large" },
+];
+
+function getVariantOptions(
+  variants: Product["variants"],
+  explicitSizes?: string[],
+  category = "",
+  subCategory = "",
+  title = "",
+) {
+  const directSizes = Array.isArray(explicitSizes)
+    ? explicitSizes.map((s) => String(s).trim()).filter(Boolean)
+    : [];
+
+  if (directSizes.length > 0) {
+    const colors = Array.isArray(variants)
+      ? ([
+          ...new Set(
+            variants
+              .map((variant) => variant.attributes?.color)
+              .filter(Boolean),
+          ),
+        ] as string[])
+      : [];
+    return {
+      sizes: directSizes,
+      colors,
+    };
+  }
+
+  const cat = (category || "").toLowerCase();
+  const subCat = (subCategory || "").toLowerCase();
+  const name = (title || "").toLowerCase();
+
+  const isBangleOrBracelet =
+    cat.includes("bangle") ||
+    cat.includes("bracelet") ||
+    subCat.includes("bangle") ||
+    subCat.includes("bracelet") ||
+    name.includes("bangle") ||
+    name.includes("bracelet") ||
+    name.includes("kada");
+
+  if (isBangleOrBracelet) {
+    const colors = Array.isArray(variants)
+      ? ([
+          ...new Set(
+            variants
+              .map((variant) => variant.attributes?.color)
+              .filter(Boolean),
+          ),
+        ] as string[])
+      : [];
+    return {
+      sizes: ["2.2", "2.4", "2.6", "2.8", "2.10", "Free Size"],
+      colors,
+    };
+  }
+
   if (!variants) return { sizes: [], colors: [] };
   if (Array.isArray(variants)) {
     return {
@@ -477,17 +548,31 @@ const ProductPageClient = ({
         : initialProduct.image;
     setSelectedImage(primaryImage);
 
-    const initialVariantOptions = getVariantOptions(initialProduct.variants);
+    const initialVariantOptions = getVariantOptions(
+      initialProduct.variants,
+      initialProduct.sizes,
+      initialProduct.category,
+      initialProduct.subCategory,
+      initialProduct.title || initialProduct.name,
+    );
     if (initialVariantOptions.sizes.length > 0) {
       setSize(initialVariantOptions.sizes[0]);
     } else {
-      const cat = initialProduct.category;
-      if (["Lowers", "Jeans", "Shirts", "dresses", "suits"].includes(cat)) {
+      const cat = (initialProduct.category || "").toLowerCase();
+      const subCat = (initialProduct.subCategory || "").toLowerCase();
+      if (
+        cat.includes("bangle") ||
+        cat.includes("bracelet") ||
+        subCat.includes("bangle") ||
+        subCat.includes("bracelet")
+      ) {
+        setSize("2.6");
+      } else if (["lowers", "jeans", "shirts", "dresses", "suits"].includes(cat)) {
         setSize("M");
-      } else if (["Shoes", "Slippers", "shoes", "flats"].includes(cat)) {
+      } else if (["shoes", "slippers", "flats"].includes(cat)) {
         setSize("7");
       } else {
-        setSize("One Size");
+        setSize("Free Size");
       }
     }
 
@@ -585,7 +670,13 @@ const ProductPageClient = ({
     };
   }, [lightboxImage, showSizeGuide]);
 
-  const variantOptions = getVariantOptions(product.variants);
+  const variantOptions = getVariantOptions(
+    product.variants,
+    product.sizes,
+    product.category,
+    product.subCategory,
+    product.title || product.name,
+  );
   const sizesList = variantOptions.sizes;
   const colorsList = variantOptions.colors;
   const showColorSelector = colorsList.length > 0;
@@ -952,33 +1043,43 @@ const ProductPageClient = ({
 
               {/* Sizes variants */}
               {sizesList.length > 0 && (
-                <div className="space-y-2 py-2">
+                <div className="space-y-2.5 py-2.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-                      Select Size
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                        Select Size:
+                      </span>
+                      <span className="text-xs font-extrabold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
+                        {size || sizesList[0]}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowSizeGuide(true)}
-                      className="text-xs font-semibold text-neutral-900 hover:text-neutral-600 underline underline-offset-2 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 underline underline-offset-2 transition-all cursor-pointer"
                     >
-                      Size Guide
+                      <Ruler className="w-3.5 h-3.5" />
+                      <span>Size Guide</span>
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {sizesList.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setSize(s)}
-                        className={`min-w-[45px] h-[40px] px-3 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${
-                          s === size
-                            ? "bg-neutral-900 text-white border-transparent shadow-sm"
-                            : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-400"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap gap-2.5">
+                    {sizesList.map((s) => {
+                      const isSelected = s === size;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSize(s)}
+                          className={`min-w-[48px] h-[40px] px-3.5 rounded-xl text-xs font-bold tracking-wide border transition-all cursor-pointer select-none flex items-center justify-center gap-1 ${
+                            isSelected
+                              ? "bg-[#db4d79] text-white border-[#db4d79] shadow-md shadow-pink-200 ring-2 ring-pink-200 scale-[1.03]"
+                              : "bg-white text-neutral-700 border-neutral-200 hover:border-[#db4d79] hover:text-[#db4d79] hover:bg-pink-50/40"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -999,7 +1100,7 @@ const ProductPageClient = ({
                           title={colName}
                           className={`relative w-8 h-8 rounded-full border-2 transition-all p-0.5 ${
                             colName === color
-                              ? "border-neutral-950 scale-110 shadow-sm"
+                              ? "border-[#db4d79] scale-110 shadow-sm ring-2 ring-pink-100"
                               : "border-transparent hover:scale-105"
                           }`}
                         >
@@ -1062,7 +1163,7 @@ const ProductPageClient = ({
                   <button
                     disabled={addingCart}
                     onClick={() => addToCart(false)}
-                    className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-all disabled:opacity-50 border border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50 cursor-pointer active:scale-98 shadow-xs"
+                    className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-all disabled:opacity-50 border-2 border-[#db4d79] bg-white text-[#db4d79] hover:bg-pink-50 hover:border-[#c23b65] hover:text-[#c23b65] cursor-pointer active:scale-98 shadow-xs"
                   >
                     <ShoppingCart className="w-4 h-4" /> Add to Bag
                   </button>
@@ -1175,7 +1276,7 @@ const ProductPageClient = ({
               Free Shipping
             </h4>
             <p className="text-xs text-neutral-400 font-medium">
-              On all orders above ₹499
+              On all orders above ₹399
             </p>
           </div>
         </div>
@@ -1356,7 +1457,7 @@ const ProductPageClient = ({
                   <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans space-y-2">
                     <p>
                       📦 <strong>Free Shipping:</strong> Enjoy free standard
-                      shipping on all orders above ₹499. Orders are shipped
+                      shipping on all orders above ₹399. Orders below ₹399 have a standard delivery fee of ₹29. Orders are shipped
                       within 24-48 hours.
                     </p>
                     <p>
@@ -1719,84 +1820,77 @@ const ProductPageClient = ({
             className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
           >
             <motion.div
-              initial={{ scale: 0.96 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.96 }}
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white w-full max-w-md p-6 border border-neutral-200 relative"
+              className="bg-white w-full max-w-lg p-6 rounded-2xl border border-neutral-200 shadow-2xl relative max-h-[85vh] overflow-y-auto"
             >
               <button
+                type="button"
                 onClick={() => setShowSizeGuide(false)}
-                className="absolute right-4 top-4 text-neutral-400 hover:text-neutral-700 transition-colors p-1 cursor-pointer"
+                className="absolute right-4 top-4 text-neutral-400 hover:text-neutral-700 transition-colors p-1.5 rounded-lg hover:bg-neutral-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <h3 className="text-md font-bold text-neutral-900 uppercase tracking-wider mb-2 font-sans">
-                Size Guide
-              </h3>
-              <p className="text-xs text-neutral-400 mb-6">
-                Standard measurements. Fit may vary depending on style and
-                fabric.
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+                  <Ruler className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-neutral-900 uppercase tracking-wide">
+                  Bangles &amp; Bracelet Size Guide
+                </h3>
+              </div>
+              <p className="text-xs text-neutral-500 mb-4 leading-relaxed">
+                Standard Indian bangle measurements (inner diameter &amp; wrist circumference). Measure an existing bangle or your hand knuckles to choose the perfect fit.
               </p>
 
-              <div className="overflow-x-auto border border-neutral-200">
+              {/* Bangle Sizing Chart Table */}
+              <div className="overflow-x-auto rounded-xl border border-neutral-200/90 mb-4">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase tracking-wider text-neutral-500">
-                      <th className="p-3">Size</th>
-                      <th className="p-3">Bust/Chest (in)</th>
-                      <th className="p-3">Waist (in)</th>
-                      <th className="p-3">Hips (in)</th>
+                    <tr className="bg-neutral-50/90 border-b border-neutral-200 font-bold uppercase tracking-wider text-neutral-600 text-[11px]">
+                      <th className="p-2.5">Indian Size</th>
+                      <th className="p-2.5">Inner Diameter</th>
+                      <th className="p-2.5">Circumference</th>
+                      <th className="p-2.5">Fit / Type</th>
                     </tr>
                   </thead>
                   <tbody className="text-neutral-700 divide-y divide-neutral-100">
-                    <tr>
-                      <td className="p-3 font-bold">XS</td>
-                      <td className="p-3">30 - 32</td>
-                      <td className="p-3">24 - 26</td>
-                      <td className="p-3">34 - 36</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold">S</td>
-                      <td className="p-3">32 - 34</td>
-                      <td className="p-3">26 - 28</td>
-                      <td className="p-3">36 - 38</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold">M</td>
-                      <td className="p-3">34 - 36</td>
-                      <td className="p-3">28 - 30</td>
-                      <td className="p-3">38 - 40</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold">L</td>
-                      <td className="p-3">36 - 38</td>
-                      <td className="p-3">30 - 32</td>
-                      <td className="p-3">40 - 42</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold">XL</td>
-                      <td className="p-3">38 - 40</td>
-                      <td className="p-3">32 - 34</td>
-                      <td className="p-3">42 - 44</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold">XXL</td>
-                      <td className="p-3">40 - 42</td>
-                      <td className="p-3">34 - 36</td>
-                      <td className="p-3">44 - 46</td>
-                    </tr>
+                    {BANGLE_SIZE_CHART.map((b) => (
+                      <tr
+                        key={b.size}
+                        className={b.size === size ? "bg-rose-50/60 font-semibold" : "hover:bg-neutral-50/50"}
+                      >
+                        <td className="p-2.5 font-bold text-neutral-900">
+                          {b.size}
+                          {b.size === size && (
+                            <span className="ml-1.5 text-[10px] text-rose-600 font-extrabold">(Selected)</span>
+                          )}
+                        </td>
+                        <td className="p-2.5 text-neutral-700">
+                          {b.diameterIn} <span className="text-neutral-400">({b.diameterMm})</span>
+                        </td>
+                        <td className="p-2.5 text-neutral-600">{b.wrist}</td>
+                        <td className="p-2.5 text-neutral-500 text-[11px]">{b.note}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
 
-              <div className="mt-5 flex gap-2.5 text-[11px] text-neutral-500 bg-neutral-50 p-3 border border-neutral-100">
-                <AlertCircle className="w-4 h-4 text-neutral-500 shrink-0 mt-0.5" />
-                <p className="leading-relaxed">
-                  <strong>Fit Guide:</strong> If you prefer a loose fit, or are
-                  between sizes, we recommend selecting one size larger.
-                </p>
+              {/* How to measure helper tips */}
+              <div className="space-y-2 rounded-xl bg-neutral-50 p-3.5 border border-neutral-200/70 text-xs text-neutral-600">
+                <div className="flex items-center gap-1.5 font-bold text-neutral-900">
+                  <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                  <span>How to measure your bangle size:</span>
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-[11px] text-neutral-600 leading-relaxed pl-1">
+                  <li><strong>Method 1:</strong> Take an existing well-fitting bangle and measure its inside diameter in inches using a ruler.</li>
+                  <li><strong>Method 2:</strong> Bring your thumb and little finger together as if putting on a bangle, then wrap a string or measuring tape around the widest part of your knuckles.</li>
+                  <li>If you are between two sizes, we recommend choosing the <strong>larger size</strong> for comfortable sliding over the hand.</li>
+                </ol>
               </div>
             </motion.div>
           </motion.div>
