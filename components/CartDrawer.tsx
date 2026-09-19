@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useAuthStore } from "@/store/store";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import Image from "next/image";
@@ -32,6 +33,28 @@ export default function CartDrawer() {
     0,
   );
   const shipping = calculateShipping(subtotal, "online");
+
+  useEffect(() => {
+    if (!isCartOpen) return;
+
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeCart();
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isCartOpen, closeCart]);
 
   return (
     <>
@@ -67,7 +90,7 @@ export default function CartDrawer() {
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-6 py-5 [scrollbar-width:thin] [scrollbar-color:rgba(200,200,200,0.5)_transparent]">
           {isCartLoading && !userCart ? (
             <div className="space-y-4 animate-pulse">
               {[1, 2, 3].map((idx) => (
@@ -87,7 +110,7 @@ export default function CartDrawer() {
                 <FloralAccent flower={2} size="md" variant="sway" />
               </div>
               <p className="font-semibold text-neutral-900 font-serif text-lg">
-                Your bag is empty
+                Your cart is empty
               </p>
               <p className="mt-1 text-sm text-neutral-500 max-w-xs">
                 Add something cute & beautiful to your collection ✨

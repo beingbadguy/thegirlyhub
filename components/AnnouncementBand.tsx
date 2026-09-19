@@ -1,7 +1,7 @@
 "use client";
 
 const messages = [
-  "✨ 100+ Satisfied Customers",
+  "✨ 100+ Happy Customers",
   "🚚 Free shipping on orders above ₹399",
   "🎁 15% off on your first order",
   "📦 Easy Exchange & Returns",

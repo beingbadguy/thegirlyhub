@@ -295,7 +295,7 @@ export default function ProductCard({
               onClick={handleCardAddToCart}
               className="w-full rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-100 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-300"
             >
-              {addedText ? "Added!" : "Add to Bag"}
+              {addedText ? "Added!" : "Add to Cart"}
             </button>
             <button
               type="button"

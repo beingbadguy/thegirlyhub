@@ -79,10 +79,16 @@ const HeaderSection = () => {
 
   useEffect(() => {
     if (menu) {
-      document.body.classList.add("overflow-hidden");
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.classList.remove("overflow-hidden");
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
     }
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
   }, [menu]);
 
   useEffect(() => {

@@ -620,7 +620,7 @@ export default function CheckoutPage() {
           </h2>
           <p className="text-sm text-gray-600">
             You don&apos;t have any items in your checkout. Redirecting you to
-            your bag...
+            your cart...
           </p>
           <Button
             onClick={() => router.replace("/cart")}

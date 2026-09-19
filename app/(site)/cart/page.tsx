@@ -22,7 +22,7 @@ const CartPage = () => {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    document.title = "Shopping Bag | GirlyHub";
+    document.title = "Shopping Cart | GirlyHub";
     useAuthStore
       .getState()
       .fetchUser()
@@ -450,7 +450,7 @@ const CartPage = () => {
             <FloralAccent flower={2} size="lg" variant="float" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2 font-serif">
-            Your shopping bag is empty
+            Your cart is empty
           </h2>
           <p className="text-sm text-gray-500 max-w-md mb-6">
             Looks like you haven&apos;t added anything to your cart yet. Explore our latest arrivals and find something special! ✨

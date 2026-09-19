@@ -367,7 +367,7 @@ const ProductPageClient = ({
         router.push("/checkout");
       } else {
         openCart();
-        setCartError("Added to bag!");
+        setCartError("Added to cart!");
         setTimeout(() => setCartError(""), 3000);
       }
     } catch (error: unknown) {
@@ -901,34 +901,36 @@ const ProductPageClient = ({
                 {product.title}
               </h1>
 
-              {/* Rating Stars average */}
-              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.round(displayRatings)
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-neutral-200"
-                      }`}
-                    />
-                  ))}
+              {/* Rating Stars average (Only displayed when there are real reviews to avoid conversion killer 0.0 / 5) */}
+              {totalReviewsCount > 0 && displayRatings > 0 ? (
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < Math.round(displayRatings)
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-neutral-200"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded">
+                    {displayRatings.toFixed(1)} / 5
+                  </span>
+                  <span className="text-xs text-neutral-300">|</span>
+                  <span
+                    className="text-xs text-neutral-500 font-medium cursor-pointer hover:underline"
+                    onClick={() => {
+                      const el = document.getElementById("reviews-section");
+                      el?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+                  </span>
                 </div>
-                <span className="text-xs font-semibold text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded">
-                  {displayRatings.toFixed(1)} / 5
-                </span>
-                <span className="text-xs text-neutral-300">|</span>
-                <span
-                  className="text-xs text-neutral-500 font-medium cursor-pointer hover:underline"
-                  onClick={() => {
-                    const el = document.getElementById("reviews-section");
-                    el?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  {product.reviews?.length || 0} reviews
-                </span>
-              </div>
+              ) : null}
 
               {/* Price display with responsive layout that never overflows on phone */}
               <div className="flex flex-col gap-3 py-3 border-y border-neutral-100/90">
@@ -1165,7 +1167,7 @@ const ProductPageClient = ({
                     onClick={() => addToCart(false)}
                     className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl font-bold text-xs tracking-wider uppercase transition-all disabled:opacity-50 border-2 border-[#db4d79] bg-white text-[#db4d79] hover:bg-pink-50 hover:border-[#c23b65] hover:text-[#c23b65] cursor-pointer active:scale-98 shadow-xs"
                   >
-                    <ShoppingCart className="w-4 h-4" /> Add to Bag
+                    <ShoppingCart className="w-4 h-4" /> Add to Cart
                   </button>
                 </div>
               )}
@@ -1489,51 +1491,59 @@ const ProductPageClient = ({
             Ratings & Reviews
           </h2>
 
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-4xl font-extrabold text-neutral-950">
-              {displayRatings.toFixed(1)}
-            </span>
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${i < Math.round(displayRatings)
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-neutral-200"
-                      }`}
-                  />
-                ))}
-              </div>
-              <p className="text-[11px] font-semibold text-neutral-400">
-                Based on {product.reviews?.length || 0} reviews
-              </p>
-            </div>
-          </div>
-
-          {/* Rating Distribution Bars */}
-          <div className="space-y-2 mb-6 border-t border-neutral-100 pt-4">
-            {ratingDistribution.map((count, index) => {
-              const stars = 5 - index;
-              const percentage = Math.round((count / distributionSum) * 100);
-              return (
-                <div key={stars} className="flex items-center gap-3 text-xs">
-                  <span className="w-8 text-neutral-500 font-semibold">
-                    {stars} ★
-                  </span>
-                  <div className="flex-1 h-2 bg-neutral-100 overflow-hidden">
-                    <div
-                      style={{ width: `${percentage}%` }}
-                      className="h-full bg-neutral-900 transition-all duration-500"
-                    />
+          {totalReviewsCount > 0 ? (
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <span className="text-4xl font-extrabold text-neutral-950">
+                  {displayRatings.toFixed(1)}
+                </span>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${i < Math.round(displayRatings)
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-neutral-200"
+                          }`}
+                      />
+                    ))}
                   </div>
-                  <span className="w-8 text-right text-neutral-400 font-semibold">
-                    {percentage}%
-                  </span>
+                  <p className="text-[11px] font-semibold text-neutral-400">
+                    Based on {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+
+              {/* Rating Distribution Bars */}
+              <div className="space-y-2 mb-6 border-t border-neutral-100 pt-4">
+                {ratingDistribution.map((count, index) => {
+                  const stars = 5 - index;
+                  const percentage = Math.round((count / distributionSum) * 100);
+                  return (
+                    <div key={stars} className="flex items-center gap-3 text-xs">
+                      <span className="w-8 text-neutral-500 font-semibold">
+                        {stars} ★
+                      </span>
+                      <div className="flex-1 h-2 bg-neutral-100 overflow-hidden">
+                        <div
+                          style={{ width: `${percentage}%` }}
+                          className="h-full bg-neutral-900 transition-all duration-500"
+                        />
+                      </div>
+                      <span className="w-8 text-right text-neutral-400 font-semibold">
+                        {percentage}%
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="mb-6 rounded-xl bg-neutral-50 border border-neutral-100 p-4 text-xs text-neutral-600">
+              No reviews yet. Be the first to review this product!
+            </div>
+          )}
 
           <div className="border-t border-neutral-100 pt-4">
             {reviewEligible ? (
@@ -1922,7 +1932,7 @@ const ProductPageClient = ({
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent [animation:button-shine_1.8s_ease-in-out_infinite]"
               />
-              {addingCart ? "Adding..." : "Add to Bag"}
+              {addingCart ? "Adding..." : "Add to Cart"}
             </button>
           </motion.div>
         )}

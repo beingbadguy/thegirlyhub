@@ -15,46 +15,35 @@ export const databaseConnection = async () => {
     );
   }
 
-  // Check if existing connection is active and connected to Basics database
-  if (
-    cached.conn &&
-    mongoose.connection.readyState === 1 &&
-    mongoose.connection.name === "Basics"
-  ) {
+  // 1. If already connected and ready, return existing connection
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
-  if (
-    !cached.promise ||
-    mongoose.connection.readyState === 0 ||
-    mongoose.connection.name !== "Basics"
-  ) {
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.disconnect().catch(() => {});
-    }
-    const opts = {
+  // 2. If a connection is already in progress, wait for it rather than creating a duplicate
+  if (!cached.promise) {
+    const opts: mongoose.ConnectOptions = {
       dbName: "Basics",
-      bufferCommands: false,
+      bufferCommands: true, // Keep buffered operations enabled so concurrent queries don't throw MongoNotConnectedError
       maxPoolSize: 50,
-      minPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
       maxIdleTimeMS: 30000,
     };
 
-    cached.promise = mongoose
-      .connect(MONGODB_URI, opts)
-      .then((mongooseInstance) => {
-        return mongooseInstance;
-      });
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+      return m;
+    });
   }
 
   try {
     cached.conn = await cached.promise;
     return cached.conn;
   } catch (err) {
+    cached.promise = null; // Reset promise so subsequent requests can re-attempt
+    cached.conn = null;
     console.error("MongoDB connection failed ❌", err);
-    cached.promise = null; // Reset the promise so subsequent calls retry
     throw err;
   }
 };
