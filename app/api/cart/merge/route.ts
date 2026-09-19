@@ -66,11 +66,10 @@ export async function POST(request: NextRequest) {
 
       const size = item.size || "";
       const quantity = Math.max(1, Number(item.quantity) || 1);
-      const existing = userCart.products.find(
-        (p: { productId: { toString(): string }; size?: string }) =>
-          p.productId.toString() === String(item.productId) &&
-          (p.size || "") === size,
-      );
+      const existing = userCart.products.find((p: any) => {
+        const pId = p.productId?._id?.toString() || p.productId?.toString();
+        return pId === String(item.productId) && (p.size || "") === size;
+      });
 
       if (existing) {
         existing.quantity = Math.min(

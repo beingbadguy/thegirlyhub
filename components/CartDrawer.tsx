@@ -136,7 +136,7 @@ export default function CartDrawer() {
                         <button
                           type="button"
                           aria-label={`Remove ${product.title}`}
-                          onClick={() => removeFromCart(product._id)}
+                          onClick={() => removeFromCart(product._id, item.size)}
                           className="shrink-0 text-neutral-400 transition hover:text-rose-600"
                         >
                           <Trash2 className="size-4" />
@@ -156,10 +156,11 @@ export default function CartDrawer() {
                           aria-label="Decrease quantity"
                           onClick={() =>
                             item.quantity <= 1
-                              ? removeFromCart(product._id)
+                              ? removeFromCart(product._id, item.size)
                               : updateCartQuantity(
                                   product._id,
                                   item.quantity - 1,
+                                  item.size,
                                 )
                           }
                           className="flex size-7 items-center justify-center rounded-full border border-neutral-200 text-neutral-600 hover:bg-neutral-50"
@@ -173,7 +174,7 @@ export default function CartDrawer() {
                           type="button"
                           aria-label="Increase quantity"
                           onClick={() =>
-                            updateCartQuantity(product._id, item.quantity + 1)
+                            updateCartQuantity(product._id, item.quantity + 1, item.size)
                           }
                           className="flex size-7 items-center justify-center rounded-full border border-neutral-200 text-neutral-600 hover:bg-neutral-50"
                         >

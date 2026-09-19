@@ -42,8 +42,8 @@ interface AuthState {
   fetchUserCart: () => Promise<void>;
   fetchUserWishlist: () => void;
   addToCart: (productId: string, size?: string) => Promise<void>;
-  updateCartQuantity: (productId: string, quantity: number) => Promise<void>;
-  removeFromCart: (productId: string) => Promise<void>;
+  updateCartQuantity: (productId: string, quantity: number, size?: string) => Promise<void>;
+  removeFromCart: (productId: string, size?: string) => Promise<void>;
   syncCartAfterAuth: () => Promise<void>;
 }
 type PopulatedCartProduct = {
@@ -271,14 +271,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  updateCartQuantity: async (productId: string, quantity: number) => {
+  updateCartQuantity: async (productId: string, quantity: number, size?: string) => {
     const previousCart = get().userCart;
 
     // Optimistic UI Update: Update quantity immediately in state
     if (previousCart?.products) {
       const updatedProducts = previousCart.products.map((item) => {
         const id = item.productId?._id?.toString() || item.productId?.toString();
-        if (id === productId) {
+        const matchesProduct = id === productId;
+        const matchesSize = size !== undefined ? (item.size || "") === (size || "") : true;
+        if (matchesProduct && matchesSize) {
           return { ...item, quantity };
         }
         return item;
@@ -288,12 +290,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       if (get().user) {
-        const response = await axios.put(`/api/cart/${productId}`, { quantity });
+        const response = await axios.put(`/api/cart/${productId}`, { quantity, size });
         if (response.data?.cart) {
           set({ userCart: response.data.cart });
+        } else {
+          await get().fetchUserCart();
         }
       } else {
-        updateGuestCartQuantity(productId, quantity);
+        updateGuestCartQuantity(productId, quantity, size);
         const cart = await hydrateGuestCart();
         set({ userCart: cart });
       }
@@ -309,7 +313,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  removeFromCart: async (productId: string) => {
+  removeFromCart: async (productId: string, size?: string) => {
     const previousCart = get().userCart;
 
     // Optimistic UI Update: Remove item immediately from state
@@ -317,21 +321,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const updatedProducts = previousCart.products.filter((item) => {
         const id = item.productId?._id?.toString() || item.productId?.toString();
         const lineId = (item as any)?._id?.toString();
-        return id !== productId && lineId !== productId;
+        const matchesProduct = id === productId || lineId === productId;
+        const matchesSize = size !== undefined ? (item.size || "") === (size || "") : true;
+        return !(matchesProduct && matchesSize);
       });
       set({ userCart: { ...previousCart, products: updatedProducts }, isCartUpdating: true });
     }
 
     try {
       if (get().user) {
-        const response = await axios.delete(`/api/cart/${productId}`);
+        const query = size ? `?size=${encodeURIComponent(size)}` : "";
+        const response = await axios.delete(`/api/cart/${productId}${query}`);
         if (response.data?.cart) {
           set({ userCart: response.data.cart });
         } else {
           await get().fetchUserCart();
         }
       } else {
-        removeGuestCartItem(productId);
+        removeGuestCartItem(productId, size);
         const cart = await hydrateGuestCart();
         set({ userCart: cart });
       }
@@ -350,8 +357,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const items = readGuestCart();
     if (!get().user || !items.length) return;
     try {
-      await axios.post("/api/cart/merge", { products: items });
+      const res = await axios.post("/api/cart/merge", { products: items });
       clearGuestCart();
+      if (res.data?.cart) {
+        set({ userCart: res.data.cart });
+      } else {
+        await get().fetchUserCart();
+      }
     } catch (error) {
       console.error("Failed to merge guest cart", error);
     }

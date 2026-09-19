@@ -7,6 +7,7 @@ import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, Loader2, MailCheck } from "lucide-react";
 import FloralAccent from "@/components/decorations/FloralAccent";
 import FloralFloatingAmbient from "@/components/decorations/FloralFloatingAmbient";
+import { useAuthStore } from "@/store/store";
 
 function VerifyForm() {
   const router = useRouter();
@@ -54,6 +55,7 @@ function VerifyForm() {
     setLoading(true);
     try {
       await axios.post("/api/verify", { token: code.join("") });
+      await useAuthStore.getState().fetchUser();
       router.replace(next);
     } catch (requestError: unknown) {
       setError(

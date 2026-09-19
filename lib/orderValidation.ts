@@ -125,7 +125,9 @@ export function getOrderFieldErrors(
       "Phone must be a valid 10-digit Indian mobile number.";
   }
 
-  if (data.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+  if (!data.email?.trim()) {
+    fieldErrors.email = "Email address is required.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     fieldErrors.email = "Please enter a valid email address.";
   }
 

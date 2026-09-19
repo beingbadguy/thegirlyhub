@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/store";
+import { readGuestCart } from "@/lib/guestCart";
 
 const StickyMenuBar = () => {
   const { user, userCart, userWishlist } = useAuthStore();
@@ -16,7 +17,16 @@ const StickyMenuBar = () => {
   const [isVisible, setIsVisible] = useState(!isProductPage);
   const lastScrollY = useRef(0);
   const cartCount =
-    userCart?.products?.filter((item) => item.productId).length ?? 0;
+    userCart?.products !== undefined
+      ? userCart.products
+          .filter((item) => item.productId)
+          .reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
+      : (typeof window !== "undefined" && !user
+          ? readGuestCart().reduce(
+              (sum, item) => sum + (Number(item.quantity) || 1),
+              0,
+            )
+          : 0);
   const wishlistCount = userWishlist?.products?.length ?? 0;
 
   useEffect(() => {
@@ -81,8 +91,8 @@ const StickyMenuBar = () => {
                     }`}
                 />
 
-                {item.badge !== undefined && (
-                  <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-pink-500 text-[10px] leading-none text-white">
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold leading-none text-white">
                     {item.badge}
                   </span>
                 )}

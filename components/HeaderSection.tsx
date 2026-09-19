@@ -24,6 +24,7 @@ import { cachedApiGet } from "@/lib/apiCache";
 import SearchDrawer from "@/components/SearchDrawer";
 import LogoMark from "@/components/LogoMark";
 import { productUrl } from "@/lib/slug";
+import { readGuestCart } from "@/lib/guestCart";
 
 type Products = {
   _id: string;
@@ -93,12 +94,34 @@ const HeaderSection = () => {
       (item) => item.productId,
     );
 
-    if (validCartProducts?.length) {
-      setTotalNumberOfProducts(validCartProducts.length);
+    if (validCartProducts && validCartProducts.length > 0) {
+      const count = validCartProducts.reduce(
+        (sum, item) => sum + (Number(item.quantity) || 1),
+        0,
+      );
+      setTotalNumberOfProducts(count);
+    } else if (!user && typeof window !== "undefined") {
+      const guestItems = readGuestCart();
+      const count = guestItems.reduce(
+        (sum, item) => sum + (Number(item.quantity) || 1),
+        0,
+      );
+      setTotalNumberOfProducts(count);
     } else {
       setTotalNumberOfProducts(0);
     }
-  }, [userCart]);
+  }, [userCart, user]);
+
+  const validCartProducts = userCart?.products?.filter(
+    (item) => item.productId,
+  );
+  const cartBadgeCount =
+    validCartProducts !== undefined
+      ? validCartProducts.reduce(
+          (sum, item) => sum + (Number(item.quantity) || 1),
+          0,
+        )
+      : totalNumberOfProducts;
 
   useEffect(() => {
     const announcementTimer = window.setInterval(() => {
@@ -358,11 +381,14 @@ const HeaderSection = () => {
             onClick={() => {
               router.push("/cart");
             }}
+            title="Cart"
           >
             <ShoppingBag />
-            <p className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full size-6 flex items-center text-sm justify-center">
-              {user ? totalNumberOfProducts : 0}
-            </p>
+            {cartBadgeCount > 0 && (
+              <p className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white rounded-full size-[22px] flex items-center text-[10px] font-bold justify-center shadow-xs">
+                {cartBadgeCount}
+              </p>
+            )}
           </div>
 
           <UserRound

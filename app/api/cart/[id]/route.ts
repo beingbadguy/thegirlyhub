@@ -192,7 +192,7 @@ export async function PUT(
       );
     }
     const { id } = await context.params;
-    const { quantity } = await request.json();
+    const { quantity, size } = await request.json();
 
     if (!quantity || quantity < 1) {
       return NextResponse.json(
@@ -237,7 +237,9 @@ export async function PUT(
 
     const product = cart.products.find((p: any) => {
       const pId = p.productId?._id?.toString() || p.productId?.toString();
-      return pId === id;
+      const matchesProduct = pId === id;
+      const matchesSize = size !== undefined ? (p.size || "") === (size || "") : true;
+      return matchesProduct && matchesSize;
     });
 
     if (!product) {
@@ -289,6 +291,7 @@ export async function DELETE(
       );
     }
     const { id } = await context.params;
+    const size = request.nextUrl.searchParams.get("size");
     const cart = await Cart.findOne({ userId: decoded.userId });
     if (!cart) {
       return NextResponse.json(
@@ -299,7 +302,9 @@ export async function DELETE(
     cart.products = (cart.products || []).filter((p: any) => {
       const pId = p.productId?._id?.toString() || p.productId?.toString();
       const lineId = p._id?.toString();
-      return pId && pId !== id && lineId !== id;
+      const matchesProduct = (pId && pId === id) || (lineId && lineId === id);
+      const matchesSize = size !== null ? (p.size || "") === size : true;
+      return !(matchesProduct && matchesSize);
     });
     await cart.save();
 

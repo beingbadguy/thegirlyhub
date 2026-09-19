@@ -54,18 +54,29 @@ export function addGuestCartItem(productId: string, size = "", quantity = 1) {
   return items;
 }
 
-export function updateGuestCartQuantity(productId: string, quantity: number) {
-  const items = readGuestCart().map((item) =>
-    item.productId === productId
-      ? { ...item, quantity: Math.max(1, quantity) }
-      : item,
-  );
+export function updateGuestCartQuantity(
+  productId: string,
+  quantity: number,
+  size?: string,
+) {
+  const items = readGuestCart().map((item) => {
+    const matchesProduct = item.productId === productId;
+    const matchesSize = size !== undefined ? (item.size || "") === (size || "") : true;
+    if (matchesProduct && matchesSize) {
+      return { ...item, quantity: Math.max(1, quantity) };
+    }
+    return item;
+  });
   writeGuestCart(items);
   return items;
 }
 
-export function removeGuestCartItem(productId: string) {
-  const items = readGuestCart().filter((item) => item.productId !== productId);
+export function removeGuestCartItem(productId: string, size?: string) {
+  const items = readGuestCart().filter((item) => {
+    const matchesProduct = item.productId === productId;
+    const matchesSize = size !== undefined ? (item.size || "") === (size || "") : true;
+    return !(matchesProduct && matchesSize);
+  });
   writeGuestCart(items);
   return items;
 }

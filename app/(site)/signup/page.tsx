@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useState, useEffect, Suspense } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { MdArrowRightAlt } from "react-icons/md";
@@ -13,8 +13,10 @@ import SocialAuthButtons from "@/components/SocialAuthButtons";
 import FloralAccent from "@/components/decorations/FloralAccent";
 import FloralFloatingAmbient from "@/components/decorations/FloralFloatingAmbient";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/";
   useEffect(() => {
     document.title = "Sign Up | GirlyHub";
   }, []);
@@ -37,8 +39,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const response = await axios.post("/api/signup", data);
-      // console.log(response.data);
-      router.push(`/verify?email=${encodeURIComponent(data.email)}&next=/`);
+      router.push(`/verify?email=${encodeURIComponent(data.email)}&next=${encodeURIComponent(next)}`);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.log(error.response?.data);
@@ -143,7 +144,7 @@ export default function SignupPage() {
               </div>
             )}
             <Link
-              href="/login"
+              href={next !== "/" ? `/login?next=${encodeURIComponent(next)}` : "/login"}
               className="text-sm md:text-md text-neutral-500 hover:text-rose-500 transition-colors"
             >
               Already have an account? Login
@@ -153,5 +154,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[78vh] bg-[#fffafb]" />}>
+      <SignupForm />
+    </Suspense>
   );
 }

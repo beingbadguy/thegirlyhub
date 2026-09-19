@@ -32,9 +32,10 @@ const CartPage = () => {
   const handleChangeCartQuantity = async (
     productId: string,
     quantity: number,
+    size?: string,
   ) => {
     try {
-      await updateCartQuantity(productId, quantity);
+      await updateCartQuantity(productId, quantity, size);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
@@ -44,9 +45,9 @@ const CartPage = () => {
     }
   };
 
-  const handleDelete = async (productId: string) => {
+  const handleDelete = async (productId: string, size?: string) => {
     try {
-      await removeFromCart(productId);
+      await removeFromCart(productId, size);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error(error.response?.data);
@@ -109,15 +110,6 @@ const CartPage = () => {
     return <CartSkeleton />;
   }
 
-  if (!user) {
-    return (
-      <GuestAuthPrompt
-        title="Your bag is ready"
-        description="Please log in to view your saved items, manage your bag, and continue to checkout."
-      />
-    );
-  }
-
   return (
     <div className="min-h-[90vh] bg-[#fffafb]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -134,6 +126,23 @@ const CartPage = () => {
           <h1 className="font-bold text-pink-700 text-3xl font-serif">Your Cart</h1>
           <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
         </div>
+
+        {!user && (
+          <div className="mt-3 mb-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-pink-100 bg-pink-50/70 px-4 py-3 text-xs sm:text-sm text-neutral-700">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🛍️</span>
+              <span>
+                Shopping as a <strong>guest</strong>. Your items are saved in this browser.
+              </span>
+            </div>
+            <Link
+              href="/login?next=/cart"
+              className="rounded-full border border-pink-200 bg-white px-3 py-1 font-semibold text-xs text-pink-700 hover:bg-pink-100 transition shadow-xs"
+            >
+              Log in to save across devices
+            </Link>
+          </div>
+        )}
 
       {cartItems.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -211,6 +220,7 @@ const CartPage = () => {
                             handleChangeCartQuantity(
                               item.productId._id,
                               item.quantity - 1,
+                              item.size,
                             );
                           } else {
                             console.log("Quantity cannot be less than 1");
@@ -228,6 +238,7 @@ const CartPage = () => {
                             handleChangeCartQuantity(
                               item.productId._id,
                               item.quantity + 1,
+                              item.size,
                             );
                           }
                         }}
@@ -241,7 +252,7 @@ const CartPage = () => {
                     </div>
 
                     <button
-                      onClick={() => handleDelete(item.productId._id)}
+                      onClick={() => handleDelete(item.productId._id, item.size)}
                       className="ml-4 text-red-600 hover:text-red-800 cursor-pointer"
                     >
                       <Trash2 size={20} />
@@ -303,7 +314,7 @@ const CartPage = () => {
                             </p>
                           </div>
                           <button
-                            onClick={() => handleDelete(item.productId._id)}
+                            onClick={() => handleDelete(item.productId._id, item.size)}
                             className="text-red-600 hover:text-red-800"
                           >
                             <Trash2 size={18} />

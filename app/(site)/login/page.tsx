@@ -5,7 +5,7 @@ import axios, { AxiosError } from "axios";
 import Link from "next/link";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import { FormEvent, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/store";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -13,10 +13,14 @@ import { MdArrowRightAlt } from "react-icons/md";
 import SocialAuthButtons from "@/components/SocialAuthButtons";
 import FloralAccent from "@/components/decorations/FloralAccent";
 import FloralFloatingAmbient from "@/components/decorations/FloralFloatingAmbient";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const { setUser, fetchUserCart, syncCartAfterAuth } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/";
+
   useEffect(() => {
     document.title = "Login | GirlyHub";
   }, []);
@@ -37,22 +41,17 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await axios.post("/api/login", data);
-      // console.log(response.data);
       setUser(response.data.data);
       await syncCartAfterAuth();
-      fetchUserCart();
-      router.push("/");
-      // if (await response.data.data.isVerified) {
-      // } else {
-      //   router.push("/verify"); // Redirect to home page after successful login
-      // }
+      await fetchUserCart();
+      router.push(next);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.log(error.response?.data);
         const details = error.response?.data;
         if (details?.needsVerification) {
           router.push(
-            `/verify?email=${encodeURIComponent(details.email || data.email)}&next=/`,
+            `/verify?email=${encodeURIComponent(details.email || data.email)}&next=${encodeURIComponent(next)}`,
           );
           return;
         }
@@ -167,5 +166,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[78vh] bg-[#fffafb]" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

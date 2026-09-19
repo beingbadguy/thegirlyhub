@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const dbProducts = await Product.find({ _id: { $in: ids } })
       .select(
-        "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug category",
+        "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive slug category sizes",
       )
       .lean();
     const byId = new Map(dbProducts.map((p: any) => [p._id.toString(), p]));
