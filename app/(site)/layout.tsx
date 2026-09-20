@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import {
-  Darker_Grotesque,
   Instrument_Serif,
   Bodoni_Moda,
   Poppins,
   Caveat,
-  Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
 import HeaderSection from "@/components/HeaderSection";
@@ -15,8 +14,6 @@ import SmoothScroll from "@/components/SmoothScroll";
 import AnnouncementBand from "@/components/AnnouncementBand";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import StickyMenuBar from "@/components/StickyMenuBar";
-import FloatingWhatsApp from "@/components/FloatingWhatsApp";
-import CartDrawer from "@/components/CartDrawer";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import {
@@ -24,10 +21,13 @@ import {
   generateWebSiteSchema,
 } from "@/lib/seo/schema";
 
+const CartDrawer = dynamic(() => import("@/components/CartDrawer"));
+const FloatingWhatsApp = dynamic(() => import("@/components/FloatingWhatsApp"));
+
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -44,24 +44,10 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-const darkerGrotesque = Darker_Grotesque({
-  variable: "--font-darker-grotesque",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
 const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
   display: "swap",
 });
 
@@ -152,7 +138,7 @@ export default function RootLayout({
         <JsonLd data={webSiteSchema} />
       </head>
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} ${caveat.variable} ${playfair.variable} antialiased custom-scrollbar overflow-x-hidden`}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${caveat.variable} antialiased custom-scrollbar overflow-x-hidden`}
       >
         <AnnouncementBand />
         <SmoothScroll />

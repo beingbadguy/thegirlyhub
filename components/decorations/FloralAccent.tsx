@@ -49,6 +49,15 @@ const variantClasses: Record<FloralVariant, string> = {
   static: "",
 };
 
+const sizesPropMap: Record<FloralSize, string> = {
+  xs: "32px",
+  sm: "56px",
+  md: "96px",
+  lg: "144px",
+  xl: "224px",
+  custom: "96px",
+};
+
 export default function FloralAccent({
   flower = 1,
   variant,
@@ -75,7 +84,7 @@ export default function FloralAccent({
         src={src}
         alt={decorative ? "" : alt}
         fill
-        sizes="(max-width: 640px) 100px, (max-width: 1024px) 150px, 250px"
+        sizes={sizesPropMap[size] || "96px"}
         priority={priority}
         className="object-contain drop-shadow-sm filter"
       />

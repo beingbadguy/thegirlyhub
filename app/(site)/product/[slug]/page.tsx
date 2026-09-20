@@ -62,15 +62,19 @@ async function findProductBySlugOrId(identifier: string) {
   }
 
   const baseSlug = decoded.replace(/-[a-f0-9]{6}$/i, "");
-  const products = (await Product.find({}).lean()) as unknown as LeanProduct[];
-  return (
-    products.find(
-      (p) =>
-        p.slug === decoded ||
-        slugify(p.title || p.name || "") === baseSlug ||
-        buildProductSlug(p.title || p.name || "", p._id.toString()) === decoded,
-    ) ?? null
-  );
+  const baseTitle = baseSlug.replace(/-/g, " ").trim();
+  const escapedBaseSlug = baseSlug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedBaseTitle = baseTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const byFuzzy = await Product.findOne({
+    $or: [
+      { slug: new RegExp(`^${escapedBaseSlug}$`, "i") },
+      { title: new RegExp(`^${escapedBaseTitle}$`, "i") },
+      { name: new RegExp(`^${escapedBaseTitle}$`, "i") },
+    ],
+  }).lean();
+
+  return (byFuzzy as unknown as LeanProduct) || null;
 }
 
 export async function generateMetadata({

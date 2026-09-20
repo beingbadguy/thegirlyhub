@@ -1,6 +1,19 @@
 import { databaseConnection } from "@/config/databseConnection";
+import Banner from "@/models/banner.model";
 import Category from "@/models/category.model";
 import Product from "@/models/product.model";
+
+export type SSRBanner = {
+  _id: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  image: string;
+  mobileImage?: string;
+  tabletImage?: string;
+  link?: string;
+  buttonText?: string;
+};
 
 export type SSRCategory = {
   _id: string;
@@ -178,6 +191,34 @@ export async function getSSRHomeCategories(limit = 12): Promise<SSRCategory[]> {
 }
 
 /**
+ * Server-Side Fetch: Active Hero Banners
+ */
+export async function getSSRBanners(): Promise<SSRBanner[]> {
+  try {
+    await databaseConnection();
+    const banners = await Banner.find({ isActive: true })
+      .sort({ displayOrder: 1, createdAt: -1 })
+      .select("title subtitle description image mobileImage tabletImage link buttonText")
+      .lean();
+
+    return (banners || []).map((b: any) => ({
+      _id: b._id ? b._id.toString() : "",
+      title: b.title || "",
+      subtitle: b.subtitle || "",
+      description: b.description || "",
+      image: b.image || "",
+      mobileImage: b.mobileImage,
+      tabletImage: b.tabletImage,
+      link: b.link || "",
+      buttonText: b.buttonText || "",
+    }));
+  } catch (error) {
+    console.error("Error fetching SSR banners:", error);
+    return [];
+  }
+}
+
+/**
  * Server-Side Fetch: Products with filter options
  */
 export async function getSSRProducts(options: {
@@ -187,6 +228,7 @@ export async function getSSRProducts(options: {
   page?: number;
   sort?: string;
   maxPrice?: number;
+  includeDescription?: boolean;
 } = {}): Promise<{
   products: SSRProduct[];
   total: number;
@@ -226,11 +268,13 @@ export async function getSSRProducts(options: {
       sortOption = { discountedPrice: -1 };
     }
 
+    const selectFields = options.includeDescription
+      ? "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand material countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug"
+      : "title name shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand material countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug";
+
     const [products, total] = await Promise.all([
       Product.find(filter)
-        .select(
-          "title name description shortDescription price sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category brand material countInStock stock totalStock rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival createdAt isActive slug",
-        )
+        .select(selectFields)
         .sort(sortOption)
         .skip(skip)
         .limit(limit)

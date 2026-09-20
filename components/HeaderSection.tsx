@@ -21,10 +21,15 @@ import { IoPhonePortraitOutline } from "react-icons/io5";
 import { Separator } from "@radix-ui/react-select";
 import { AnimatePresence, motion } from "framer-motion";
 import { cachedApiGet } from "@/lib/apiCache";
-import SearchDrawer from "@/components/SearchDrawer";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import LogoMark from "@/components/LogoMark";
 import { productUrl } from "@/lib/slug";
 import { readGuestCart } from "@/lib/guestCart";
+
+const SearchDrawer = dynamic(() => import("@/components/SearchDrawer"), {
+  ssr: false,
+});
 
 type Products = {
   _id: string;
@@ -92,8 +97,10 @@ const HeaderSection = () => {
   }, [menu]);
 
   useEffect(() => {
-    fetchAllProducts();
-  }, []);
+    if (menu && products.length === 0) {
+      fetchAllProducts();
+    }
+  }, [menu, products.length]);
 
   useEffect(() => {
     const validCartProducts = userCart?.products?.filter(
@@ -297,10 +304,12 @@ const HeaderSection = () => {
               >
                 {/* Image */}
                 <div className="relative w-full h-44 overflow-hidden rounded-2xl bg-gray-100">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.title}
-                    className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                    fill
+                    sizes="(max-width: 768px) 50vw, 160px"
+                    className="object-cover transition duration-500 group-hover:scale-110"
                   />
 
                   {/* Gradient overlay */}

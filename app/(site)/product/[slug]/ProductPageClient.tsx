@@ -255,12 +255,6 @@ const ProductPageClient = ({
 
   useEffect(() => {
     setActiveViewers(getRandomViewerCount());
-
-    const viewerTimer = window.setInterval(() => {
-      setActiveViewers(getRandomViewerCount());
-    }, 8000);
-
-    return () => window.clearInterval(viewerTimer);
   }, []);
 
   useEffect(() => {

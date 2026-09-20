@@ -213,21 +213,35 @@ export default function ProductCard({
 
         {/* Product image using smooth crossfade */}
         <div className={`relative size-full overflow-hidden transition-opacity duration-300 ${!inStock ? "opacity-80 grayscale-[20%]" : ""}`}>
-          {images.map((imgSrc, idx) => (
-            <Image
-              key={`${imgSrc}-${idx}`}
-              src={imgSrc || "/placeholder.png"}
-              alt={product.title}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
-                idx === activeImageIndex
-                  ? "opacity-100 z-1"
-                  : "opacity-0 z-0 pointer-events-none"
-              }`}
-              priority={idx === 0}
-            />
-          ))}
+          <Image
+            src={images[0]}
+            alt={product.title}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
+              activeImageIndex === 0
+                ? "opacity-100 z-1"
+                : "opacity-0 z-0 pointer-events-none"
+            }`}
+          />
+          {isHovered &&
+            images.slice(1).map((imgSrc, sliceIdx) => {
+              const idx = sliceIdx + 1;
+              return (
+                <Image
+                  key={`${imgSrc}-${idx}`}
+                  src={imgSrc}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
+                    idx === activeImageIndex
+                      ? "opacity-100 z-1"
+                      : "opacity-0 z-0 pointer-events-none"
+                  }`}
+                />
+              );
+            })}
         </div>
 
         {/* Slideshow dots indicator */}

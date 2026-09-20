@@ -45,36 +45,16 @@ const itemVariants: Variants = {
 };
 
 const CategoryImageSlider = ({ category }: { category: Category }) => {
-  const productImages = category.productImages?.filter(Boolean) ?? [];
-  const images = [category.categoryImage, ...productImages];
-  const [imageIndex, setImageIndex] = useState(0);
-
-  useEffect(() => {
-    if (images.length < 2) return;
-
-    const interval = window.setInterval(() => {
-      setImageIndex((currentIndex) => (currentIndex + 1) % images.length);
-    }, 2000);
-
-    return () => window.clearInterval(interval);
-  }, [images.length]);
-
   return (
-    <motion.div
-      key={images[imageIndex]}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.45 }}
-      className="absolute inset-0"
-    >
+    <div className="absolute inset-0">
       <Image
-        src={images[imageIndex]}
+        src={category.categoryImage || "/placeholder.png"}
         alt={category.name}
         fill
         sizes="80px"
-        className="object-cover"
+        className="object-cover transition-transform duration-300 group-hover:scale-105"
       />
-    </motion.div>
+    </div>
   );
 };
 

@@ -1,9 +1,6 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Tag, Flame, Crown, Gem } from "lucide-react";
-import { motion } from "framer-motion";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
 interface PriceTier {
@@ -110,11 +107,8 @@ export default function BudgetPriceZone() {
               href={tier.href}
               className="group relative block focus:outline-none"
             >
-              <motion.div
-                whileHover={{ y: -6, scale: 1.015 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-                className={`relative flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br ${tier.gradient} p-6 text-white shadow-lg transition-all duration-300 sm:min-h-[280px] sm:p-7`}
+              <div
+                className={`relative flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br ${tier.gradient} p-6 text-white shadow-lg transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.015] active:scale-[0.98] sm:min-h-[280px] sm:p-7`}
                 style={{
                   boxShadow: `0 14px 30px -10px ${tier.glowColor}`,
                 }}
@@ -170,7 +164,7 @@ export default function BudgetPriceZone() {
                     <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </div>
-              </motion.div>
+              </div>
             </Link>
           );
         })}
