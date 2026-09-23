@@ -7,7 +7,7 @@ import { Heart } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { IoCloseOutline } from "react-icons/io5";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios, { AxiosError } from "axios";
 
 export type ProductCardProduct = {
@@ -57,6 +57,13 @@ export default function ProductCard({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Swipe gesture refs for mobile/phone screens
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  const hasSwipedRef = useRef(false);
+
   const rawImages =
     product.images && product.images.length > 0
       ? product.images
@@ -82,6 +89,55 @@ export default function ProductCard({
   const handleMouseLeave = () => {
     setIsHovered(false);
     setActiveImageIndex(0);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchStartY.current = e.targetTouches[0].clientY;
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
+    hasSwipedRef.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (
+      touchStartX.current === null ||
+      touchEndX.current === null ||
+      touchStartY.current === null ||
+      touchEndY.current === null ||
+      images.length <= 1
+    ) {
+      return;
+    }
+
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = touchStartY.current - touchEndY.current;
+
+    // Detect horizontal swipe vs vertical scroll
+    if (Math.abs(diffX) > 30 && Math.abs(diffX) > Math.abs(diffY)) {
+      hasSwipedRef.current = true;
+      if (diffX > 0) {
+        // Swiped left -> next image
+        setActiveImageIndex((prev) => (prev + 1) % images.length);
+      } else {
+        // Swiped right -> prev image
+        setActiveImageIndex((prev) => (prev <= 0 ? images.length - 1 : prev - 1));
+      }
+
+      setTimeout(() => {
+        hasSwipedRef.current = false;
+      }, 250);
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+    touchStartY.current = null;
+    touchEndY.current = null;
   };
 
   const handleCardAddToCart = async (e: React.MouseEvent) => {
@@ -127,6 +183,7 @@ export default function ProductCard({
   };
 
   const goToProduct = () => {
+    if (hasSwipedRef.current) return;
     onProductClick?.();
     router.push(productUrl(product.title, product._id, product.slug));
   };
@@ -149,10 +206,19 @@ export default function ProductCard({
     >
       {/* Image Container */}
       <div
-        className="relative aspect-square w-full overflow-hidden rounded-xl bg-neutral-50 cursor-pointer"
+        className="relative aspect-square w-full overflow-hidden rounded-xl bg-neutral-50 cursor-pointer select-none touch-pan-y"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={goToProduct}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => {
+          touchStartX.current = null;
+          touchEndX.current = null;
+          touchStartY.current = null;
+          touchEndY.current = null;
+        }}
       >
         {/* Out of Stock or Discount Badge on the top left */}
         {!inStock ? (
@@ -213,35 +279,21 @@ export default function ProductCard({
 
         {/* Product image using smooth crossfade */}
         <div className={`relative size-full overflow-hidden transition-opacity duration-300 ${!inStock ? "opacity-80 grayscale-[20%]" : ""}`}>
-          <Image
-            src={images[0]}
-            alt={product.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
-              activeImageIndex === 0
-                ? "opacity-100 z-1"
-                : "opacity-0 z-0 pointer-events-none"
-            }`}
-          />
-          {isHovered &&
-            images.slice(1).map((imgSrc, sliceIdx) => {
-              const idx = sliceIdx + 1;
-              return (
-                <Image
-                  key={`${imgSrc}-${idx}`}
-                  src={imgSrc}
-                  alt={product.title}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
-                    idx === activeImageIndex
-                      ? "opacity-100 z-1"
-                      : "opacity-0 z-0 pointer-events-none"
-                  }`}
-                />
-              );
-            })}
+          {images.map((imgSrc, idx) => (
+            <Image
+              key={`${imgSrc}-${idx}`}
+              src={imgSrc}
+              alt={product.title}
+              fill
+              draggable={false}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className={`object-cover transition-all duration-300 ease-out group-hover:scale-105 pointer-events-none select-none ${
+                idx === activeImageIndex
+                  ? "opacity-100 z-1"
+                  : "opacity-0 z-0"
+              }`}
+            />
+          ))}
         </div>
 
         {/* Slideshow dots indicator */}

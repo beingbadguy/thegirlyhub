@@ -16,8 +16,14 @@ export async function GET(request: NextRequest) {
         },
         { status: 401 }
       );
-      response.cookies.delete("girlyhub");
-      response.cookies.delete("basics");
+      const cookieOptions = {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? ("none" as const) : ("lax" as const),
+      };
+      response.cookies.delete({ name: "girlyhub", ...cookieOptions });
+      response.cookies.delete({ name: "basics", ...cookieOptions });
       return response;
     }
 
@@ -38,6 +44,15 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = user.role === "admin";
 
+    const authHeader =
+      request.headers.get("authorization") ||
+      request.headers.get("Authorization");
+    const token = (authHeader && authHeader.startsWith("Bearer "))
+      ? authHeader.substring(7).trim()
+      : request.cookies.get("girlyhub")?.value?.trim() ||
+        request.cookies.get("basics")?.value?.trim() ||
+        undefined;
+
     const authData = {
       _id: user._id,
       id: user._id,
@@ -56,11 +71,13 @@ export async function GET(request: NextRequest) {
       firstPurchase: Boolean(user.firstPurchase),
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      token,
     };
 
     return NextResponse.json({
       success: true,
       isAdmin,
+      token,
       user: authData,
       data: authData,
     });

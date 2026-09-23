@@ -398,12 +398,14 @@ export default function TrackOrderPage() {
                     <span>Items Subtotal</span>
                     <span>₹{subtotal.toFixed(2)}</span>
                   </div>
-                  {shippingCharge > 0 && (
-                    <div className="flex justify-between px-4 py-2 border-b border-gray-50">
-                      <span>Delivery charge</span>
+                  <div className="flex justify-between px-4 py-2 border-b border-gray-50">
+                    <span>Delivery charge</span>
+                    {shippingCharge > 0 ? (
                       <span>₹{shippingCharge.toFixed(2)}</span>
-                    </div>
-                  )}
+                    ) : (
+                      <span className="text-emerald-600 font-semibold">FREE</span>
+                    )}
+                  </div>
                   {firstOrderDiscount > 0 && (
                     <div className="flex justify-between px-4 py-2 border-b border-gray-50 text-green-600">
                       <span>First Order Discount</span>

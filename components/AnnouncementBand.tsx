@@ -2,7 +2,7 @@
 
 const messages = [
   "✨ 100+ Happy Customers",
-  "🚚 Free shipping on orders above ₹399",
+  "🚚 100% Free Delivery on all orders",
   "🎁 15% off on your first order",
   "📦 Easy Exchange & Returns",
   "🛍️ COD Available",

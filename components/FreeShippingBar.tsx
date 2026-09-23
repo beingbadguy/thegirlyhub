@@ -1,64 +1,38 @@
-import { FaTruck, FaCheckCircle } from "react-icons/fa";
-import { BsLightningFill } from "react-icons/bs";
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGE } from "@/lib/shipping";
+import { FaTruck } from "react-icons/fa";
+import { Sparkles } from "lucide-react";
 
 export default function FreeShippingBar({
-  isFreeShipping,
-  remainingForFreeShipping,
-  subtotal,
-  freeShippingProgress,
+  isFreeShipping = true,
+  remainingForFreeShipping = 0,
+  subtotal = 0,
+  freeShippingProgress = 100,
 }: {
-  isFreeShipping: boolean;
-  remainingForFreeShipping: number;
-  subtotal: number;
-  freeShippingProgress: number;
-}) {
+  isFreeShipping?: boolean;
+  remainingForFreeShipping?: number;
+  subtotal?: number;
+  freeShippingProgress?: number;
+} = {}) {
   return (
-    <div className="p-4 rounded-xl border bg-white shadow-sm space-y-3">
-      {/* Top Row */}
-      <div className="flex items-center justify-between text-sm font-medium">
-        {/* Left Content */}
-        <div className="flex items-center gap-2">
-          {isFreeShipping ? (
-            <>
-              <FaCheckCircle className="text-green-500 text-base" />
-              <span className="text-green-600">Free shipping unlocked</span>
-            </>
-          ) : (
-            <>
-              <FaTruck className="text-rose-500 text-base" />
-              <span className="text-gray-700">
-                Add{" "}
-                <span className="font-semibold text-rose-600">
-                  ₹{remainingForFreeShipping}
-                </span>{" "}
-                more for free delivery
-              </span>
-            </>
-          )}
+    <div className="p-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-emerald-50/90 shadow-xs flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm shrink-0">
+          <FaTruck className="size-4" />
         </div>
-
-        {/* Right Price */}
-        <span className="text-gray-500 font-semibold">₹{subtotal} / ₹{FREE_SHIPPING_THRESHOLD}</span>
+        <div>
+          <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-950">
+            <span>Free Delivery On This Order</span>
+            <Sparkles className="size-3.5 text-emerald-600 animate-pulse" />
+          </div>
+          <p className="text-xs text-emerald-700/90 font-medium">
+            100% Free delivery across India · No minimum purchase needed
+          </p>
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div
-          className={`h-full transition-all duration-700 ease-out ${
-            isFreeShipping ? "bg-green-500" : "bg-rose-500"
-          }`}
-          style={{ width: `${freeShippingProgress}%` }}
-        />
-      </div>
-
-      {/* Bottom Success */}
-      {isFreeShipping && (
-        <div className="flex items-center gap-2 text-xs text-green-600 font-medium">
-          <BsLightningFill className="text-green-500" />
-          You saved ₹{SHIPPING_CHARGE} on shipping
-        </div>
-      )}
+      <span className="shrink-0 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-xs">
+        FREE
+      </span>
     </div>
   );
 }
+

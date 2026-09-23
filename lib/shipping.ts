@@ -3,11 +3,11 @@
 // Used by both frontend (cart / checkout) and backend (order API)
 // ──────────────────────────────────────────────────────────────
 
-/** Minimum cart subtotal for free shipping */
-export const FREE_SHIPPING_THRESHOLD = 399;
+/** Minimum cart subtotal for free shipping (0 = 100% free delivery sitewide) */
+export const FREE_SHIPPING_THRESHOLD = 0;
 
-/** Flat shipping fee when subtotal is below the threshold */
-export const SHIPPING_CHARGE = 29;
+/** Flat shipping fee when subtotal is below the threshold (0 = Free delivery on all orders; return shipping applies only in return cases) */
+export const SHIPPING_CHARGE = 0;
 
 /** Cash on Delivery does not add any extra fee */
 export const COD_FEE = 0;
@@ -34,6 +34,9 @@ export interface ShippingResult {
  * Pure function — calculates shipping charges based on cart subtotal
  * and selected payment method.
  *
+ * Delivery is completely free (₹0 charge) on checkout across India.
+ * Shipping cost applies only in customer return/exchange cases.
+ *
  * @param subtotal  Sum of (discountedPrice × qty) for all cart items
  * @param paymentMethod  "cod" | "online"
  */
@@ -41,34 +44,12 @@ export function calculateShipping(
   subtotal: number,
   paymentMethod: "cod" | "online" = "online",
 ): ShippingResult {
-  if (subtotal <= 0) {
-    return {
-      shippingCharge: 0,
-      codFee: 0,
-      totalShipping: 0,
-      remainingForFreeShipping: FREE_SHIPPING_THRESHOLD,
-      isFreeShipping: false,
-      freeShippingProgress: 0,
-    };
-  }
-
-  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const shippingCharge = isFreeShipping ? 0 : SHIPPING_CHARGE;
-  const codFee = 0;
-  const remainingForFreeShipping = isFreeShipping
-    ? 0
-    : Math.max(0, Math.round((FREE_SHIPPING_THRESHOLD - subtotal) * 100) / 100);
-  const freeShippingProgress = Math.min(
-    100,
-    Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100),
-  );
-
   return {
-    shippingCharge,
-    codFee,
-    totalShipping: shippingCharge + codFee,
-    remainingForFreeShipping,
-    isFreeShipping,
-    freeShippingProgress,
+    shippingCharge: 0,
+    codFee: 0,
+    totalShipping: 0,
+    remainingForFreeShipping: 0,
+    isFreeShipping: true,
+    freeShippingProgress: 100,
   };
 }

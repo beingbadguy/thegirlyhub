@@ -74,9 +74,11 @@ export default function RefundPolicy() {
               </li>
 
               <li>
-                <span className="font-medium">Return Shipping:</span> Customers
-                are responsible for return shipping unless the item is defective
-                or incorrect.
+                <span className="font-medium">Free Initial Delivery:</span> Initial standard delivery is 100% free with no delivery charges at checkout on all orders across India.
+              </li>
+
+              <li>
+                <span className="font-medium">Return Shipping:</span> Shipping charges apply only in the event of a customer return or exchange. Customers are responsible for return shipping unless the item arrived damaged, defective, or incorrect.
               </li>
 
               <li>
@@ -88,7 +90,7 @@ export default function RefundPolicy() {
 
               <li>
                 <span className="font-medium">Shipping Charges:</span>{" "}
-                Non-refundable.
+                Non-refundable for return shipments.
               </li>
 
               <li>

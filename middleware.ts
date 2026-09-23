@@ -19,11 +19,30 @@ const allowedOrigins = new Set([
   "http://127.0.0.1:3000",
   "http://127.0.0.1:3001",
   "https://girlyadmin.vercel.app",
+  "https://girlyhub.vercel.app",
+  "https://girlyhub.in",
+  "https://www.girlyhub.in",
 ]);
 
-function applyCorsHeaders(response: NextResponse, origin: string | null) {
-  if (origin && allowedOrigins.has(origin)) {
-    response.headers.set("Access-Control-Allow-Origin", origin);
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  const clean = origin.trim().replace(/\/$/, "");
+  if (allowedOrigins.has(clean)) return true;
+  if (/^https:\/\/girlyadmin(-[a-z0-9-]+)?\.vercel\.app$/i.test(clean)) return true;
+  if (/^https:\/\/girlyhub(-[a-z0-9-]+)?\.vercel\.app$/i.test(clean)) return true;
+  if (/^https?:\/\/localhost(:\d+)?$/i.test(clean)) return true;
+  if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/i.test(clean)) return true;
+  return false;
+}
+
+function applyCorsHeaders(
+  response: NextResponse,
+  origin: string | null,
+  requestedHeaders?: string | null
+) {
+  if (origin && isAllowedOrigin(origin)) {
+    const cleanOrigin = origin.trim().replace(/\/$/, "");
+    response.headers.set("Access-Control-Allow-Origin", cleanOrigin);
     response.headers.set("Vary", "Origin");
     response.headers.set("Access-Control-Allow-Credentials", "true");
     response.headers.set(
@@ -32,8 +51,10 @@ function applyCorsHeaders(response: NextResponse, origin: string | null) {
     );
     response.headers.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization",
+      requestedHeaders ||
+        "Content-Type, Authorization, X-Requested-With, Accept, Origin",
     );
+    response.headers.set("Access-Control-Max-Age", "86400");
   }
 
   return response;
@@ -44,12 +65,23 @@ export async function middleware(request: NextRequest) {
 
   if (path.startsWith("/api/")) {
     const origin = request.headers.get("origin");
+    const requestedHeaders = request.headers.get(
+      "access-control-request-headers"
+    );
 
     if (request.method === "OPTIONS") {
-      return applyCorsHeaders(new NextResponse(null, { status: 204 }), origin);
+      return applyCorsHeaders(
+        new NextResponse(null, { status: 204 }),
+        origin,
+        requestedHeaders
+      );
     }
 
-    return applyCorsHeaders(NextResponse.next(), origin);
+    return applyCorsHeaders(
+      NextResponse.next(),
+      origin,
+      requestedHeaders
+    );
   }
 
   const token =

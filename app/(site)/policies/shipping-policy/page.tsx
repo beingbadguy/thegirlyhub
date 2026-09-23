@@ -115,22 +115,24 @@ export default function ShippingPolicy() {
         {/* SECTION */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            💰 Shipping Charges
+            💰 Shipping & Delivery Charges
           </h2>
-          <ul className="list-disc pl-5 space-y-1.5">
+          <ul className="list-disc pl-5 space-y-2">
             <li>
-              <span className="font-medium text-green-600">Free Shipping</span>{" "}
-              on orders above or equal to ₹399.
+              <span className="font-semibold text-green-600">100% Free Delivery:</span>{" "}
+              Standard delivery is completely <span className="font-semibold text-gray-900">FREE</span> on all orders across India. There is no minimum spend threshold or hidden delivery fee when checking out.
             </li>
             <li>
-              For orders below ₹399, a flat shipping fee of{" "}
-              <span className="font-medium">₹29</span> applies.
-            </li>
-            <li>
-              <span className="font-medium text-pink-700">
-                Cash on Delivery (COD)
+              <span className="font-semibold text-pink-700">
+                Cash on Delivery (COD):
               </span>{" "}
-              is available across India.
+              Available across India with ₹0 extra surcharge.
+            </li>
+            <li>
+              <span className="font-semibold text-neutral-900">
+                Return & Exchange Shipping:
+              </span>{" "}
+              Initial delivery is always 100% free. In the case of returns or exchanges, shipping charges apply only to the return process and are borne by the customer (unless the item received was damaged, defective, or incorrect).
             </li>
           </ul>
         </div>

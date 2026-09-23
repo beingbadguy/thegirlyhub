@@ -6,7 +6,7 @@ export const generateTokenAndSetCookie = async (
   isVerified: boolean,
   role: string,
   response: NextResponse
-) => {
+): Promise<string> => {
   const token = jwt.sign(
     { userId, isVerified, role },
     process.env.JWT_SECRET!,
@@ -24,4 +24,6 @@ export const generateTokenAndSetCookie = async (
   });
   // Clear legacy cookie if present
   response.cookies.delete("basics");
+
+  return token;
 };

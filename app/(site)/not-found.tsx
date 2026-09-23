@@ -269,10 +269,10 @@ export default function NotFoundPage() {
             </div>
             <div className="text-left">
               <h3 className="font-semibold text-sm sm:text-[15px] text-[#1F242E] leading-tight">
-                Free Shipping
+                Free Delivery
               </h3>
               <p className="text-xs sm:text-[13px] text-[#788292] leading-tight mt-0.5">
-                on orders above ₹399
+                On all orders across India
               </p>
             </div>
           </div>

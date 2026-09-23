@@ -22,7 +22,7 @@ import {
   calculateCheckout,
   MIN_PAYABLE_AMOUNT,
 } from "@/lib/checkoutCalculation";
-import { calculateShipping, SHIPPING_CHARGE } from "@/lib/shipping";
+import { calculateShipping } from "@/lib/shipping";
 import { isProductInStock } from "@/lib/productStock";
 import { clearGuestCart } from "@/lib/guestCart";
 import CaptchaWidget from "@/components/CaptchaWidget";
@@ -989,22 +989,13 @@ export default function CheckoutPage() {
                     <TbTruckDelivery className="size-4" />
                     Delivery charge
                   </p>
-                  {isFreeShipping ? (
-                    <p className="text-green-600 font-bold flex items-center gap-1">
-                      <span className="line-through text-xs text-gray-400 font-normal">
-                        ₹{SHIPPING_CHARGE.toFixed(2)}
-                      </span>{" "}
-                      FREE
-                    </p>
-                  ) : (
-                    <p>₹{shippingCharge.toFixed(2)}</p>
-                  )}
+                  <p className="text-green-600 font-bold">
+                    FREE
+                  </p>
                 </div>
-                {isFreeShipping && (
-                  <div className="text-[11px] text-green-700 font-medium">
-                    You saved ₹{SHIPPING_CHARGE} on shipping 🎉
-                  </div>
-                )}
+                <div className="text-[11px] text-green-700 font-medium">
+                  Free standard delivery on all orders 🎉
+                </div>
                 {!user?.firstPurchase && (
                   <div className="flex justify-between text-green-600">
                     <p>First order discount (15%)</p>

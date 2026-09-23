@@ -8,7 +8,7 @@ import { Minus, Plus, Trash2, Sparkles, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AxiosError } from "axios";
-import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGE } from "@/lib/shipping";
+import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 import FreeShippingBar from "@/components/FreeShippingBar";
@@ -92,18 +92,6 @@ const CartPage = () => {
     : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
   const totalAfterDiscount = subtotal + shippingCharge - firstTimeDiscount;
 
-  // State for Toast Notification
-  const [showToast, setShowToast] = useState(false);
-  const prevSubtotalRef = useRef(subtotal);
-
-  useEffect(() => {
-    if (subtotal > 0 && prevSubtotalRef.current < FREE_SHIPPING_THRESHOLD && subtotal >= FREE_SHIPPING_THRESHOLD) {
-      setShowToast(true);
-      const timer = setTimeout(() => setShowToast(false), 4000);
-      return () => clearTimeout(timer);
-    }
-    prevSubtotalRef.current = subtotal;
-  }, [subtotal]);
 
   // Show rich animated Skeleton Loader while checking auth or loading cart
   if (!authChecked || (isCartLoading && !userCart)) {
@@ -329,46 +317,6 @@ const CartPage = () => {
           </div>
 
           <div className="border border-pink-100 bg-white p-5 rounded-2xl shadow-sm space-y-4 h-fit text-sm">
-            {/* Free Shipping Progress Indicator */}
-            {/* <div className="space-y-2 p-3 bg-pink-50/55 rounded-xl border border-pink-100/50">
-              <div className="flex justify-between text-xs font-semibold">
-                <span
-                  className={
-                    isFreeShipping
-                      ? "text-green-600 flex items-center gap-1"
-                      : "text-gray-600"
-                  }
-                >
-                  {isFreeShipping ? (
-                    <>🚀 Free shipping unlocked!</>
-                  ) : (
-                    <>
-                      Add{" "}
-                      <span className="font-bold text-pink-600">
-                        ₹{remainingForFreeShipping}
-                      </span>{" "}
-                      more to get FREE shipping 🚚
-                    </>
-                  )}
-                </span>
-                <span className="text-gray-500 font-bold">
-                  ₹{subtotal} / ₹399
-                </span>
-              </div>
-              <div className="w-full bg-gray-200/80 rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-pink-600 h-full rounded-full transition-all duration-700 ease-out"
-                  style={{ width: `${freeShippingProgress}%` }}
-                />
-              </div>
-              {isFreeShipping && (
-                <div className="text-[11px] text-green-700 font-medium flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-green-600 animate-pulse" />{" "}
-                  You saved ₹29 on shipping 🎉
-                </div>
-              )}
-            </div> */}
-
             <FreeShippingBar
               isFreeShipping={isFreeShipping}
               remainingForFreeShipping={remainingForFreeShipping}
@@ -393,18 +341,9 @@ const CartPage = () => {
 
             <div className="flex justify-between text-gray-600">
               <p>Delivery charge</p>
-              {isFreeShipping ? (
-                <p className="text-green-600 font-bold flex items-center gap-1">
-                  <span className="line-through text-xs text-gray-400 font-normal">
-                    ₹{SHIPPING_CHARGE.toFixed(2)}
-                  </span>{" "}
-                  FREE
-                </p>
-              ) : (
-                <p className="font-semibold text-gray-800">
-                  ₹{shippingCharge.toFixed(2)}
-                </p>
-              )}
+              <p className="text-green-600 font-bold">
+                FREE
+              </p>
             </div>
             {!user?.firstPurchase && (
               <div className="flex justify-between text-green-600">
@@ -465,15 +404,7 @@ const CartPage = () => {
         </div>
       )}
 
-        {/* Floating Free Shipping Toast */}
-        {showToast && (
-          <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-green-500 animate-bounce transition-all duration-300">
-            <Sparkles className="w-5 h-5 text-white" />
-            <span className="font-bold text-sm">
-              Congrats! You unlocked FREE shipping 🚀
-            </span>
-          </div>
-        )}
+
       </div>
     </div>
   );

@@ -30,6 +30,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Ruler,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { SiGooglepay, SiPaytm } from "react-icons/si";
@@ -290,8 +292,12 @@ const ProductPageClient = ({
   const [reviewError, setReviewError] = useState<string>("");
   const [reviewSuccess, setReviewSuccess] = useState<string>("");
 
-  // Lightbox state
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  // Lightbox state & full-screen zoom controls
+  const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
+  const [lightboxImagesList, setLightboxImagesList] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number>(0);
+  const [lightboxScale, setLightboxScale] = useState<number>(1);
+  const [lightboxPan, setLightboxPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Share state
   const [shareSuccess, setShareSuccess] = useState(false);
@@ -584,7 +590,11 @@ const ProductPageClient = ({
   // Auto-change image in a loop every 5 seconds
   // Touch swipe gesture refs for mobile slider
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  const hasSwipedRef = useRef(false);
+  const [swipeDirection, setSwipeDirection] = useState<number>(1);
 
   // Fallbacks for display
   const displayPrice = product.price;
@@ -600,6 +610,7 @@ const ProductPageClient = ({
 
   const handlePrevImage = useCallback(() => {
     if (displayImages.length <= 1) return;
+    setSwipeDirection(-1);
     setSelectedImage((curr) => {
       const idx = displayImages.indexOf(curr);
       const prevIdx = idx <= 0 ? displayImages.length - 1 : idx - 1;
@@ -609,6 +620,7 @@ const ProductPageClient = ({
 
   const handleNextImage = useCallback(() => {
     if (displayImages.length <= 1) return;
+    setSwipeDirection(1);
     setSelectedImage((curr) => {
       const idx = displayImages.indexOf(curr);
       const nextIdx = (idx + 1) % displayImages.length;
@@ -616,28 +628,276 @@ const ProductPageClient = ({
     });
   }, [displayImages]);
 
+  const lightboxImage =
+    lightboxOpen && lightboxImagesList.length > 0
+      ? lightboxImagesList[lightboxIndex]
+      : null;
+
+  const openLightbox = useCallback(
+    (image: string, customList?: string[]) => {
+      const list = customList && customList.length > 0 ? customList : displayImages;
+      const idx = Math.max(0, list.indexOf(image));
+      setLightboxImagesList(list);
+      setLightboxIndex(idx);
+      setLightboxScale(1);
+      setLightboxPan({ x: 0, y: 0 });
+      setLightboxOpen(true);
+    },
+    [displayImages],
+  );
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false);
+    setLightboxScale(1);
+    setLightboxPan({ x: 0, y: 0 });
+  }, []);
+
+  const setLightboxImage = useCallback(
+    (img: string | null) => {
+      if (img) {
+        openLightbox(img);
+      } else {
+        closeLightbox();
+      }
+    },
+    [openLightbox, closeLightbox],
+  );
+
+  const handleLightboxPrev = useCallback(() => {
+    if (lightboxImagesList.length <= 1) return;
+    setLightboxScale(1);
+    setLightboxPan({ x: 0, y: 0 });
+    setLightboxIndex((curr) => {
+      const prevIdx = curr <= 0 ? lightboxImagesList.length - 1 : curr - 1;
+      const prevImg = lightboxImagesList[prevIdx];
+      if (displayImages.includes(prevImg)) {
+        setSelectedImage(prevImg);
+      }
+      return prevIdx;
+    });
+  }, [lightboxImagesList, displayImages]);
+
+  const handleLightboxNext = useCallback(() => {
+    if (lightboxImagesList.length <= 1) return;
+    setLightboxScale(1);
+    setLightboxPan({ x: 0, y: 0 });
+    setLightboxIndex((curr) => {
+      const nextIdx = (curr + 1) % lightboxImagesList.length;
+      const nextImg = lightboxImagesList[nextIdx];
+      if (displayImages.includes(nextImg)) {
+        setSelectedImage(nextImg);
+      }
+      return nextIdx;
+    });
+  }, [lightboxImagesList, displayImages]);
+
+  const toggleLightboxZoom = useCallback(() => {
+    if (lightboxScale > 1) {
+      setLightboxScale(1);
+      setLightboxPan({ x: 0, y: 0 });
+    } else {
+      setLightboxScale(2.2);
+    }
+  }, [lightboxScale]);
+
+  // Lightbox keyboard navigation (ArrowLeft, ArrowRight, Escape)
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeLightbox();
+      } else if (e.key === "ArrowLeft") {
+        handleLightboxPrev();
+      } else if (e.key === "ArrowRight") {
+        handleLightboxNext();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, handleLightboxNext, handleLightboxPrev, closeLightbox]);
+
+  // Lightbox touch & zoom gesture state
+  const lightboxTouchStartX = useRef<number | null>(null);
+  const lightboxTouchStartY = useRef<number | null>(null);
+  const lightboxInitialPinchDist = useRef<number | null>(null);
+  const lightboxLastTapTime = useRef<number>(0);
+  const lightboxIsDragging = useRef<boolean>(false);
+  const lightboxDragStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const handleLightboxTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Pinch gesture start
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      );
+      lightboxInitialPinchDist.current = dist;
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      lightboxTouchStartX.current = touch.clientX;
+      lightboxTouchStartY.current = touch.clientY;
+
+      if (lightboxScale > 1) {
+        lightboxIsDragging.current = true;
+        lightboxDragStart.current = {
+          x: touch.clientX - lightboxPan.x,
+          y: touch.clientY - lightboxPan.y,
+        };
+      }
+    }
+  };
+
+  const handleLightboxTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lightboxInitialPinchDist.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      );
+      const factor = dist / lightboxInitialPinchDist.current;
+      const newScale = Math.min(Math.max(1, factor * lightboxScale), 3.5);
+      setLightboxScale(newScale);
+      if (newScale <= 1.05) {
+        setLightboxPan({ x: 0, y: 0 });
+      }
+      return;
+    }
+
+    if (e.touches.length === 1 && lightboxScale > 1 && lightboxIsDragging.current) {
+      const touch = e.touches[0];
+      const maxPanX = Math.max(100, (window.innerWidth * (lightboxScale - 1)) / 1.6);
+      const maxPanY = Math.max(100, (window.innerHeight * (lightboxScale - 1)) / 1.6);
+      const newX = touch.clientX - lightboxDragStart.current.x;
+      const newY = touch.clientY - lightboxDragStart.current.y;
+      setLightboxPan({
+        x: Math.max(-maxPanX, Math.min(maxPanX, newX)),
+        y: Math.max(-maxPanY, Math.min(maxPanY, newY)),
+      });
+    }
+  };
+
+  const handleLightboxTouchEnd = (e: React.TouchEvent) => {
+    lightboxInitialPinchDist.current = null;
+    lightboxIsDragging.current = false;
+
+    if (lightboxScale <= 1.05) {
+      setLightboxScale(1);
+      setLightboxPan({ x: 0, y: 0 });
+    }
+
+    if (e.changedTouches.length === 1) {
+      const touch = e.changedTouches[0];
+
+      // Double-tap detection
+      const now = Date.now();
+      if (now - lightboxLastTapTime.current < 320) {
+        lightboxLastTapTime.current = 0;
+        toggleLightboxZoom();
+        return;
+      }
+      lightboxLastTapTime.current = now;
+
+      // Horizontal swipe to change image (when scale is normal 1x)
+      if (
+        lightboxScale <= 1.1 &&
+        lightboxTouchStartX.current !== null &&
+        lightboxTouchStartY.current !== null
+      ) {
+        const diffX = lightboxTouchStartX.current - touch.clientX;
+        const diffY = lightboxTouchStartY.current - touch.clientY;
+
+        if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX > 0) {
+            handleLightboxNext();
+          } else {
+            handleLightboxPrev();
+          }
+        } else if (diffY < -75 && Math.abs(diffY) > Math.abs(diffX)) {
+          // Swipe down to dismiss
+          closeLightbox();
+        }
+      }
+    }
+
+    lightboxTouchStartX.current = null;
+    lightboxTouchStartY.current = null;
+  };
+
+  const handleLightboxMouseDown = (e: React.MouseEvent) => {
+    if (lightboxScale > 1) {
+      lightboxIsDragging.current = true;
+      lightboxDragStart.current = {
+        x: e.clientX - lightboxPan.x,
+        y: e.clientY - lightboxPan.y,
+      };
+    }
+  };
+
+  const handleLightboxMouseMove = (e: React.MouseEvent) => {
+    if (lightboxIsDragging.current && lightboxScale > 1) {
+      const maxPanX = Math.max(100, (window.innerWidth * (lightboxScale - 1)) / 1.6);
+      const maxPanY = Math.max(100, (window.innerHeight * (lightboxScale - 1)) / 1.6);
+      const newX = e.clientX - lightboxDragStart.current.x;
+      const newY = e.clientY - lightboxDragStart.current.y;
+      setLightboxPan({
+        x: Math.max(-maxPanX, Math.min(maxPanX, newX)),
+        y: Math.max(-maxPanY, Math.min(maxPanY, newY)),
+      });
+    }
+  };
+
+  const handleLightboxMouseUp = () => {
+    lightboxIsDragging.current = false;
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
+    touchStartY.current = e.targetTouches[0].clientY;
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
+    hasSwipedRef.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
   };
 
   const handleTouchEnd = () => {
-    if (touchStartX.current === null || touchEndX.current === null) return;
-    const distance = touchStartX.current - touchEndX.current;
-    const isLeftSwipe = distance > 40;
-    const isRightSwipe = distance < -40;
+    if (
+      touchStartX.current === null ||
+      touchEndX.current === null ||
+      touchStartY.current === null ||
+      touchEndY.current === null
+    ) {
+      return;
+    }
 
-    if (isLeftSwipe) {
-      handleNextImage();
-    } else if (isRightSwipe) {
-      handlePrevImage();
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = touchStartY.current - touchEndY.current;
+
+    // Detect intentional horizontal swipe vs vertical scrolling
+    if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY)) {
+      hasSwipedRef.current = true;
+      if (diffX > 0) {
+        // Swiped left -> next image
+        handleNextImage();
+      } else {
+        // Swiped right -> prev image
+        handlePrevImage();
+      }
+
+      setTimeout(() => {
+        hasSwipedRef.current = false;
+      }, 300);
     }
 
     touchStartX.current = null;
     touchEndX.current = null;
+    touchStartY.current = null;
+    touchEndY.current = null;
   };
 
   // Auto-change image in a loop every 6 seconds when not interacting
@@ -726,10 +986,16 @@ const ProductPageClient = ({
           <div className="lg:col-span-6 flex flex-col gap-3.5">
             {/* Main Display Image Container with touch slide & left/right controls */}
             <div
-              className="relative w-full aspect-square overflow-hidden rounded-xl md:rounded-2xl bg-neutral-50/70 border border-neutral-100/80 group select-none"
+              className="relative w-full aspect-square overflow-hidden rounded-xl md:rounded-2xl bg-neutral-50/70 border border-neutral-100/80 group select-none touch-pan-y"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onTouchCancel={() => {
+                touchStartX.current = null;
+                touchEndX.current = null;
+                touchStartY.current = null;
+                touchEndY.current = null;
+              }}
             >
               {product.discountPercentage > 0 && (
                 <span className="absolute left-3 top-3 z-10 bg-neutral-900/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white tracking-wider uppercase rounded-md shadow-xs">
@@ -809,36 +1075,65 @@ const ProductPageClient = ({
                 </>
               )}
 
-              {/* Discreet Pagination Indicator Pill */}
+              {/* Discreet Pagination Indicator / Dots for phone screens */}
               {displayImages.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-[11px] font-medium text-white shadow-xs">
-                  <span>{currentImageIndex + 1}</span>
-                  <span className="opacity-60">/</span>
-                  <span>{displayImages.length}</span>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md shadow-xs">
+                  {displayImages.map((_, dotIdx) => (
+                    <button
+                      key={dotIdx}
+                      type="button"
+                      aria-label={`Go to image ${dotIdx + 1}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSwipeDirection(dotIdx > currentImageIndex ? 1 : -1);
+                        setSelectedImage(displayImages[dotIdx]);
+                      }}
+                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                        dotIdx === currentImageIndex
+                          ? "w-4 bg-white"
+                          : "w-1.5 bg-white/50 hover:bg-white/80"
+                      }`}
+                    />
+                  ))}
                 </div>
               )}
 
               {/* Magnifier glass zoom area / Full-width image display */}
               <div
-                className="relative w-full h-full cursor-zoom-in flex items-center justify-center"
+                className="relative w-full h-full cursor-zoom-in flex items-center justify-center touch-pan-y"
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
-                onClick={() => setLightboxImage(selectedImage)}
+                onClick={() => {
+                  if (hasSwipedRef.current) return;
+                  setLightboxImage(selectedImage);
+                }}
               >
-                {selectedImage ? (
-                  <Image
-                    src={selectedImage}
-                    alt={product.title || "Product"}
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                    className="object-contain transition-all duration-300"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-neutral-100 text-xs text-neutral-400">
-                    No image available
-                  </div>
-                )}
+                <AnimatePresence mode="wait" initial={false}>
+                  {selectedImage ? (
+                    <motion.div
+                      key={selectedImage}
+                      initial={{ opacity: 0.85, x: swipeDirection > 0 ? 25 : -25 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0.85, x: swipeDirection > 0 ? -25 : 25 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="relative w-full h-full"
+                    >
+                      <Image
+                        src={selectedImage}
+                        alt={product.title || "Product"}
+                        fill
+                        priority
+                        draggable={false}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                        className="object-contain transition-all duration-300 pointer-events-none select-none"
+                      />
+                    </motion.div>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-neutral-100 text-xs text-neutral-400">
+                      No image available
+                    </div>
+                  )}
+                </AnimatePresence>
 
                 {/* Magnifier Lens Container (Desktop only) */}
                 {!isMobile && selectedImage && (
@@ -1269,10 +1564,10 @@ const ProductPageClient = ({
           </div>
           <div>
             <h4 className="font-bold text-sm text-neutral-800">
-              Free Shipping
+              Free Delivery
             </h4>
             <p className="text-xs text-neutral-400 font-medium">
-              On all orders above ₹399
+              100% Free on all orders
             </p>
           </div>
         </div>
@@ -1452,14 +1747,13 @@ const ProductPageClient = ({
                 >
                   <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans space-y-2">
                     <p>
-                      📦 <strong>Free Shipping:</strong> Enjoy free standard
-                      shipping on all orders above ₹399. Orders below ₹399 have a standard delivery fee of ₹29. Orders are shipped
+                      📦 <strong>Free Delivery:</strong> Enjoy 100% free standard
+                      delivery on all orders across India with no minimum purchase requirement. Orders are shipped
                       within 24-48 hours.
                     </p>
                     <p>
-                      🔄 <strong>7-Day Returns:</strong> If you are not
-                      completely satisfied, return or replace your product
-                      within 7 days of delivery. Terms & conditions apply.
+                      🔄 <strong>Easy Returns:</strong> If you are not
+                      completely satisfied, you can request a return. Standard initial delivery is free; return shipping cost is borne by the customer in return cases (free return for damaged or defective items).
                     </p>
                     <p>
                       🛡️ <strong>Secure Checkout:</strong> All transactions are
@@ -1723,7 +2017,7 @@ const ProductPageClient = ({
                       {rev.photos.map((photoUrl, pIdx) => (
                         <button
                           key={pIdx}
-                          onClick={() => setLightboxImage(photoUrl)}
+                          onClick={() => openLightbox(photoUrl, rev.photos)}
                           className="relative w-14 h-14 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 hover:opacity-90 active:scale-95 transition-all shadow-sm"
                         >
                           <Image
@@ -1783,32 +2077,167 @@ const ProductPageClient = ({
         </div>
       )}
 
-      {/* Lightbox photo viewer overlay */}
+      {/* Lightbox photo viewer overlay with touch swipe & zoom panning */}
       <AnimatePresence>
-        {lightboxImage && (
+        {lightboxOpen && lightboxImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setLightboxImage(null)}
-            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-zoom-out p-4"
+            onClick={closeLightbox}
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/92 backdrop-blur-md select-none touch-none"
           >
+            {/* Top Bar Controls */}
             <div
-              className="relative max-h-full max-w-full overflow-hidden"
+              className="absolute top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={lightboxImage}
-                alt="Fullscreen Customer View"
-                className="max-h-[85vh] max-w-[90vw] object-contain shadow-2xl"
-              />
-              <button
-                className="absolute right-4 top-4 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur transition-all active:scale-95"
-                onClick={() => setLightboxImage(null)}
-              >
-                <X className="w-4 h-4" />
-              </button>
+              {lightboxImagesList.length > 1 ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-semibold backdrop-blur-md border border-white/15 pointer-events-auto shadow-md">
+                  <span>{lightboxIndex + 1}</span>
+                  <span className="text-white/50">/</span>
+                  <span>{lightboxImagesList.length}</span>
+                </div>
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center gap-2 pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={toggleLightboxZoom}
+                  aria-label="Toggle zoom"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/15 transition-all active:scale-95 cursor-pointer shadow-md"
+                >
+                  {lightboxScale > 1 ? (
+                    <ZoomOut className="w-4 h-4" />
+                  ) : (
+                    <ZoomIn className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeLightbox}
+                  aria-label="Close photo viewer"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/15 transition-all active:scale-95 cursor-pointer shadow-md"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Left navigation arrow */}
+            {lightboxImagesList.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLightboxPrev();
+                }}
+                aria-label="Previous photo"
+                className="absolute left-2.5 sm:left-6 top-1/2 -translate-y-1/2 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 hover:bg-white/30 text-white backdrop-blur-md border border-white/15 transition-all active:scale-90 shadow-xl cursor-pointer"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* Right navigation arrow */}
+            {lightboxImagesList.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLightboxNext();
+                }}
+                aria-label="Next photo"
+                className="absolute right-2.5 sm:right-6 top-1/2 -translate-y-1/2 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 hover:bg-white/30 text-white backdrop-blur-md border border-white/15 transition-all active:scale-90 shadow-xl cursor-pointer"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* Main Image Display Area with Pan & Swipe Gestures */}
+            <div
+              className={`relative flex items-center justify-center w-full h-full p-4 overflow-hidden ${
+                lightboxScale > 1 ? "cursor-grab active:cursor-grabbing" : "cursor-zoom-in"
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (e.target === e.currentTarget && lightboxScale <= 1) {
+                  closeLightbox();
+                }
+              }}
+              onTouchStart={handleLightboxTouchStart}
+              onTouchMove={handleLightboxTouchMove}
+              onTouchEnd={handleLightboxTouchEnd}
+              onMouseDown={handleLightboxMouseDown}
+              onMouseMove={handleLightboxMouseMove}
+              onMouseUp={handleLightboxMouseUp}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                toggleLightboxZoom();
+              }}
+            >
+              <div
+                style={{
+                  transform: `scale(${lightboxScale}) translate(${lightboxPan.x / lightboxScale}px, ${lightboxPan.y / lightboxScale}px)`,
+                  transition: lightboxIsDragging.current ? "none" : "transform 220ms ease-out",
+                }}
+                className="relative max-h-[78vh] max-w-[92vw] flex items-center justify-center will-change-transform"
+              >
+                <img
+                  key={lightboxImage}
+                  src={lightboxImage}
+                  alt="Fullscreen Product View"
+                  draggable={false}
+                  className="max-h-[76vh] max-w-[88vw] object-contain shadow-2xl rounded-sm select-none pointer-events-none"
+                />
+              </div>
+            </div>
+
+            {/* Bottom thumbnail selector / hint strip */}
+            {lightboxImagesList.length > 1 && (
+              <div
+                className="absolute bottom-4 left-0 right-0 z-40 flex flex-col items-center gap-2 pointer-events-auto px-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Thumbnails */}
+                <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/50 backdrop-blur-md border border-white/10 max-w-full overflow-x-auto scrollbar-none">
+                  {lightboxImagesList.map((thumb, tIdx) => (
+                    <button
+                      key={tIdx}
+                      type="button"
+                      onClick={() => {
+                        setLightboxScale(1);
+                        setLightboxPan({ x: 0, y: 0 });
+                        setLightboxIndex(tIdx);
+                        if (lightboxImagesList === displayImages) {
+                          setSelectedImage(thumb);
+                        }
+                      }}
+                      className={`relative h-11 w-11 rounded-xl overflow-hidden shrink-0 transition-all duration-200 cursor-pointer ${
+                        tIdx === lightboxIndex
+                          ? "ring-2 ring-white scale-105 opacity-100 shadow-md"
+                          : "opacity-45 hover:opacity-85"
+                      }`}
+                    >
+                      <img
+                        src={thumb}
+                        alt={`Thumbnail ${tIdx + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Helper hint */}
+                <p className="text-[11px] text-white/60 font-medium tracking-wide">
+                  {lightboxScale > 1
+                    ? "Drag to pan • Double-tap to reset"
+                    : "Swipe left / right to change image • Double-tap to zoom"}
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

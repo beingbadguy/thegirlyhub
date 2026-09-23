@@ -124,14 +124,32 @@ export async function POST(request: NextRequest) {
       isVerified: user.isVerified,
     };
 
+    // Create response with token in JSON body for cross-site / mobile auth
     const response = NextResponse.json({
       success: true,
       message: "Logged in successfully",
-      data: authUser,
+      token: "", // placeholder, will fill below
+      data: { ...authUser, token: "" },
+      user: { ...authUser, token: "" },
     });
 
-    generateTokenAndSetCookie(user._id, user.isVerified, user.role, response);
-    return response;
+    const token = await generateTokenAndSetCookie(
+      user._id,
+      user.isVerified,
+      user.role,
+      response
+    );
+
+    // Re-assign JSON with final token
+    return NextResponse.json({
+      success: true,
+      message: "Logged in successfully",
+      token,
+      data: { ...authUser, token },
+      user: { ...authUser, token },
+    }, {
+      headers: response.headers,
+    });
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

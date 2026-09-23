@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/store";
-import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, Truck, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { calculateShipping, FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGE } from "@/lib/shipping";
+import { calculateShipping } from "@/lib/shipping";
 import { productUrl } from "@/lib/slug";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
@@ -223,35 +223,23 @@ export default function CartDrawer() {
             </button>
           ) : (
             <>
-              <div className="mb-5 rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
-                <div className="flex items-start justify-between gap-3">
+              <div className="mb-5 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/90 to-teal-50/60 p-3.5 flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                    <Truck className="size-4" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-neutral-900">
-                      {shipping.isFreeShipping
-                        ? "Free delivery unlocked"
-                        : `Add ₹${shipping.remainingForFreeShipping.toLocaleString("en-IN")} more`}
+                    <p className="text-xs font-bold text-emerald-950 flex items-center gap-1">
+                      Free Delivery Unlocked <Sparkles className="size-3 text-emerald-600 animate-pulse" />
                     </p>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      {shipping.isFreeShipping
-                        ? "Your order qualifies for complimentary delivery."
-                        : "Shop a little more to unlock free delivery."}
+                    <p className="text-[11px] text-emerald-700 font-medium">
+                      Complimentary delivery on all orders
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs font-semibold text-rose-600">
-                    ₹{Math.min(subtotal, FREE_SHIPPING_THRESHOLD).toLocaleString("en-IN")} / ₹{FREE_SHIPPING_THRESHOLD}
-                  </span>
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${shipping.isFreeShipping ? "bg-emerald-500" : "bg-rose-500"}`}
-                    style={{ width: `${shipping.freeShippingProgress}%` }}
-                  />
-                </div>
-                {shipping.isFreeShipping && (
-                  <p className="mt-2 text-xs font-medium text-emerald-600">
-                    You saved ₹{SHIPPING_CHARGE} on delivery
-                  </p>
-                )}
+                <span className="shrink-0 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wider">
+                  FREE
+                </span>
               </div>
               <div className="mb-4 flex items-center justify-between text-base font-semibold">
                 <span>Total</span>
