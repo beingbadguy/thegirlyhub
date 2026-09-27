@@ -285,12 +285,24 @@ export default function OrderDetailsCard({
     order.status !== "completed" &&
     order.status !== "cancelled";
 
-  const getProductTitle = (item: Product) =>
-    item.productId?.title || item.title || "Product";
-  const getProductPrice = (item: Product) =>
-    item.price ?? item.productId?.discountPrice ?? item.productId?.discountedPrice ?? item.productId?.price ?? 0;
-  const getProductImage = (item: Product) =>
-    item.productId?.image || item.image || "";
+  const products = Array.isArray(order?.products) ? order.products.filter(Boolean) : [];
+
+  const getProductTitle = (item?: Product | null) =>
+    (typeof item?.productId === "object" ? item.productId?.title : "") ||
+    item?.title ||
+    "Product";
+
+  const getProductPrice = (item?: Product | null) =>
+    item?.price ??
+    (typeof item?.productId === "object"
+      ? item.productId?.discountPrice ?? item.productId?.discountedPrice ?? item.productId?.price
+      : 0) ??
+    0;
+
+  const getProductImage = (item?: Product | null) =>
+    (typeof item?.productId === "object" ? item.productId?.image : "") ||
+    item?.image ||
+    "";
 
   const handleStatusChange = (newStatus: OrderStatus) => {
     if (newStatus === "shipped") {
@@ -342,7 +354,7 @@ export default function OrderDetailsCard({
 
   // Use recorded values if available, otherwise fall back to computed/estimated values
   const subtotal = order.subtotal ??
-    order.products.reduce((acc, item) => acc + getProductPrice(item) * (item.quantity ?? 1), 0);
+    products.reduce((acc, item) => acc + getProductPrice(item) * (item?.quantity ?? 1), 0);
   const shippingCharge = order.shippingCharge ?? (order.totalAmount < 150 ? 80 : 0);
   const firstOrderDiscount = order.firstOrderDiscount ?? 0;
   const couponDiscount = order.couponDiscount ?? (
@@ -399,33 +411,35 @@ export default function OrderDetailsCard({
             </div>
 
             {/* Product Preview Thumbnails in Summary */}
-            <div className="mt-3 flex items-center gap-2 flex-wrap">
-              <div className="flex items-center -space-x-2 overflow-hidden">
-                {order.products.slice(0, 4).map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="relative size-9 rounded-lg border-2 border-white bg-gray-100 overflow-hidden shrink-0 shadow-xs"
-                  >
-                    {getProductImage(item) ? (
-                      <img
-                        src={getProductImage(item)}
-                        alt={getProductTitle(item)}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">
-                        Item
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {products.length > 0 && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="flex items-center -space-x-2 overflow-hidden">
+                  {products.slice(0, 4).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="relative size-9 rounded-lg border-2 border-white bg-gray-100 overflow-hidden shrink-0 shadow-xs"
+                    >
+                      {getProductImage(item) ? (
+                        <img
+                          src={getProductImage(item)}
+                          alt={getProductTitle(item)}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">
+                          Item
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-xs font-medium text-gray-600 truncate max-w-[240px] sm:max-w-md">
+                  {products.length} item{products.length !== 1 ? "s" : ""}:{" "}
+                  <span className="text-gray-900 font-semibold">{getProductTitle(products[0])}</span>
+                  {products.length > 1 && ` and ${products.length - 1} more`}
+                </span>
               </div>
-              <span className="text-xs font-medium text-gray-600 truncate max-w-[240px] sm:max-w-md">
-                {order.products.length} item{order.products.length !== 1 ? "s" : ""}:{" "}
-                <span className="text-gray-900 font-semibold">{getProductTitle(order.products[0])}</span>
-                {order.products.length > 1 && ` and ${order.products.length - 1} more`}
-              </span>
-            </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
@@ -561,11 +575,11 @@ export default function OrderDetailsCard({
               {/* Products */}
               <section>
                 <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-1.5">
-                  <Package className="w-3.5 h-3.5" /> Items ({order.products.length})
+                  <Package className="w-3.5 h-3.5" /> Items ({products.length})
                 </h4>
                 <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                  {order.products.map((item, i) => {
-                    const productId = typeof item.productId === "object" ? item.productId?._id : item.productId;
+                  {products.map((item, i) => {
+                    const productId = typeof item?.productId === "object" ? item?.productId?._id : item?.productId;
                     const itemUrl = productId ? productUrl(getProductTitle(item), productId, (item.productId as any)?.slug) : null;
 
                     return (
@@ -601,15 +615,15 @@ export default function OrderDetailsCard({
                             <span className="text-xs text-pink-600 font-semibold">
                               ₹{getProductPrice(item).toFixed(2)}
                             </span>
-                            <span className="text-xs text-gray-400">×{item.quantity ?? 1}</span>
-                            {item.size && item.size.toLowerCase() !== "one size" && (
+                            <span className="text-xs text-gray-400">×{item?.quantity ?? 1}</span>
+                            {item?.size && item.size.toLowerCase() !== "one size" && (
                               <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
                                 {item.size}
                               </span>
                             )}
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5 font-medium">
-                            Subtotal: ₹{(getProductPrice(item) * (item.quantity ?? 1)).toFixed(2)}
+                            Subtotal: ₹{(getProductPrice(item) * (item?.quantity ?? 1)).toFixed(2)}
                           </p>
                         </div>
                       </li>
@@ -628,7 +642,7 @@ export default function OrderDetailsCard({
                   </h4>
                 <div className="rounded-xl border border-gray-100 overflow-hidden text-sm">
                   <div className="flex justify-between items-center px-4 py-2.5 border-b border-gray-50 text-gray-600">
-                    <span>Items ({order.products.length})</span>
+                    <span>Items ({products.length})</span>
                     <span>₹{subtotal.toFixed(2)}</span>
                   </div>
                   

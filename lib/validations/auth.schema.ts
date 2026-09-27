@@ -97,39 +97,86 @@ export const contactResponseSchema = z.object({
     .max(5000, "Response message cannot exceed 5000 characters."),
 });
 
-export const userProfileUpdateSchema = z.object({
-  address: z
-    .string()
-    .trim()
-    .min(10, "Address must be at least 10 characters.")
-    .max(300, "Address cannot exceed 300 characters."),
+export const addressItemSchema = z.object({
+  id: z.string().optional(),
+  type: z.string().default("shipping"),
+  isDefault: z.boolean().default(false),
+  name: z.string().trim().min(2, "Name must be at least 2 characters.").max(100),
   phone: z
     .union([z.string(), z.number()])
     .transform((val) => String(val).trim())
     .refine((val) => /^[6-9]\d{9}$/.test(val), {
       message: "Phone must be a valid 10-digit Indian mobile number.",
     }),
-  city: z
-    .string()
-    .trim()
-    .min(2, "City is required.")
-    .max(80, "City cannot exceed 80 characters."),
-  state: z
-    .string()
-    .trim()
-    .min(2, "State is required.")
-    .max(80, "State cannot exceed 80 characters."),
-  zip: z
+  street: z.string().trim().min(5, "Street address must be at least 5 characters.").max(300),
+  city: z.string().trim().min(2, "City is required.").max(80),
+  state: z.string().trim().min(2, "State is required.").max(80),
+  postalCode: z
     .union([z.string(), z.number()])
     .transform((val) => String(val).trim())
     .refine((val) => /^\d{6}$/.test(val), {
       message: "Pincode must be exactly 6 digits.",
     }),
+  country: z.string().default("India"),
+  landmark: z.string().trim().max(150).optional().nullable(),
+});
+
+export const userProfileUpdateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters.")
+    .max(80, "Name cannot exceed 80 characters.")
+    .optional(),
+  address: z
+    .string()
+    .trim()
+    .min(5, "Address must be at least 5 characters.")
+    .max(300, "Address cannot exceed 300 characters.")
+    .optional(),
+  phone: z
+    .union([z.string(), z.number()])
+    .transform((val) => String(val).trim())
+    .refine((val) => /^[6-9]\d{9}$/.test(val), {
+      message: "Phone must be a valid 10-digit Indian mobile number.",
+    })
+    .optional(),
+  city: z
+    .string()
+    .trim()
+    .min(2, "City is required.")
+    .max(80, "City cannot exceed 80 characters.")
+    .optional(),
+  state: z
+    .string()
+    .trim()
+    .min(2, "State is required.")
+    .max(80, "State cannot exceed 80 characters.")
+    .optional(),
+  zip: z
+    .union([z.string(), z.number()])
+    .transform((val) => String(val).trim())
+    .refine((val) => /^\d{6}$/.test(val), {
+      message: "Pincode must be exactly 6 digits.",
+    })
+    .optional(),
   landmark: z
     .string()
     .trim()
     .max(150, "Landmark cannot exceed 150 characters.")
     .optional()
     .nullable(),
+  addresses: z.array(addressItemSchema).optional(),
 });
+
+export const changePasswordSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(1, "Current password is required."),
+  newPassword: z
+    .string()
+    .min(6, "New password must be at least 6 characters.")
+    .max(128, "Password cannot exceed 128 characters."),
+});
+
 

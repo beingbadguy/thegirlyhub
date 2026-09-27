@@ -9,6 +9,7 @@ import {
 } from "@/services/sendMail";
 import { after } from "next/server";
 import type { PreparedCheckout } from "@/lib/prepareCheckout";
+import { broadcastNewOrder } from "@/lib/orderEvents";
 
 export async function placeOrderRecord(
   prepared: PreparedCheckout,
@@ -118,6 +119,26 @@ export async function placeOrderRecord(
       if (existing) return existing;
     }
     throw saveErr;
+  }
+
+  try {
+    broadcastNewOrder({
+      id: newOrder._id.toString(),
+      orderId: newOrder._id.toString(),
+      totalAmount: newOrder.totalAmount,
+      recipientName: newOrder.recipientName || (prepared.user as any)?.name || "Customer",
+      email: prepared.email,
+      phone: newOrder.phone ? String(newOrder.phone) : undefined,
+      city: newOrder.city,
+      state: newOrder.state,
+      itemsCount: Array.isArray(newOrder.products) ? newOrder.products.length : 1,
+      paymentMethod: newOrder.paymentMethod,
+      paymentStatus: newOrder.paymentStatus,
+      status: newOrder.status,
+      createdAt: (newOrder.createdAt || new Date()).toISOString(),
+    });
+  } catch (broadcastErr) {
+    console.error("[Realtime] Order broadcast error:", broadcastErr);
   }
 
   const extrasUpdates: Promise<unknown>[] = [];

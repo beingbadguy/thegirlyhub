@@ -23,7 +23,9 @@ export async function fetchTokenDetails(request: NextRequest) {
       request.cookies.get("basics")?.value?.trim() ||
       null;
 
-    const candidates = [headerToken, cookieToken].filter(
+    const queryToken = request.nextUrl.searchParams.get("token")?.trim() || null;
+
+    const candidates = [headerToken, cookieToken, queryToken].filter(
       (t): t is string => Boolean(t && t.length > 0)
     );
 

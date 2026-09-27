@@ -1,4 +1,5 @@
 import { databaseConnection } from "@/config/databseConnection";
+import mongoose from "mongoose";
 import { verifyRecaptcha } from "@/lib/captcha";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import { getPagination, paginationResult } from "@/lib/pagination";
@@ -174,9 +175,56 @@ export async function GET(request: NextRequest) {
     }
 
     const { page, limit, skip } = getPagination(request);
-    const [orders, total] = await Promise.all([
-      Order.find({ userId: decoded.userId })
-        .sort({ createdAt: -1 })
+    const searchParams = request.nextUrl.searchParams;
+    const statusParam = searchParams.get("status")?.trim().toLowerCase();
+    const searchParam = searchParams.get("search")?.trim();
+    const sortParam = searchParams.get("sort") || "newest";
+
+    const baseFilter: Record<string, any> = {
+      $or: [
+        { userId: decoded.userId },
+        ...(decoded.email ? [{ email: decoded.email }] : []),
+      ],
+    };
+
+    const query: Record<string, any> = { ...baseFilter };
+
+    if (statusParam && statusParam !== "all") {
+      query.status = statusParam;
+    }
+
+    if (searchParam) {
+      const searchConditions: any[] = [
+        { recipientName: { $regex: searchParam, $options: "i" } },
+        { phone: { $regex: searchParam, $options: "i" } },
+        { "products.title": { $regex: searchParam, $options: "i" } },
+        { awbNumber: { $regex: searchParam, $options: "i" } },
+      ];
+
+      if (mongoose.Types.ObjectId.isValid(searchParam)) {
+        searchConditions.push({ _id: new mongoose.Types.ObjectId(searchParam) });
+      }
+
+      query.$and = [
+        { ...baseFilter },
+        { $or: searchConditions },
+      ];
+      delete query.$or;
+    }
+
+    let sortOption: Record<string, any> = { createdAt: -1 };
+    if (sortParam === "oldest") {
+      sortOption = { createdAt: 1 };
+    } else if (sortParam === "amount_high") {
+      sortOption = { totalAmount: -1 };
+    } else if (sortParam === "amount_low") {
+      sortOption = { totalAmount: 1 };
+    }
+
+    // Parallel fetch: Paginated Orders, Total Filtered, and Status Counts Aggregation
+    const [orders, total, allUserOrders] = await Promise.all([
+      Order.find(query)
+        .sort(sortOption)
         .skip(skip)
         .limit(limit)
         .populate({ path: "userId", select: "name email phone" })
@@ -185,12 +233,31 @@ export async function GET(request: NextRequest) {
           select: "title name image mainImage price discountedPrice slug",
         })
         .lean(),
-      Order.countDocuments({ userId: decoded.userId }),
+      Order.countDocuments(query),
+      Order.find(baseFilter, { status: 1 }).lean(),
     ]);
+
+    const statusCounts: Record<string, number> = {
+      all: allUserOrders.length,
+      processing: 0,
+      reviewing: 0,
+      preparing: 0,
+      shipped: 0,
+      delivered: 0,
+      completed: 0,
+      cancelled: 0,
+    };
+
+    for (const ord of allUserOrders) {
+      if (ord.status && statusCounts[ord.status] !== undefined) {
+        statusCounts[ord.status]++;
+      }
+    }
 
     return NextResponse.json(
       {
         orders,
+        statusCounts,
         success: true,
         message: "Orders fetched successfully",
         pagination: paginationResult(page, limit, total),
@@ -198,10 +265,11 @@ export async function GET(request: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching orders:", error);
     return NextResponse.json(
       { message: "Error fetching orders", success: false },
       { status: 500 },
     );
   }
 }
+

@@ -1,84 +1,58 @@
 "use client";
-import OrderDetailsCard from "@/components/OrderDetailsCart";
-import PaginationControls from "@/components/PaginationControls";
-import ProductCard from "@/components/ProductCard";
-import { Button } from "@/components/ui/button";
-import { formatAddressLines, hasSavedAddress } from "@/lib/address";
-import { INDIAN_STATES } from "@/lib/orderValidation";
-import { useAuthStore } from "@/store/store";
+
+import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios, { AxiosError } from "axios";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { compressImage } from "@/utils/image";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  LogOut,
-  MapPin,
-  Package,
-  Pencil,
-  ShoppingBag,
   User,
+  Package,
+  MapPin,
+  Lock,
+  Heart,
+  ShoppingBag,
+  Sparkles,
 } from "lucide-react";
+import { useAuthStore } from "@/store/store";
+import { compressImage } from "@/utils/image";
+import ProductCard from "@/components/ProductCard";
+import PaginationControls from "@/components/PaginationControls";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
-type Order = {
-  _id: string;
-  userId: { _id: string; name: string; email: string };
-  products: {
-    productId: {
-      _id: string;
-      title: string;
-      price: number;
-      category: string;
-      image: string;
-      discountedPrice: number;
-    };
-    quantity: number;
-  }[];
-  totalAmount: number;
-  paymentMethod: "cod" | "online" | "credit/debit";
-  deliveryType: "normal" | "fast";
-  address: string;
-  city?: string;
-  state?: string;
-  zip?: number;
-  phone: string;
-  status:
-    | "processing"
-    | "cancelled"
-    | "completed"
-    | "reviewing"
-    | "preparing"
-    | "shipped"
-    | "delivered";
-  createdAt: string;
-  updatedAt: string;
-};
+// Enterprise Profile Components
+import ProfileHeroHeader from "@/components/profile/ProfileHeroHeader";
+import ProfileStatsCards from "@/components/profile/ProfileStatsCards";
+import ProfilePersonalSection from "@/components/profile/ProfilePersonalSection";
+import ProfileAddressBook from "@/components/profile/ProfileAddressBook";
+import ProfileOrdersSection from "@/components/profile/ProfileOrdersSection";
+import ProfileSecuritySection from "@/components/profile/ProfileSecuritySection";
+import ProfileToast, { ToastMessage, ToastType } from "@/components/profile/ProfileToast";
+import ProfileSkeleton from "@/components/profile/ProfileSkeleton";
 
-type MenuKey = "account" | "address" | "orders" | "cart" | "wishlist";
-type OrderStatus = Order["status"];
-type OrderFilter = "all" | OrderStatus;
-
-const ORDER_FILTERS: { key: OrderFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "processing", label: "Processing" },
-  { key: "reviewing", label: "Reviewing" },
-  { key: "preparing", label: "Preparing" },
-  { key: "shipped", label: "Shipped" },
-  { key: "delivered", label: "Delivered" },
-  { key: "completed", label: "Completed" },
-  { key: "cancelled", label: "Cancelled" },
-];
+import {
+  ProfileMenuKey,
+  OrderFilterKey,
+  OrderSortKey,
+  UserProfileData,
+  StatusCounts,
+} from "@/types/profile";
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileSkeleton />}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+
+  // Auth Store
   const {
-    user,
+    user: storeUser,
     logout,
     isLoggingOut,
     fetchUser,
@@ -87,919 +61,630 @@ export default function ProfilePage() {
     fetchUserCart,
     fetchUserWishlist,
   } = useAuthStore();
-  const [menu, setMenu] = useState<MenuKey>("account");
-  const [showModal, setShowModal] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [error, setError] = useState("");
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [orderFilter, setOrderFilter] = useState<OrderFilter>("all");
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [orderPage, setOrderPage] = useState(1);
-  const [cartPage, setCartPage] = useState(1);
-  const [wishlistPage, setWishlistPage] = useState(1);
+
+  // Query Parameters from URL
+  const tabParam = (searchParams.get("tab") as ProfileMenuKey) || "account";
+  const statusParam = (searchParams.get("status") as OrderFilterKey) || "all";
+  const searchParam = searchParams.get("search") || "";
+  const sortParam = (searchParams.get("sort") as OrderSortKey) || "newest";
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+
+  // Active States
+  const [activeTab, setActiveTab] = useState<ProfileMenuKey>(tabParam);
   const [authChecked, setAuthChecked] = useState(false);
-  const itemsPerPage = 12;
+  const [profileData, setProfileData] = useState<UserProfileData | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // Filter tabs horizontal scroll & drag support
-  const filterScrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const [isDraggingFilter, setIsDraggingFilter] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeftState, setScrollLeftState] = useState(0);
-
-  const checkFilterScroll = useCallback(() => {
-    const el = filterScrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 6);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 6);
-  }, []);
-
-  useEffect(() => {
-    checkFilterScroll();
-    const el = filterScrollRef.current;
-    if (!el) return;
-    const handleScroll = () => checkFilterScroll();
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
-    return () => {
-      el.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [checkFilterScroll, menu, orders.length]);
-
-  const scrollFilters = (direction: "left" | "right") => {
-    const el = filterScrollRef.current;
-    if (!el) return;
-    const amount = direction === "left" ? -220 : 220;
-    el.scrollBy({ left: amount, behavior: "smooth" });
-  };
-
-  const handleFilterWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    const el = filterScrollRef.current;
-    if (!el) return;
-    if (el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
-      el.scrollLeft += e.deltaY;
-      checkFilterScroll();
-    }
-  };
-
-  const handleMouseDownFilter = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = filterScrollRef.current;
-    if (!el) return;
-    setIsDraggingFilter(true);
-    setStartX(e.pageX - el.offsetLeft);
-    setScrollLeftState(el.scrollLeft);
-  };
-
-  const handleMouseMoveFilter = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDraggingFilter) return;
-    const el = filterScrollRef.current;
-    if (!el) return;
-    e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    el.scrollLeft = scrollLeftState - walk;
-    checkFilterScroll();
-  };
-
-  const handleMouseUpFilter = () => {
-    setIsDraggingFilter(false);
-  };
-
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [zip, setZip] = useState("");
-  const [phone, setPhone] = useState("");
-
-  const fetchUserOrders = async () => {
-    try {
-      const response = await axios.get("/api/order", {
-        params: { page: 1, limit: 100 },
-      });
-      setOrders(response.data.orders || []);
-    } catch (err: unknown) {
-      if (err instanceof AxiosError) console.error(err.response?.data);
-    }
-  };
-
-  useEffect(() => {
-    document.title = "My Profile | GirlyHub";
-    fetchUser().finally(() => setAuthChecked(true));
-  }, []);
-
-  useEffect(() => {
-    if (!user?._id) return;
-    fetchUserOrders();
-  }, [user?._id]);
-
-  useEffect(() => {
-    if (!user) return;
-    setAddress(user.address || "");
-    setCity(user.city || "");
-    setState(user.state || "");
-    setLandmark(user.landmark || "");
-    setZip(user.zip ? String(user.zip) : "");
-    setPhone(user.phone ? String(user.phone) : "");
-  }, [user]);
-
-  const addressLines = useMemo(
-    () =>
-      formatAddressLines({
-        address: user?.address,
-        landmark: user?.landmark,
-        city: user?.city,
-        state: user?.state,
-        zip: user?.zip,
-      }),
-    [user],
-  );
-
-  const addressComplete = hasSavedAddress({
-    address: user?.address,
-    city: user?.city,
-    state: user?.state,
-    zip: user?.zip,
+  // Orders Query States
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersPage, setOrdersPage] = useState(pageParam || 1);
+  const [ordersTotalPages, setOrdersTotalPages] = useState(1);
+  const [orderFilter, setOrderFilter] = useState<OrderFilterKey>(statusParam);
+  const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [sortOrder, setSortOrder] = useState<OrderSortKey>(sortParam);
+  const [statusCounts, setStatusCounts] = useState<StatusCounts>({
+    all: 0,
+    processing: 0,
+    reviewing: 0,
+    preparing: 0,
+    shipped: 0,
+    delivered: 0,
+    completed: 0,
+    cancelled: 0,
   });
 
-  const validCartItems = (userCart?.products || []).filter(
-    (item) => item?.productId?._id,
-  );
-  const validCartCount = validCartItems.length;
-  const wishlistCount = userWishlist?.products?.length || 0;
-  const filteredOrders =
-    orderFilter === "all"
-      ? orders
-      : orders.filter((order) => order.status === orderFilter);
-  const orderCounts = orders.reduce<Record<string, number>>(
-    (acc, order) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
+  // Cart & Wishlist Pages
+  const [cartPage, setCartPage] = useState(1);
+  const [wishlistPage, setWishlistPage] = useState(1);
+  const itemsPerPage = 9;
+
+  // Photo Upload State
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const showToast = (message: string, type: ToastType = "info", title?: string) => {
+    setToast({
+      id: `toast_${Date.now()}`,
+      type,
+      message,
+      title,
+    });
+  };
+
+  // URL Sync Helper
+  const updateQueryParams = useCallback(
+    (params: Record<string, string | number | null | undefined>) => {
+      startTransition(() => {
+        const next = new URLSearchParams(searchParams.toString());
+        Object.entries(params).forEach(([key, val]) => {
+          if (val === null || val === undefined || val === "") {
+            next.delete(key);
+          } else {
+            next.set(key, String(val));
+          }
+        });
+        router.replace(`/profile?${next.toString()}`, { scroll: false });
+      });
     },
-    { all: orders.length },
+    [router, searchParams],
   );
 
-  const handleImageChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  // Synchronize URL on tab change
+  const handleSelectTab = (tab: ProfileMenuKey) => {
+    setActiveTab(tab);
+    updateQueryParams({ tab, page: 1 });
+  };
+
+  // Fetch Full User Profile Data
+  const loadUserProfile = useCallback(async () => {
+    try {
+      const res = await axios.get("/api/user");
+      if (res.data?.success && res.data?.user) {
+        setProfileData(res.data.user);
+      }
+    } catch (err) {
+      console.error("Failed to load user profile:", err);
+    }
+  }, []);
+
+  // Fetch Orders Query with filters, search, sort, pagination
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await axios.get("/api/order", {
+        params: {
+          page: ordersPage,
+          limit: 10,
+          status: orderFilter !== "all" ? orderFilter : undefined,
+          search: searchQuery.trim() || undefined,
+          sort: sortOrder,
+        },
+      });
+
+      if (res.data?.success) {
+        setOrders(res.data.orders || []);
+        if (res.data.pagination) {
+          setOrdersTotalPages(res.data.pagination.totalPages || 1);
+        }
+        if (res.data.statusCounts) {
+          setStatusCounts(res.data.statusCounts);
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        console.error("Failed to fetch orders:", err.response?.data);
+      }
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [ordersPage, orderFilter, searchQuery, sortOrder]);
+
+  // Initial Auth & Data Load
+  useEffect(() => {
+    document.title = "My Account & Orders | GirlyHub";
+    fetchUser()
+      .then(() => {
+        loadUserProfile();
+      })
+      .finally(() => {
+        setAuthChecked(true);
+      });
+  }, [fetchUser, loadUserProfile]);
+
+  // Fetch Orders whenever orders query params change
+  useEffect(() => {
+    if (storeUser?._id) {
+      fetchOrders();
+    }
+  }, [storeUser?._id, fetchOrders]);
+
+  // Sync state if URL query params change externally
+  useEffect(() => {
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+    if (statusParam && statusParam !== orderFilter) {
+      setOrderFilter(statusParam);
+    }
+    if (searchParam !== searchQuery) {
+      setSearchQuery(searchParam);
+    }
+    if (sortParam !== sortOrder) {
+      setSortOrder(sortParam);
+    }
+    if (pageParam && pageParam !== ordersPage) {
+      setOrdersPage(pageParam);
+    }
+  }, [tabParam, statusParam, searchParam, sortParam, pageParam]);
+
+  // Image Upload Handler with Instant Optimistic Preview
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Validate size (< 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Profile image must be less than 5MB.", "error", "Image Too Large");
+      return;
+    }
+
+    // Validate type
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+    if (!validTypes.includes(file.type)) {
+      showToast("Please select a JPG, PNG, WEBP or AVIF image.", "error", "Invalid Format");
+      return;
+    }
+
+    // Instant local preview
+    const previewUrl = URL.createObjectURL(file);
+    const previousImage = profileData?.image;
+    if (profileData) {
+      setProfileData({ ...profileData, image: previewUrl });
+    }
+
     setUploadingPhoto(true);
     try {
+      const compressed = await compressImage(file);
       const formData = new FormData();
-      const compressedImage = await compressImage(file);
-      formData.append("image", compressedImage);
-      await axios.put("/api/profileupload", formData);
-      await fetchUser();
-    } catch (err: unknown) {
-      if (err instanceof AxiosError) console.error(err.response?.data);
+      formData.append("image", compressed);
+
+      const res = await axios.put("/api/profileupload", formData);
+      if (res.data?.success) {
+        showToast("Your avatar has been updated!", "success", "Photo Uploaded");
+        await Promise.all([fetchUser(), loadUserProfile()]);
+      }
+    } catch (err) {
+      // Rollback on failure
+      if (profileData) {
+        setProfileData({ ...profileData, image: previousImage });
+      }
+      showToast("Could not upload profile photo. Please try again.", "error", "Upload Failed");
     } finally {
+      URL.revokeObjectURL(previewUrl);
       setUploadingPhoto(false);
     }
   };
 
-  const saveAddress = async () => {
-    if (!/^[6-9]\d{9}$/.test(phone.toString())) {
-      setError("Enter a valid 10-digit Indian mobile number.");
-      return;
-    }
-    if (address.trim().length < 10) {
-      setError("Street address must be at least 10 characters.");
-      return;
-    }
-    if (city.trim().length < 2) {
-      setError("City is required.");
-      return;
-    }
-    if (!state) {
-      setError("Please select a state.");
-      return;
-    }
-    if (!/^\d{6}$/.test(String(zip))) {
-      setError("Pincode must be exactly 6 digits.");
-      return;
-    }
-
-    setIsUpdating(true);
+  // Cart & Wishlist Remove Handlers
+  const handleRemoveFromCart = async (productId: string) => {
     try {
-      await axios.put("/api/user", {
-        address: address.trim(),
-        city: city.trim(),
-        state,
-        landmark: landmark.trim(),
-        phone,
-        zip,
-      });
-      await fetchUser();
-      setError("");
-      setShowModal(false);
-    } catch (err: unknown) {
-      if (err instanceof AxiosError) {
-        setError(err.response?.data?.message || "Could not update address.");
-      }
-    } finally {
-      setIsUpdating(false);
+      await axios.delete(`/api/cart/${productId}`);
+      await Promise.all([fetchUserCart(), fetchUser()]);
+      showToast("Item removed from your cart.", "info");
+    } catch (err) {
+      showToast("Failed to remove item from cart.", "error");
     }
   };
 
-  const removeFromCart = async (productId: string) => {
-    await axios.delete(`/api/cart/${productId}`);
-    fetchUserCart();
-    fetchUser();
+  const handleRemoveFromWishlist = async (productId: string) => {
+    try {
+      await axios.delete(`/api/wishlist/${productId}`);
+      await Promise.all([fetchUserWishlist(), fetchUser()]);
+      showToast("Item removed from your wishlist.", "info");
+    } catch (err) {
+      showToast("Failed to update wishlist.", "error");
+    }
   };
 
-  const removeFromWishlist = async (productId: string) => {
-    await axios.delete(`/api/wishlist/${productId}`);
-    fetchUserWishlist();
-    fetchUser();
-  };
-
-  const menuItems: { label: string; key: MenuKey; icon: React.ReactNode }[] = [
-    { label: "Account", key: "account", icon: <User className="size-4" /> },
-    { label: "Address", key: "address", icon: <MapPin className="size-4" /> },
-    { label: "Orders", key: "orders", icon: <Package className="size-4" /> },
-    { label: "Cart", key: "cart", icon: <ShoppingBag className="size-4" /> },
-    { label: "Wishlist", key: "wishlist", icon: <Heart className="size-4" /> },
+  // Navigation Tabs Configuration
+  const menuItems: { label: string; key: ProfileMenuKey; icon: React.ReactNode; badge?: number }[] = [
+    {
+      label: "Account Details",
+      key: "account",
+      icon: <User className="size-4" />,
+    },
+    {
+      label: "Orders & Tracking",
+      key: "orders",
+      icon: <Package className="size-4" />,
+      badge: statusCounts.all,
+    },
+    {
+      label: "Saved Addresses",
+      key: "addresses",
+      icon: <MapPin className="size-4" />,
+      badge: profileData?.addresses?.length || (profileData?.address ? 1 : 0),
+    },
+    {
+      label: "Security & Login",
+      key: "security",
+      icon: <Lock className="size-4" />,
+    },
+    {
+      label: "My Wishlist",
+      key: "wishlist",
+      icon: <Heart className="size-4" />,
+      badge: userWishlist?.products?.length || 0,
+    },
+    {
+      label: "Shopping Bag",
+      key: "cart",
+      icon: <ShoppingBag className="size-4" />,
+      badge: (userCart?.products || []).filter((p) => p?.productId?._id).length,
+    },
   ];
 
+  // Combined User Data Object
+  const mergedUser: UserProfileData = useMemo(() => {
+    const raw = profileData || (storeUser as any) || {};
+    return {
+      _id: raw._id || "",
+      id: raw._id || raw.id || "",
+      name: raw.name || "Customer",
+      email: raw.email || "",
+      role: raw.role || "customer",
+      authProvider: raw.authProvider || "local",
+      image: raw.image || null,
+      isVerified: Boolean(raw.isVerified),
+      firstPurchase: Boolean(raw.firstPurchase),
+      phone: raw.phone || null,
+      address: raw.address || "",
+      city: raw.city || "",
+      state: raw.state || "",
+      landmark: raw.landmark || null,
+      zip: raw.zip || raw.postalCode || null,
+      country: raw.country || "India",
+      addresses: raw.addresses || [],
+      ordersCount: statusCounts.all || raw.ordersCount || 0,
+      createdAt: raw.createdAt || new Date().toISOString(),
+      updatedAt: raw.updatedAt,
+    };
+  }, [profileData, storeUser, statusCounts.all]);
+
+  // Wishlist & Cart Paginated Items
+  const validCartItems = (userCart?.products || []).filter((item) => item?.productId?._id);
+  const cartTotalPages = Math.ceil(validCartItems.length / itemsPerPage) || 1;
+  const paginatedCart = validCartItems.slice(
+    (cartPage - 1) * itemsPerPage,
+    cartPage * itemsPerPage,
+  );
+
+  const wishlistProducts = userWishlist?.products || [];
+  const wishlistTotalPages = Math.ceil(wishlistProducts.length / itemsPerPage) || 1;
+  const paginatedWishlist = wishlistProducts.slice(
+    (wishlistPage - 1) * itemsPerPage,
+    wishlistPage * itemsPerPage,
+  );
+
+  // Loading Screen
   if (!authChecked) {
-    return (
-      <div className="flex min-h-[70vh] items-center justify-center">
-        <AiOutlineLoading3Quarters className="animate-spin text-2xl text-rose-600" />
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
-  if (!user) {
+  // Guest Prompt if Not Logged In
+  if (!storeUser) {
     return (
-      <GuestAuthPrompt
-        title="Your profile is private"
-        description="Please log in to manage your account, track orders, and keep your GirlyHub details up to date."
-      />
+      <div className="bg-[#fdf7f9] min-h-[80vh] flex items-center justify-center py-12 px-4">
+        <GuestAuthPrompt
+          title="Sign in to your GirlyHub Profile"
+          description="View active orders, track live parcels, save delivery addresses and access member-only discounts."
+        />
+      </div>
     );
   }
 
   return (
-    <div className="bg-[#fdf7f9]">
-      <div className="mx-auto flex max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8 md:h-[calc(100dvh-5.5rem)] md:flex-row md:gap-6 md:overflow-hidden md:py-6">
-        <aside className="hidden h-full w-64 shrink-0 flex-col overflow-y-auto rounded-2xl border border-rose-100 bg-white p-4 shadow-sm md:flex">
-          <div className="mb-4 flex items-center gap-3 border-b border-rose-50 pb-4">
-            <div className="relative size-12 overflow-hidden rounded-full bg-rose-50">
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt={user.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <span className="flex size-full items-center justify-center font-serif text-lg text-rose-700">
-                  {user.name?.charAt(0)}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-rose-950">
-                {user.name}
-              </p>
-              <p className="truncate text-xs text-rose-900/55">{user.email}</p>
-            </div>
-          </div>
-          <nav className="flex flex-col gap-1">
-            {menuItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setMenu(item.key)}
-                className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                  menu === item.key
-                    ? "bg-rose-700 text-white"
-                    : "text-rose-900/70 hover:bg-rose-50"
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
+    <div className="min-h-screen bg-[#fdf7f9] pb-16 pt-4 sm:pt-6">
+      {/* Toast Notification Container */}
+      <ProfileToast toast={toast} onClose={() => setToast(null)} />
 
-        <div className="sticky top-0 z-30 mb-3 rounded-2xl border border-rose-100 bg-white p-3 shadow-sm md:hidden">
-          <div className="mb-3 flex items-center gap-3">
-            <div className="relative size-11 overflow-hidden rounded-full bg-rose-50">
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt={user.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <span className="flex size-full items-center justify-center font-serif text-rose-700">
-                  {user.name?.charAt(0)}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-rose-950">
-                {user.name}
-              </p>
-              <p className="truncate text-xs text-rose-900/55">{user.email}</p>
-            </div>
-          </div>
-          <nav className="grid grid-cols-5 gap-1">
-            {menuItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setMenu(item.key)}
-                className={`flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-[11px] font-medium ${
-                  menu === item.key
-                    ? "bg-rose-700 text-white"
-                    : "bg-rose-50 text-rose-800"
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* 1. Hero Executive Header */}
+        <ProfileHeroHeader
+          user={mergedUser}
+          uploadingPhoto={uploadingPhoto}
+          onImageChange={handleImageChange}
+          isLoggingOut={isLoggingOut}
+          onLogout={logout}
+          onShowToast={showToast}
+        />
 
-        <section className="min-w-0 flex-1 md:h-full md:overflow-y-auto md:pb-2">
-          {menu === "account" && (
-            <div className="space-y-5">
-              <div className="relative overflow-hidden rounded-2xl border border-rose-100 bg-white p-5 shadow-sm sm:p-6">
-                {/* Ambient floral background accent */}
-                <div className="pointer-events-none absolute -right-6 -top-6 opacity-20 select-none">
-                  <FloralAccent flower={1} size="lg" animation="float" />
-                </div>
-                <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="relative size-20 overflow-hidden rounded-full border border-rose-100 bg-rose-50 shadow-xs">
-                      {user.image ? (
-                        <Image
-                          src={user.image}
-                          alt={user.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <span className="flex size-full items-center justify-center font-serif text-3xl text-rose-700">
-                          {user.name?.charAt(0)}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h1 className="font-serif text-2xl text-rose-950">
-                          {user.name}
-                        </h1>
-                        <FloralAccent flower={1} size="xs" animation="pulse" />
-                      </div>
-                      <p className="text-sm text-rose-900/60">{user.email}</p>
-                      <p className="mt-1 text-xs text-rose-900/50">
-                        Member since{" "}
-                        {new Date(user.createdAt).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
+        {/* 2. Key Metrics Bar */}
+        <ProfileStatsCards
+          ordersCount={statusCounts.all}
+          addressesCount={mergedUser.addresses?.length || (mergedUser.address ? 1 : 0)}
+          wishlistCount={wishlistProducts.length}
+          cartCount={validCartItems.length}
+          onSelectTab={handleSelectTab}
+        />
+
+        {/* 3. Main Dashboard Navigation & Content Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+          {/* Desktop Left Navigation Menu */}
+          <aside className="hidden md:flex flex-col gap-1 rounded-3xl border border-rose-100/80 bg-white p-3.5 shadow-xs sticky top-24">
+            <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-rose-900/60">
+              Account Navigation
+            </div>
+            {menuItems.map((item) => {
+              const isActive = activeTab === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleSelectTab(item.key)}
+                  className={`flex items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                    isActive
+                      ? "bg-rose-700 text-white shadow-xs"
+                      : "text-stone-700 hover:bg-rose-50/70 hover:text-rose-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {item.icon}
+                    <span>{item.label}</span>
                   </div>
-                  <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 transition-colors">
-                    {uploadingPhoto ? "Uploading…" : "Change photo"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                </div>
-              </div>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        isActive
+                          ? "bg-white/25 text-white"
+                          : "bg-rose-100 text-rose-800"
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </aside>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {[
-                  { label: "Orders", value: orders.length },
-                  { label: "Cart items", value: validCartCount },
-                  { label: "Wishlist", value: wishlistCount },
-                  {
-                    label: "First order",
-                    value: user.firstPurchase ? "Completed" : "Pending",
-                  },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm"
-                  >
-                    <p className="text-xs uppercase tracking-wide text-rose-400">
-                      {stat.label}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-rose-950">
-                      {stat.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
+          {/* Mobile Horizontal Scrollable Tab Bar */}
+          <div className="md:hidden sticky top-0 z-30 -mx-4 px-4 py-2 bg-[#fdf7f9]/90 backdrop-blur-md border-b border-rose-100 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            {menuItems.map((item) => {
+              const isActive = activeTab === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleSelectTab(item.key)}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-rose-700 text-white shadow-xs"
+                      : "bg-white text-stone-700 border border-rose-100"
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                        isActive ? "bg-white/20 text-white" : "bg-rose-100 text-rose-800"
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-              <div className="grid gap-5 lg:grid-cols-2">
-                <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-sm">
-                  <h2 className="mb-4 font-serif text-xl text-rose-950">
-                    Contact
-                  </h2>
-                  <dl className="space-y-3 text-sm">
-                    <div>
-                      <dt className="text-rose-400">Email</dt>
-                      <dd className="mt-0.5 text-rose-950">{user.email}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-rose-400">Phone</dt>
-                      <dd className="mt-0.5 text-rose-950">
-                        {user.phone || "Not added"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-rose-400">Account status</dt>
-                      <dd className="mt-0.5 text-rose-950">
-                        {user.isVerified ? "Verified" : "Pending verification"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-rose-400">First-order discount</dt>
-                      <dd className="mt-0.5 text-rose-950">
-                        {user.firstPurchase
-                          ? "Already used on a previous order"
-                          : "15% off is available on your first order"}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
+          {/* Tab Content Panel (3 Columns) */}
+          <main className="md:col-span-3 min-w-0">
+            {/* TAB 1: Account Overview */}
+            {activeTab === "account" && (
+              <ProfilePersonalSection
+                user={mergedUser}
+                onRefreshUser={loadUserProfile}
+                onSelectTab={handleSelectTab}
+                onShowToast={showToast}
+              />
+            )}
 
-                <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="font-serif text-xl text-rose-950">
-                      Default address
+            {/* TAB 2: Orders & Tracking */}
+            {activeTab === "orders" && (
+              <ProfileOrdersSection
+                orders={orders}
+                statusCounts={statusCounts}
+                totalOrdersCount={statusCounts.all}
+                isLoading={ordersLoading}
+                orderFilter={orderFilter}
+                onFilterChange={(newFilter) => {
+                  setOrderFilter(newFilter);
+                  setOrdersPage(1);
+                  updateQueryParams({ status: newFilter, page: 1 });
+                }}
+                searchQuery={searchQuery}
+                onSearchChange={(newSearch) => {
+                  setSearchQuery(newSearch);
+                  setOrdersPage(1);
+                  updateQueryParams({ search: newSearch, page: 1 });
+                }}
+                sortOrder={sortOrder}
+                onSortChange={(newSort) => {
+                  setSortOrder(newSort);
+                  setOrdersPage(1);
+                  updateQueryParams({ sort: newSort, page: 1 });
+                }}
+                currentPage={ordersPage}
+                totalPages={ordersTotalPages}
+                onPageChange={(page) => {
+                  setOrdersPage(page);
+                  updateQueryParams({ page });
+                  window.scrollTo({ top: 350, behavior: "smooth" });
+                }}
+                onRefreshOrders={fetchOrders}
+              />
+            )}
+
+            {/* TAB 3: Address Book */}
+            {activeTab === "addresses" && (
+              <ProfileAddressBook
+                user={mergedUser}
+                onRefreshUser={loadUserProfile}
+                onShowToast={showToast}
+              />
+            )}
+
+            {/* TAB 4: Security & Credentials */}
+            {activeTab === "security" && (
+              <ProfileSecuritySection
+                user={mergedUser}
+                onShowToast={showToast}
+              />
+            )}
+
+            {/* TAB 5: Wishlist */}
+            {activeTab === "wishlist" && (
+              <div className="rounded-3xl border border-rose-100/80 bg-white p-5 sm:p-7 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-rose-50 pb-4">
+                  <div>
+                    <h2 className="font-serif text-2xl font-medium text-rose-950">
+                      My Wishlist ({wishlistProducts.length})
                     </h2>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      Curated pieces and favorites saved for later
+                    </p>
+                  </div>
+                  {wishlistProducts.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setMenu("address");
-                        setShowModal(true);
-                      }}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 hover:underline"
+                      onClick={() => router.push("/wishlist")}
+                      className="text-xs font-semibold text-rose-700 hover:text-rose-900 hover:underline cursor-pointer"
                     >
-                      <Pencil className="size-3.5" />
-                      Edit
+                      View Full Wishlist Page →
+                    </button>
+                  )}
+                </div>
+
+                {wishlistProducts.length === 0 ? (
+                  <div className="py-12 text-center flex flex-col items-center justify-center">
+                    <div className="flex size-14 items-center justify-center rounded-full bg-rose-50 text-rose-400 mb-3">
+                      <Heart className="size-6" />
+                    </div>
+                    <h3 className="font-serif text-lg font-medium text-rose-950">
+                      Your wishlist is empty
+                    </h3>
+                    <p className="text-xs text-stone-500 mt-1 max-w-xs">
+                      Explore trending beauty, lifestyle and accessories, and tap the heart icon to save items.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/")}
+                      className="mt-4 rounded-xl bg-rose-700 px-5 py-2.5 text-xs font-semibold text-white hover:bg-rose-800 transition shadow-xs cursor-pointer"
+                    >
+                      Discover Trending Items
                     </button>
                   </div>
-                  {addressLines.length > 0 ? (
-                    <div className="space-y-1 text-sm leading-6 text-rose-950">
-                      {addressLines.map((line, index) => (
-                        <p key={`${line}-${index}`}>{line}</p>
-                      ))}
-                      {!addressComplete && (
-                        <p className="pt-2 text-xs text-amber-700">
-                          Add city and state so this address is complete for
-                          checkout.
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-rose-900/60">
-                      Add a full delivery address so checkout can fill it in
-                      automatically.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <Button
-                className="w-full rounded-full bg-rose-950 text-white hover:bg-rose-900 sm:w-auto"
-                disabled={isLoggingOut}
-                onClick={logout}
-              >
-                {isLoggingOut ? (
-                  <AiOutlineLoading3Quarters className="animate-spin" />
                 ) : (
-                  <span className="inline-flex items-center gap-2">
-                    <LogOut className="size-4" />
-                    Logout
-                  </span>
-                )}
-              </Button>
-            </div>
-          )}
-
-          {menu === "address" && (
-            <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h1 className="font-serif text-2xl text-rose-950">
-                    Delivery address
-                  </h1>
-                  <p className="mt-1 text-sm text-rose-900/60">
-                    This address is saved to your account and used at checkout.
-                    Updating it here or while placing an order keeps it in sync.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setError("");
-                    setShowModal(true);
-                  }}
-                  className="inline-flex items-center gap-1 rounded-full bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800"
-                >
-                  <Pencil className="size-3.5" />
-                  {addressComplete ? "Edit" : "Add address"}
-                </button>
-              </div>
-
-              {addressLines.length > 0 ? (
-                <div className="rounded-xl border border-rose-100 bg-[#fff9fa] p-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-rose-400">
-                    Saved address
-                  </p>
-                  <div className="space-y-1 text-sm leading-6 text-rose-950">
-                    {addressLines.map((line, index) => (
-                      <p key={`${line}-${index}`}>{line}</p>
-                    ))}
-                  </div>
-                  {user.phone && (
-                    <p className="mt-3 text-sm text-rose-900/70">
-                      Phone: {user.phone}
-                    </p>
-                  )}
-                  {!addressComplete && (
-                    <p className="mt-3 text-xs text-amber-700">
-                      City and state are missing. Edit this address so checkout
-                      can use it fully.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-rose-200 bg-[#fff9fa] p-8 text-center">
-                  <MapPin className="mx-auto size-8 text-rose-300" />
-                  <p className="mt-3 font-medium text-rose-950">
-                    No complete address yet
-                  </p>
-                  <p className="mt-1 text-sm text-rose-900/60">
-                    Add street, city, state and pincode so it appears here and
-                    at checkout.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {menu === "orders" &&
-            (() => {
-              const orderTotalPages =
-                Math.ceil(filteredOrders.length / itemsPerPage) || 1;
-              const paginatedOrders = filteredOrders.slice(
-                (orderPage - 1) * itemsPerPage,
-                orderPage * itemsPerPage,
-              );
-
-              return (
-                <div className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm sm:p-5">
-                  <h1 className="mb-4 font-serif text-2xl text-rose-950">
-                    Orders ({orders.length})
-                  </h1>
-                  <div className="relative mb-4">
-                    {/* Left Scroll Arrow */}
-                    {canScrollLeft && (
-                      <button
-                        type="button"
-                        onClick={() => scrollFilters("left")}
-                        className="absolute -left-2.5 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white text-rose-700 shadow-md border border-rose-200 hover:bg-rose-50 transition-all cursor-pointer"
-                        aria-label="Scroll left"
-                      >
-                        <ChevronLeft className="size-4" />
-                      </button>
-                    )}
-
-                    {/* Scrollable Filter List */}
-                    <div
-                      ref={filterScrollRef}
-                      onWheel={handleFilterWheel}
-                      onMouseDown={handleMouseDownFilter}
-                      onMouseMove={handleMouseMoveFilter}
-                      onMouseUp={handleMouseUpFilter}
-                      onMouseLeave={handleMouseUpFilter}
-                      className="flex gap-2 overflow-x-auto pb-2 pt-1 scroll-smooth select-none cursor-grab active:cursor-grabbing"
-                    >
-                      {ORDER_FILTERS.map((filter) => {
-                        const count =
-                          filter.key === "all"
-                            ? orders.length
-                            : orderCounts[filter.key] || 0;
-                        return (
-                          <button
-                            key={filter.key}
-                            type="button"
-                            onClick={() => {
-                              setOrderFilter(filter.key);
-                              setOrderPage(1);
-                            }}
-                            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition sm:text-sm shadow-xs ${
-                              orderFilter === filter.key
-                                ? "bg-rose-700 text-white shadow-sm"
-                                : "bg-rose-50 text-rose-800 hover:bg-rose-100"
-                            }`}
-                          >
-                            {filter.label} ({count})
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Right Scroll Arrow */}
-                    {canScrollRight && (
-                      <button
-                        type="button"
-                        onClick={() => scrollFilters("right")}
-                        className="absolute -right-2.5 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white text-rose-700 shadow-md border border-rose-200 hover:bg-rose-50 transition-all cursor-pointer"
-                        aria-label="Scroll right"
-                      >
-                        <ChevronRight className="size-4" />
-                      </button>
-                    )}
-                  </div>
-                  {orders.length === 0 ? (
-                    <div className="py-8 text-center flex flex-col items-center justify-center">
-                      <FloralAccent flower={2} size="md" animation="float" className="mb-2" />
-                      <p className="font-serif text-lg text-rose-950 font-medium">No orders yet</p>
-                      <p className="text-xs text-rose-900/60 mt-1 max-w-xs">
-                        When you place an order, its real-time tracking and invoice details will appear here.
-                      </p>
-                    </div>
-                  ) : filteredOrders.length === 0 ? (
-                    <div className="py-8 text-center">
-                      <p className="text-sm text-rose-900/60">
-                        No {orderFilter} orders.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {paginatedOrders.map((order) => (
-                        <OrderDetailsCard
-                          order={order as never}
-                          key={order._id}
-                          fetchUserOrders={fetchUserOrders}
+                  <>
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                      {paginatedWishlist.map((item: any) => (
+                        <ProductCard
+                          key={item.productId?._id || item._id}
+                          product={item.productId}
+                          onRemove={() =>
+                            handleRemoveFromWishlist(item.productId?._id || item._id)
+                          }
                         />
                       ))}
-                      <PaginationControls
-                        page={orderPage}
-                        totalPages={orderTotalPages}
-                        onPageChange={setOrderPage}
-                      />
-                      {filteredOrders.length > itemsPerPage && (
-                        <p className="mt-3 text-center text-xs text-rose-900/50">
-                          Showing page {orderPage} of {orderTotalPages} (
-                          {filteredOrders.length} orders)
-                        </p>
-                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })()}
-
-          {menu === "cart" &&
-            (() => {
-              const cartTotalPages =
-                Math.ceil(validCartCount / itemsPerPage) || 1;
-              const paginatedCart = validCartItems.slice(
-                (cartPage - 1) * itemsPerPage,
-                cartPage * itemsPerPage,
-              );
-
-              return (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h1 className="font-serif text-2xl text-rose-950">
-                      Cart ({validCartCount})
-                    </h1>
-                    {validCartCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => router.push("/cart")}
-                        className="text-sm font-medium text-rose-700 hover:underline"
-                      >
-                        Go to cart
-                      </button>
-                    )}
-                  </div>
-                  {validCartCount === 0 ? (
-                    <p className="rounded-2xl border border-rose-100 bg-white p-8 text-sm text-rose-900/60">
-                      Your cart is empty.
-                    </p>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-                        {paginatedCart.map((item) => (
-                          <ProductCard
-                            key={item.productId._id}
-                            product={item.productId}
-                            onRemove={() => removeFromCart(item.productId._id)}
-                          />
-                        ))}
+                    {wishlistTotalPages > 1 && (
+                      <div className="pt-4 flex flex-col items-center gap-2">
+                        <PaginationControls
+                          page={wishlistPage}
+                          totalPages={wishlistTotalPages}
+                          onPageChange={setWishlistPage}
+                        />
                       </div>
-                      <PaginationControls
-                        page={cartPage}
-                        totalPages={cartTotalPages}
-                        onPageChange={setCartPage}
-                      />
-                      {validCartCount > itemsPerPage && (
-                        <p className="mt-3 text-center text-xs text-rose-900/50">
-                          Showing page {cartPage} of {cartTotalPages} (
-                          {validCartCount} items)
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })()}
-
-          {menu === "wishlist" &&
-            (() => {
-              const wishlistTotalPages =
-                Math.ceil(wishlistCount / itemsPerPage) || 1;
-              const paginatedWishlist = (userWishlist?.products || []).slice(
-                (wishlistPage - 1) * itemsPerPage,
-                wishlistPage * itemsPerPage,
-              );
-
-              return (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h1 className="font-serif text-2xl text-rose-950">
-                      Wishlist ({wishlistCount})
-                    </h1>
-                    {wishlistCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => router.push("/wishlist")}
-                        className="text-sm font-medium text-rose-700 hover:underline"
-                      >
-                        Open wishlist
-                      </button>
                     )}
-                  </div>
-                  {wishlistCount === 0 ? (
-                    <p className="rounded-2xl border border-rose-100 bg-white p-8 text-sm text-rose-900/60">
-                      Your wishlist is empty.
-                    </p>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-                        {paginatedWishlist.map((item) => (
-                          <ProductCard
-                            key={item.productId._id}
-                            product={item.productId}
-                            onRemove={() =>
-                              removeFromWishlist(item.productId._id)
-                            }
-                          />
-                        ))}
-                      </div>
-                      <PaginationControls
-                        page={wishlistPage}
-                        totalPages={wishlistTotalPages}
-                        onPageChange={setWishlistPage}
-                      />
-                      {wishlistCount > itemsPerPage && (
-                        <p className="mt-3 text-center text-xs text-rose-900/50">
-                          Showing page {wishlistPage} of {wishlistTotalPages} (
-                          {wishlistCount} items)
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })()}
-        </section>
-      </div>
-
-      {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="font-serif text-xl text-rose-950">
-              {addressComplete ? "Edit address" : "Add address"}
-            </h2>
-            <p className="mt-1 text-sm text-rose-900/60">
-              This updates your saved profile address everywhere, including
-              checkout.
-            </p>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Street address
-                </label>
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="min-h-20 w-full rounded-lg border px-3 py-2 outline-none focus:border-rose-400"
-                  placeholder="House no., street, area"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Landmark (optional)
-                </label>
-                <input
-                  value={landmark}
-                  onChange={(e) => setLandmark(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2 outline-none focus:border-rose-400"
-                  placeholder="Near metro, mall, etc."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">City</label>
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2 outline-none focus:border-rose-400"
-                    placeholder="City"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    State
-                  </label>
-                  <select
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2 outline-none focus:border-rose-400"
-                  >
-                    <option value="">Select state</option>
-                    {INDIAN_STATES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Pincode
-                  </label>
-                  <input
-                    value={zip}
-                    onChange={(e) => setZip(e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2 outline-none focus:border-rose-400"
-                    placeholder="6-digit PIN"
-                    maxLength={6}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Phone
-                  </label>
-                  <input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2 outline-none focus:border-rose-400"
-                    placeholder="10-digit mobile"
-                    maxLength={10}
-                  />
-                </div>
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowModal(false)}
-                className="rounded-full"
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-full bg-rose-700 text-white hover:bg-rose-800"
-                onClick={saveAddress}
-                disabled={isUpdating}
-              >
-                {isUpdating ? (
-                  <AiOutlineLoading3Quarters className="animate-spin" />
-                ) : (
-                  "Save address"
+                  </>
                 )}
-              </Button>
-            </div>
-          </div>
+              </div>
+            )}
+
+            {/* TAB 6: Cart */}
+            {activeTab === "cart" && (
+              <div className="rounded-3xl border border-rose-100/80 bg-white p-5 sm:p-7 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-rose-50 pb-4">
+                  <div>
+                    <h2 className="font-serif text-2xl font-medium text-rose-950">
+                      Shopping Bag ({validCartItems.length})
+                    </h2>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      Reserved items ready for instant delivery checkout
+                    </p>
+                  </div>
+                  {validCartItems.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => router.push("/cart")}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800 transition cursor-pointer shadow-xs"
+                    >
+                      <ShoppingBag className="size-3.5" />
+                      Proceed to Checkout
+                    </button>
+                  )}
+                </div>
+
+                {validCartItems.length === 0 ? (
+                  <div className="py-12 text-center flex flex-col items-center justify-center">
+                    <div className="flex size-14 items-center justify-center rounded-full bg-rose-50 text-rose-400 mb-3">
+                      <ShoppingBag className="size-6" />
+                    </div>
+                    <h3 className="font-serif text-lg font-medium text-rose-950">
+                      Your shopping bag is empty
+                    </h3>
+                    <p className="text-xs text-stone-500 mt-1 max-w-xs">
+                      Looking for inspiration? Browse our hand-picked styles and best sellers.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/")}
+                      className="mt-4 rounded-xl bg-rose-700 px-5 py-2.5 text-xs font-semibold text-white hover:bg-rose-800 transition shadow-xs cursor-pointer"
+                    >
+                      Start Shopping
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                      {paginatedCart.map((item: any) => (
+                        <ProductCard
+                          key={item.productId?._id || item._id}
+                          product={item.productId}
+                          onRemove={() =>
+                            handleRemoveFromCart(item.productId?._id || item._id)
+                          }
+                        />
+                      ))}
+                    </div>
+                    {cartTotalPages > 1 && (
+                      <div className="pt-4 flex flex-col items-center gap-2">
+                        <PaginationControls
+                          page={cartPage}
+                          totalPages={cartTotalPages}
+                          onPageChange={setCartPage}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </main>
         </div>
-      )}
+      </div>
     </div>
   );
 }
