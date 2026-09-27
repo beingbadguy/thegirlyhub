@@ -24,6 +24,7 @@ export interface OrderInput {
   phone: string | number;
   products: OrderProductInput[];
   couponCode?: string;
+  isBuyNow?: boolean;
 }
 
 export type OrderFieldErrors = Partial<

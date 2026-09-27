@@ -1,7 +1,7 @@
 "use client";
 import { useAuthStore } from "@/store/store";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { VscLoading } from "react-icons/vsc";
 import { MdCancel, MdOutlinePayment } from "react-icons/md";
 import { IoCashOutline } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
-import { Check, ShoppingBag } from "lucide-react";
+import { Check, ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import {
   FIRST_ORDER_DISCOUNT_RATE,
@@ -23,7 +23,7 @@ import {
   MIN_PAYABLE_AMOUNT,
 } from "@/lib/checkoutCalculation";
 import { calculateShipping } from "@/lib/shipping";
-import { isProductInStock } from "@/lib/productStock";
+import { isProductInStock, getAvailableQuantity } from "@/lib/productStock";
 import { clearGuestCart } from "@/lib/guestCart";
 import CaptchaWidget from "@/components/CaptchaWidget";
 import { executeCaptcha, loadCaptchaScript } from "@/lib/clientCaptcha";
@@ -103,9 +103,11 @@ function inputClass(hasError: boolean) {
   }`;
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const { user, userCart, fetchUser } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams.get("buyNow") === "1";
 
   const [recipientName, setRecipientName] = useState("");
   const [email, setEmail] = useState("");
@@ -142,6 +144,64 @@ export default function CheckoutPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isCheckingCart, setIsCheckingCart] = useState(true);
   const [orderCompleted, setOrderCompleted] = useState(false);
+
+  // Buy Now and Item Modification States
+  const [buyNowItem, setBuyNowItem] = useState<{
+    productId: any;
+    quantity: number;
+    size: string;
+  } | null>(null);
+  const [buyNowHydrated, setBuyNowHydrated] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const [itemActionError, setItemActionError] = useState("");
+
+  // Hydrate Buy Now item if in Buy Now mode
+  useEffect(() => {
+    if (isBuyNow) {
+      try {
+        const raw = sessionStorage.getItem("girlyhub_buy_now");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.productId) {
+            const p = parsed.productId;
+            if (typeof p === "string" || (!p.title && !p.name)) {
+              const pId = typeof p === "string" ? p : p._id;
+              axios
+                .get(`/api/product/${pId}`)
+                .then((res) => {
+                  if (res.data?.product) {
+                    setBuyNowItem({
+                      ...parsed,
+                      productId: res.data.product,
+                    });
+                  } else {
+                    setBuyNowItem(parsed);
+                  }
+                })
+                .catch(() => {
+                  setBuyNowItem(parsed);
+                })
+                .finally(() => setBuyNowHydrated(true));
+            } else {
+              setBuyNowItem(parsed);
+              setBuyNowHydrated(true);
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse buy now item:", e);
+      }
+      setBuyNowItem(null);
+      setBuyNowHydrated(true);
+    } else {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("girlyhub_buy_now");
+      }
+      setBuyNowItem(null);
+      setBuyNowHydrated(true);
+    }
+  }, [isBuyNow]);
 
   useEffect(() => {
     document.title = "Checkout | GirlyHub";
@@ -180,23 +240,76 @@ export default function CheckoutPage() {
     }
   }, [eligibleForWelcomeCoupon, couponApplied, welcomeCouponRedeemed]);
 
-  const availableCartItems =
-    userCart?.products?.filter(
-      (item) => item?.productId && isProductInStock(item.productId),
-    ) ?? [];
+  // If in Buy Now mode, checkout ONLY the buy-now item!
+  // If in Cart mode, checkout ALL available cart items!
+  const availableCartItems = isBuyNow
+    ? buyNowItem && isProductInStock(buyNowItem.productId)
+      ? [buyNowItem]
+      : []
+    : userCart?.products?.filter(
+        (item) => item?.productId && isProductInStock(item.productId),
+      ) ?? [];
 
-  useEffect(() => {
-    if (isCheckingCart || placingOrder || orderCompleted) return;
-    if (availableCartItems.length === 0) {
-      router.replace("/cart");
+  const handleQuantityChange = async (item: any, delta: number) => {
+    const p = item.productId;
+    const pId = p?._id?.toString() || p?.toString();
+    const currentQty = Number(item.quantity) || 1;
+    const newQty = currentQty + delta;
+    const maxStock = getAvailableQuantity(p);
+
+    if (newQty < 1) return;
+    if (newQty > maxStock) {
+      setItemActionError(`Only ${maxStock} unit(s) available for "${p.title || "this product"}".`);
+      setTimeout(() => setItemActionError(""), 3500);
+      return;
     }
-  }, [
-    isCheckingCart,
-    placingOrder,
-    orderCompleted,
-    availableCartItems.length,
-    router,
-  ]);
+
+    const itemKey = `${pId}-${item.size || "default"}`;
+    setUpdatingItemId(itemKey);
+    setItemActionError("");
+
+    try {
+      if (isBuyNow && buyNowItem) {
+        const updated = {
+          ...buyNowItem,
+          quantity: newQty,
+        };
+        setBuyNowItem(updated);
+        sessionStorage.setItem("girlyhub_buy_now", JSON.stringify(updated));
+      } else if (!isBuyNow) {
+        await useAuthStore.getState().updateCartQuantity(pId, newQty, item.size);
+      }
+    } catch (err: any) {
+      console.error("Failed to update item quantity:", err);
+      setItemActionError(err?.response?.data?.message || "Failed to update item quantity.");
+      setTimeout(() => setItemActionError(""), 3500);
+    } finally {
+      setUpdatingItemId(null);
+    }
+  };
+
+  const handleRemoveItem = async (item: any) => {
+    const p = item.productId;
+    const pId = p?._id?.toString() || p?.toString();
+    const itemKey = `${pId}-${item.size || "default"}`;
+    setUpdatingItemId(itemKey);
+    setItemActionError("");
+
+    try {
+      if (isBuyNow) {
+        setBuyNowItem(null);
+        sessionStorage.removeItem("girlyhub_buy_now");
+      } else {
+        await useAuthStore.getState().removeFromCart(pId, item.size);
+      }
+    } catch (err: any) {
+      console.error("Failed to remove item:", err);
+      setItemActionError(err?.response?.data?.message || "Failed to remove item from checkout.");
+      setTimeout(() => setItemActionError(""), 3500);
+    } finally {
+      setUpdatingItemId(null);
+    }
+  };
 
   const mappedCartItems = availableCartItems.map((item) => {
     const p = item.productId;
@@ -208,11 +321,11 @@ export default function CheckoutPage() {
         0,
     );
     return {
-      productId: p._id,
+      productId: p._id || p,
       quantity: item.quantity,
       price,
       title: p.title || (p as any).name || "Product",
-      image: p.image || (p as any).mainImage || "",
+      image: p.image || (p as any).mainImage || (Array.isArray(p.images) ? p.images[0] : "") || "/final_gh.png",
       size: item.size || "",
     };
   });
@@ -254,6 +367,7 @@ export default function CheckoutPage() {
     orderNotes,
     zip,
     phone,
+    isBuyNow,
     couponCode: couponApplied ? promoCode : undefined,
     products:
       availableCartItems.map((item) => {
@@ -266,12 +380,12 @@ export default function CheckoutPage() {
             0,
         );
         return {
-          productId: p._id,
+          productId: p._id || p,
           quantity: item.quantity,
           size: item.size || "",
           title: p.title || (p as any).name || "Product",
           price: price,
-          image: p.image || (p as any).mainImage || "",
+          image: p.image || (p as any).mainImage || (Array.isArray(p.images) ? p.images[0] : "") || "/final_gh.png",
         };
       }) ?? [],
   });
@@ -330,23 +444,45 @@ export default function CheckoutPage() {
 
       setOrderCompleted(true);
       setShowCodModal(false);
-      clearGuestCart();
-      useAuthStore.setState((prevStore) => {
-        if (!prevStore.user) return { userCart: { products: [] } };
-        return {
-          userCart: { products: [] },
-          user: {
-            ...prevStore.user,
-            name: recipientName || prevStore.user.name,
-            address: address || prevStore.user.address,
-            city: city || prevStore.user.city,
-            state: state || prevStore.user.state,
-            landmark: landmark || prevStore.user.landmark,
-            zip: Number(zip) || prevStore.user.zip,
-            phone: Number(phone) || prevStore.user.phone,
-          },
-        };
-      });
+      if (!isBuyNow) {
+        clearGuestCart();
+        useAuthStore.setState((prevStore) => {
+          if (!prevStore.user) return { userCart: { products: [] } };
+          return {
+            userCart: { products: [] },
+            user: {
+              ...prevStore.user,
+              name: recipientName || prevStore.user.name,
+              address: address || prevStore.user.address,
+              city: city || prevStore.user.city,
+              state: state || prevStore.user.state,
+              landmark: landmark || prevStore.user.landmark,
+              zip: Number(zip) || prevStore.user.zip,
+              phone: Number(phone) || prevStore.user.phone,
+            },
+          };
+        });
+      } else {
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("girlyhub_buy_now");
+        }
+        useAuthStore.setState((prevStore) => {
+          if (!prevStore.user) return {};
+          return {
+            user: {
+              ...prevStore.user,
+              name: recipientName || prevStore.user.name,
+              address: address || prevStore.user.address,
+              city: city || prevStore.user.city,
+              state: state || prevStore.user.state,
+              landmark: landmark || prevStore.user.landmark,
+              zip: Number(zip) || prevStore.user.zip,
+              phone: Number(phone) || prevStore.user.phone,
+            },
+          };
+        });
+        useAuthStore.getState().fetchUserCart().catch(() => {});
+      }
       router.push(`/success/${response.data.order._id}`);
     } catch (error: unknown) {
       setOrderCompleted(false);
@@ -431,23 +567,45 @@ export default function CheckoutPage() {
 
             if (verifyRes.data.success) {
               setOrderCompleted(true);
-              clearGuestCart();
-              useAuthStore.setState((prevStore) => {
-                if (!prevStore.user) return { userCart: { products: [] } };
-                return {
-                  userCart: { products: [] },
-                  user: {
-                    ...prevStore.user,
-                    name: recipientName || prevStore.user.name,
-                    address: address || prevStore.user.address,
-                    city: city || prevStore.user.city,
-                    state: state || prevStore.user.state,
-                    landmark: landmark || prevStore.user.landmark,
-                    zip: Number(zip) || prevStore.user.zip,
-                    phone: Number(phone) || prevStore.user.phone,
-                  },
-                };
-              });
+              if (!isBuyNow) {
+                clearGuestCart();
+                useAuthStore.setState((prevStore) => {
+                  if (!prevStore.user) return { userCart: { products: [] } };
+                  return {
+                    userCart: { products: [] },
+                    user: {
+                      ...prevStore.user,
+                      name: recipientName || prevStore.user.name,
+                      address: address || prevStore.user.address,
+                      city: city || prevStore.user.city,
+                      state: state || prevStore.user.state,
+                      landmark: landmark || prevStore.user.landmark,
+                      zip: Number(zip) || prevStore.user.zip,
+                      phone: Number(phone) || prevStore.user.phone,
+                    },
+                  };
+                });
+              } else {
+                if (typeof window !== "undefined") {
+                  sessionStorage.removeItem("girlyhub_buy_now");
+                }
+                useAuthStore.setState((prevStore) => {
+                  if (!prevStore.user) return {};
+                  return {
+                    user: {
+                      ...prevStore.user,
+                      name: recipientName || prevStore.user.name,
+                      address: address || prevStore.user.address,
+                      city: city || prevStore.user.city,
+                      state: state || prevStore.user.state,
+                      landmark: landmark || prevStore.user.landmark,
+                      zip: Number(zip) || prevStore.user.zip,
+                      phone: Number(phone) || prevStore.user.phone,
+                    },
+                  };
+                });
+                useAuthStore.getState().fetchUserCart().catch(() => {});
+              }
               const successId =
                 verifyRes.data.orderId || response.razorpay_payment_id;
               router.push(`/online-success/${successId}`);
@@ -600,13 +758,13 @@ export default function CheckoutPage() {
   const showError = (field: keyof OrderFieldErrors) =>
     submitted ? fieldErrors[field] : undefined;
 
-  if (isCheckingCart) {
+  if (isCheckingCart || (isBuyNow && !buyNowHydrated)) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[#fffafb] px-4">
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="size-10 animate-spin rounded-full border-4 border-rose-200 border-t-rose-600" />
           <p className="text-sm font-medium text-gray-600">
-            Checking your cart...
+            {isBuyNow ? "Preparing your item..." : "Checking your cart..."}
           </p>
         </div>
       </div>
@@ -616,23 +774,33 @@ export default function CheckoutPage() {
   if (availableCartItems.length === 0) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[#fffafb] px-4">
-        <div className="flex max-w-md flex-col items-center gap-4 text-center">
+        <div className="flex max-w-md flex-col items-center gap-4 text-center p-6 bg-white rounded-3xl border border-rose-100 shadow-sm">
           <div className="flex size-16 items-center justify-center rounded-full bg-rose-50 text-rose-500">
             <ShoppingBag className="size-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Your Cart is Empty
+          <h2 className="text-2xl font-bold text-gray-900 font-serif">
+            {isBuyNow ? "Buy Now Item Removed" : "Your Cart is Empty"}
           </h2>
           <p className="text-sm text-gray-600">
-            You don&apos;t have any items in your checkout. Redirecting you to
-            your cart...
+            {isBuyNow
+              ? "You removed the item from Buy Now, or your session has ended. Browse our store to pick something special!"
+              : "You don't have any items in your checkout. Explore our latest arrivals or view your cart."}
           </p>
-          <Button
-            onClick={() => router.replace("/cart")}
-            className="mt-2 bg-rose-600 hover:bg-rose-700 text-white"
-          >
-            Go to Cart
-          </Button>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              onClick={() => router.push("/newarrivals")}
+              className="bg-rose-600 hover:bg-rose-700 text-white cursor-pointer"
+            >
+              Explore Products
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/cart")}
+              className="border-gray-200 hover:bg-gray-50 cursor-pointer"
+            >
+              Go to Cart
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -879,27 +1047,70 @@ export default function CheckoutPage() {
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-sm">
+              {/* Buy Now Mode Alert Banner */}
+              {isBuyNow && (
+                <div className="mb-3.5 flex items-center justify-between gap-2 rounded-xl bg-rose-50/80 border border-rose-200/80 p-3 text-xs text-rose-950">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-600 text-[10px] text-white font-bold">⚡</span>
+                    <span>
+                      <strong>Direct Buy Now:</strong> Only this item is being purchased. Your cart items remain saved.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/checkout")}
+                    className="shrink-0 text-xs font-semibold text-rose-700 underline hover:text-rose-800 cursor-pointer"
+                  >
+                    Switch to Cart
+                  </button>
+                </div>
+              )}
+
               <div className="mb-3.5 flex items-start justify-between gap-3 pb-3 border-b border-gray-100">
                 <div>
-                  <h2 className="text-base font-bold text-gray-900">
-                    Order Items ({availableCartItems.length})
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-gray-900">
+                      {isBuyNow ? "Buy Now Item" : "Order Items"} ({availableCartItems.length})
+                    </h2>
+                    {isBuyNow && (
+                      <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-800">
+                        Buy Now
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-0.5 text-xs text-gray-500">
-                    Review your items before placing order
+                    Modify quantity or remove items directly here
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => router.push("/cart")}
-                  className="shrink-0 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md transition"
-                >
-                  Edit cart
-                </button>
+                {!isBuyNow ? (
+                  <Link
+                    href="/cart"
+                    className="shrink-0 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md transition"
+                  >
+                    View cart
+                  </Link>
+                ) : (
+                  <Link
+                    href="/cart"
+                    className="shrink-0 text-xs font-semibold text-gray-600 hover:text-gray-800 bg-gray-100 px-2.5 py-1 rounded-md transition"
+                  >
+                    View cart
+                  </Link>
+                )}
               </div>
 
-              <div className="max-h-[320px] space-y-2.5 overflow-y-auto pr-1.5 custom-scrollbar">
+              {itemActionError && (
+                <div className="mb-3 rounded-lg bg-red-50 p-2.5 text-xs text-red-700 border border-red-200">
+                  {itemActionError}
+                </div>
+              )}
+
+              <div className="max-h-[380px] space-y-3 overflow-y-auto pr-1.5 custom-scrollbar">
                 {availableCartItems.map((item) => {
                   const product = item.productId;
+                  const pId = product?._id?.toString() || product?.toString();
+                  const itemKey = `${pId}-${item.size || "default"}`;
+                  const isItemUpdating = updatingItemId === itemKey;
                   const unitPrice = Number(
                     product.discountedPrice ||
                       product.price ||
@@ -908,6 +1119,7 @@ export default function CheckoutPage() {
                       0,
                   );
                   const lineTotal = unitPrice * item.quantity;
+                  const maxStock = getAvailableQuantity(product);
                   const itemUrl = productUrl(
                     product.title,
                     product._id,
@@ -916,48 +1128,105 @@ export default function CheckoutPage() {
                   const itemImg =
                     product.image ||
                     (product as any).mainImage ||
+                    (Array.isArray(product.images) ? product.images[0] : "") ||
                     "/final_gh.png";
 
                   return (
                     <div
-                      key={`${product._id}-${item.size || "default"}`}
-                      className="flex gap-3 rounded-xl border border-gray-100 bg-gray-50/40 p-3 hover:bg-gray-50 transition-colors"
+                      key={itemKey}
+                      className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50/40 p-3 hover:bg-gray-50 transition-colors"
                     >
-                      <Link
-                        href={itemUrl}
-                        className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-white border border-gray-100 p-0.5 transition hover:opacity-80"
-                      >
-                        <Image
-                          src={itemImg}
-                          alt={product.title || "Product"}
-                          fill
-                          className="object-contain p-0.5"
-                        />
-                      </Link>
-
-                      <div className="min-w-0 flex-1">
+                      <div className="flex gap-3">
                         <Link
                           href={itemUrl}
-                          className="line-clamp-1 text-xs sm:text-sm font-semibold text-gray-900 transition hover:text-rose-600"
+                          className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-white border border-gray-100 p-0.5 transition hover:opacity-80"
                         >
-                          {product.title}
+                          <Image
+                            src={itemImg}
+                            alt={product.title || "Product"}
+                            fill
+                            className="object-contain p-0.5"
+                          />
                         </Link>
-                        <div className="mt-1 flex items-center gap-2 flex-wrap text-xs text-gray-500">
-                          {item.size &&
-                            item.size.toLowerCase() !== "one size" && (
-                              <span className="bg-gray-200/70 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
-                                Size: {item.size}
-                              </span>
-                            )}
-                          <span className="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
-                            Qty: {item.quantity}
-                          </span>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <Link
+                              href={itemUrl}
+                              className="line-clamp-1 text-xs sm:text-sm font-semibold text-gray-900 transition hover:text-rose-600"
+                            >
+                              {product.title}
+                            </Link>
+
+                            {/* Delete / Remove item button */}
+                            <button
+                              type="button"
+                              disabled={isItemUpdating || placingOrder}
+                              onClick={() => handleRemoveItem(item)}
+                              title="Remove item"
+                              className="shrink-0 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-40 cursor-pointer"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </div>
+
+                          <div className="mt-1 flex items-center gap-2 flex-wrap text-xs text-gray-500">
+                            {item.size &&
+                              item.size.toLowerCase() !== "one size" && (
+                                <span className="bg-gray-200/70 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-medium">
+                                  Size: {item.size}
+                                </span>
+                              )}
+                            <span className="text-gray-500 text-[11px]">
+                              ₹{unitPrice.toFixed(2)} each
+                            </span>
+                          </div>
                         </div>
-                        <div className="mt-1.5 flex items-center justify-between text-xs">
-                          <span className="text-gray-500">
-                            ₹{unitPrice.toFixed(2)} each
+                      </div>
+
+                      {/* Item modifier controls: Stepper and Line Total */}
+                      <div className="flex items-center justify-between border-t border-gray-200/50 pt-2 mt-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-medium text-gray-500">
+                            Qty:
                           </span>
-                          <span className="font-bold text-gray-900 text-sm">
+                          <div className="flex items-center rounded-lg border border-gray-200 bg-white shadow-xs">
+                            <button
+                              type="button"
+                              disabled={item.quantity <= 1 || isItemUpdating || placingOrder}
+                              onClick={() => handleQuantityChange(item, -1)}
+                              className="flex h-7 w-7 items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed rounded-l-lg transition cursor-pointer"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus className="size-3" />
+                            </button>
+                            <span className="flex h-7 w-8 items-center justify-center text-xs font-bold text-gray-900 select-none">
+                              {isItemUpdating ? (
+                                <VscLoading className="size-3 animate-spin text-rose-600" />
+                              ) : (
+                                item.quantity
+                              )}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={item.quantity >= maxStock || isItemUpdating || placingOrder}
+                              onClick={() => handleQuantityChange(item, 1)}
+                              className="flex h-7 w-7 items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed rounded-r-lg transition cursor-pointer"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus className="size-3" />
+                            </button>
+                          </div>
+
+                          {item.quantity >= maxStock && (
+                            <span className="text-[10px] text-amber-600 font-medium">
+                              Max ({maxStock})
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-right">
+                          <span className="font-bold text-gray-950 text-sm">
                             ₹{lineTotal.toFixed(2)}
                           </span>
                         </div>
@@ -1313,5 +1582,22 @@ export default function CheckoutPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[#fffafb] px-4">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="size-10 animate-spin rounded-full border-4 border-rose-200 border-t-rose-600" />
+            <p className="text-sm font-medium text-gray-600">Loading checkout...</p>
+          </div>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }

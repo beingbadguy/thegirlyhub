@@ -44,6 +44,7 @@ export type PreparedCheckout = {
   couponCode: string | null;
   paymentMethod: "cod" | "online";
   deliveryType: "normal" | "fast";
+  isBuyNow?: boolean;
 };
 
 export type PrepareCheckoutResult =
@@ -89,6 +90,7 @@ export async function prepareCheckout(
     products,
     zip,
     couponCode,
+    isBuyNow,
   } = body as OrderInput;
 
   let user: any = null;
@@ -254,6 +256,7 @@ export async function prepareCheckout(
       couponCode: normalizedCoupon,
       paymentMethod,
       deliveryType: deliveryType || "normal",
+      isBuyNow: Boolean(isBuyNow),
     },
   };
 }

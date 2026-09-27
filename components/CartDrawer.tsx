@@ -258,7 +258,7 @@ export default function CartDrawer() {
                   onClick={closeCart}
                   className="rounded-full bg-rose-500 py-3 text-center text-sm font-semibold text-white hover:bg-rose-600"
                 >
-                  Buy now
+                  Checkout
                 </Link>
               </div>
             </>

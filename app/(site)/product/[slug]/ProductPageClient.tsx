@@ -357,19 +357,30 @@ const ProductPageClient = ({
       setCartError("This product is out of stock.");
       return;
     }
+
+    if (goDirectlyToCart) {
+      // Direct Buy Now: checkout only this item straight away without adding it to the cart
+      const buyNowItem = {
+        productId: product,
+        quantity,
+        size: size || (sizesList.length > 0 ? sizesList[0] : "One Size"),
+      };
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("girlyhub_buy_now", JSON.stringify(buyNowItem));
+      }
+      router.push("/checkout?buyNow=1");
+      return;
+    }
+
     setAddingCart(true);
     setCartError("");
     try {
       for (let index = 0; index < quantity; index += 1) {
         await useAuthStore.getState().addToCart(product._id, size);
       }
-      if (goDirectlyToCart) {
-        router.push("/checkout");
-      } else {
-        openCart();
-        setCartError("Added to cart!");
-        setTimeout(() => setCartError(""), 3000);
-      }
+      openCart();
+      setCartError("Added to cart!");
+      setTimeout(() => setCartError(""), 3000);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setCartError(error.response?.data?.message || "Could not add to cart.");

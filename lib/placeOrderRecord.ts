@@ -168,7 +168,9 @@ export async function placeOrderRecord(
       userToUpdate.order.push(newOrder._id);
     }
     userToUpdate.firstPurchase = true;
-    userToUpdate.cart = [];
+    if (!prepared.isBuyNow) {
+      userToUpdate.cart = [];
+    }
     userToUpdate.address = prepared.address;
     userToUpdate.city = prepared.city;
     userToUpdate.state = prepared.state;
@@ -183,7 +185,20 @@ export async function placeOrderRecord(
     }
     userToUpdate.updatedAt = new Date();
     extrasUpdates.push(userToUpdate.save());
-    extrasUpdates.push(Cart.findOneAndDelete({ userId: userToUpdate._id }));
+    if (!prepared.isBuyNow) {
+      extrasUpdates.push(Cart.findOneAndDelete({ userId: userToUpdate._id }));
+    } else {
+      // Direct Buy Now: preserve other cart items; remove only the bought item(s) if in cart
+      const boughtProductIds = prepared.verifiedProducts.map((p) =>
+        String(p.productId),
+      );
+      extrasUpdates.push(
+        Cart.findOneAndUpdate(
+          { userId: userToUpdate._id },
+          { $pull: { products: { productId: { $in: boughtProductIds } } } },
+        ),
+      );
+    }
   }
 
   await Promise.all(extrasUpdates);

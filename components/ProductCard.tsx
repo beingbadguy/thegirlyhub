@@ -162,7 +162,7 @@ export default function ProductCard({
     }
   };
 
-  const handleCardBuyNow = async (e: React.MouseEvent) => {
+  const handleCardBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       let defaultSize = "M";
@@ -175,8 +175,16 @@ export default function ProductCard({
         defaultSize = "One Size";
       }
 
-      await useAuthStore.getState().addToCart(product._id, defaultSize);
-      router.push("/checkout");
+      // Direct Buy Now: store only this item for checkout and do not pollute the cart
+      const buyNowItem = {
+        productId: product,
+        quantity: 1,
+        size: defaultSize,
+      };
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("girlyhub_buy_now", JSON.stringify(buyNowItem));
+      }
+      router.push("/checkout?buyNow=1");
     } catch (error) {
       console.error("Failed to buy now:", error);
     }

@@ -32,11 +32,23 @@ export default function AddToCartButton({
       return;
     }
 
+    if (buyNow) {
+      const buyNowItem = {
+        productId: productId,
+        quantity: 1,
+        size: "",
+      };
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("girlyhub_buy_now", JSON.stringify(buyNowItem));
+      }
+      router.push("/checkout?buyNow=1");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
       await useAuthStore.getState().addToCart(productId, "");
-      if (buyNow) router.push("/cart");
     } catch (error) {
       if (error instanceof AxiosError) {
         setError(error.response?.data?.message || "Could not add to cart");
