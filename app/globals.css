@@ -33,7 +33,9 @@ body {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins), sans-serif;
-  --font-serif: var(--font-bodoni-moda), serif;
+  --font-serif: var(--font-cormorant), var(--font-bodoni-moda), serif;
+  --font-cormorant: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-editorial: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
   --font-opaline: var(--font-bodoni-moda), serif;
   --font-magenda: var(--font-bodoni-moda), serif;
   --font-mono: var(--font-geist-mono);

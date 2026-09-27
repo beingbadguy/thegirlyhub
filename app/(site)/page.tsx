@@ -14,8 +14,8 @@ import {
   getSSRProducts,
 } from "@/lib/ssrData";
 
-// Dynamic imports for below-the-fold components to reduce initial critical JS bundle
 const OfferBanner = dynamic(() => import("@/components/OfferBanner"));
+const OurStorySection = dynamic(() => import("@/components/OurStorySection"));
 const HomeReviews = dynamic(() => import("@/components/HomeReviews"));
 const Newsletter = dynamic(() => import("@/components/Newsletter"));
 const Faqs = dynamic(() => import("@/components/Faqs"));
@@ -77,6 +77,9 @@ export default async function Home() {
 
         {/* Dynamic Below-the-fold Offer Countdown */}
         <OfferBanner />
+
+        {/* Server Component: Our Story Luxury Editorial */}
+        <OurStorySection />
 
         {/* Server Component: Trust Strip */}
         <TrustStrip />

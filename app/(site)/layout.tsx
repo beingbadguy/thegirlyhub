@@ -5,6 +5,7 @@ import {
   Bodoni_Moda,
   Poppins,
   Caveat,
+  Cormorant_Garamond,
 } from "next/font/google";
 import "./globals.css";
 import HeaderSection from "@/components/HeaderSection";
@@ -48,6 +49,14 @@ const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
   weight: "400",
+  display: "swap",
+});
+
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -138,7 +147,7 @@ export default function RootLayout({
         <JsonLd data={webSiteSchema} />
       </head>
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${caveat.variable} antialiased custom-scrollbar overflow-x-hidden`}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${caveat.variable} ${cormorantGaramond.variable} antialiased custom-scrollbar overflow-x-hidden`}
       >
         <AnnouncementBand />
         <SmoothScroll />

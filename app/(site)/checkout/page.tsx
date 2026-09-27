@@ -169,10 +169,11 @@ function CheckoutContent() {
               axios
                 .get(`/api/product/${pId}`)
                 .then((res) => {
-                  if (res.data?.product) {
+                  const prod = res.data?.product || res.data?.data;
+                  if (prod && typeof prod === "object") {
                     setBuyNowItem({
                       ...parsed,
-                      productId: res.data.product,
+                      productId: prod,
                     });
                   } else {
                     setBuyNowItem(parsed);
@@ -312,7 +313,7 @@ function CheckoutContent() {
   };
 
   const mappedCartItems = availableCartItems.map((item) => {
-    const p = item.productId;
+    const p = item.productId || {};
     const price = Number(
       p.discountedPrice ||
         p.price ||
@@ -320,9 +321,10 @@ function CheckoutContent() {
         (p as any).discountPrice ||
         0,
     );
+    const pId = p._id ? String(p._id) : (typeof p === "string" ? p : "");
     return {
-      productId: p._id || p,
-      quantity: item.quantity,
+      productId: pId,
+      quantity: Number(item.quantity) || 1,
       price,
       title: p.title || (p as any).name || "Product",
       image: p.image || (p as any).mainImage || (Array.isArray(p.images) ? p.images[0] : "") || "/final_gh.png",
@@ -369,25 +371,14 @@ function CheckoutContent() {
     phone,
     isBuyNow,
     couponCode: couponApplied ? promoCode : undefined,
-    products:
-      availableCartItems.map((item) => {
-        const p = item.productId;
-        const price = Number(
-          p.discountedPrice ||
-            p.price ||
-            (p as any).sellingPrice ||
-            (p as any).discountPrice ||
-            0,
-        );
-        return {
-          productId: p._id || p,
-          quantity: item.quantity,
-          size: item.size || "",
-          title: p.title || (p as any).name || "Product",
-          price: price,
-          image: p.image || (p as any).mainImage || (Array.isArray(p.images) ? p.images[0] : "") || "/final_gh.png",
-        };
-      }) ?? [],
+    products: mappedCartItems.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      size: item.size || "",
+      title: item.title || "Product",
+      price: item.price,
+      image: item.image || "/final_gh.png",
+    })),
   });
 
   const clearFieldError = (field: keyof OrderFieldErrors) => {

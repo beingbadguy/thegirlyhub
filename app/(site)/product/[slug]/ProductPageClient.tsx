@@ -37,6 +37,7 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { SiGooglepay, SiPaytm } from "react-icons/si";
 import { FaWhatsapp } from "react-icons/fa";
 import FloralAccent from "@/components/decorations/FloralAccent";
+import ProductDescriptionRenderer from "@/components/ProductDescriptionRenderer";
 
 type ReviewType = {
   _id?: string;
@@ -1339,9 +1340,11 @@ const ProductPageClient = ({
                 </div>
               )}
 
-              <p className="text-sm leading-relaxed text-neutral-600">
-                {product.shortDescription || product.description}
-              </p>
+              <ProductDescriptionRenderer
+                content={product.shortDescription || product.description}
+                isCompact
+                className="text-sm leading-relaxed text-neutral-600"
+              />
 
               {/* Sizes variants */}
               {sizesList.length > 0 && (
@@ -1636,9 +1639,9 @@ const ProductPageClient = ({
                   className="overflow-hidden"
                 >
                   <div className="pt-4 text-xs md:text-sm text-neutral-600 leading-relaxed font-sans">
-                    <pre className="overflow-auto whitespace-pre-wrap break-words font-sans">
-                      {product.longDescription || product.description || product.info}
-                    </pre>
+                    <ProductDescriptionRenderer
+                      content={product.longDescription || product.description || product.info}
+                    />
                   </div>
                 </motion.div>
               )}

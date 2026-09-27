@@ -7,7 +7,7 @@ export type StockProduct = {
 };
 
 export function isProductInStock(product: StockProduct | null | undefined): boolean {
-  if (!product) return false;
+  if (!product || typeof product !== "object") return false;
   if (
     product.status === "out_of_stock" ||
     product.status === "draft" ||
@@ -21,6 +21,6 @@ export function isProductInStock(product: StockProduct | null | undefined): bool
 }
 
 export function getAvailableQuantity(product: StockProduct | null | undefined): number {
-  if (!product || !isProductInStock(product)) return 0;
+  if (!product || typeof product !== "object" || !isProductInStock(product)) return 0;
   return product.countInStock ?? product.totalStock ?? product.stock ?? 0;
 }

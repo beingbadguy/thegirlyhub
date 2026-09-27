@@ -9,6 +9,8 @@ import FloralAccent from "@/components/decorations/FloralAccent";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import { generateBreadcrumbSchema } from "@/lib/seo/schema";
 
+import OurStorySection from "@/components/OurStorySection";
+
 export const metadata: Metadata = {
   title: "About Us | Our Story & Mission",
   description:
@@ -51,11 +53,12 @@ const AboutUs = () => {
           <span className="text-neutral-300">/</span>
           <span className="font-semibold text-neutral-900">About Us</span>
         </nav>
+
         {/* Hero Section */}
         <section className="text-center mb-8 md:mb-12">
           <div className="inline-flex items-center gap-2 mb-2">
             <FloralAccent flower={1} size="sm" animation="pulse" />
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 font-serif">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-normal text-[#4e1a27] font-cormorant tracking-[0.02em]">
               Discover the Sparkle of GirlyHub
             </h1>
             <FloralAccent flower={1} size="sm" animation="pulse" className="rotate-45" />
@@ -96,25 +99,22 @@ const AboutUs = () => {
           </div>
         </section>
 
-        {/* Quote Section */}
-        <section className="relative overflow-hidden bg-rose-50/60 border border-rose-100/80 rounded-3xl py-8 px-6 md:py-12 md:px-10 mb-8 md:mb-12 flex flex-col md:flex-row items-center gap-6 shadow-xs">
-          <div className="pointer-events-none absolute right-4 bottom-2 opacity-30 select-none hidden sm:block">
-            <FloralAccent flower={2} size="md" animation="float" />
-          </div>
-          <FaQuoteLeft className="text-rose-400 text-4xl md:text-5xl shrink-0" />
-          <blockquote className="text-gray-700 italic text-center md:text-left relative z-10">
-            <p className="mb-3 text-base md:text-lg">
-              &quot;We believe every girl deserves high quality, adorable accessories that make her feel confident and radiant every single day.&quot;
-            </p>
-            <cite className="text-rose-600 font-semibold not-italic">- The GirlyHub Team</cite>
-          </blockquote>
-        </section>
+        {/* Luxury Editorial Story Section */}
+        <OurStorySection
+          title="Our Story"
+          paragraphs={[
+            "GirlyHub is a curated, solutions-oriented accessories brand, crafted to bring everyday sparkle, effortless grace, and confidence to women across India.",
+            `"I've always believed that the little details define how we feel. A perfectly holding claw clip that doesn't pull your hair, a delicate hypoallergenic pendant that catches the sun, or dainty rings that make everyday moments feel special — every piece should celebrate you, effortlessly and comfortably."`,
+            "So we created GirlyHub, for the woman who creates, dreams, and defines her own style — accessories that blend premium quality with joyful designs, made for real, everyday life.",
+          ]}
+          signature="GirlyHub, curated with love"
+        />
 
         {/* Our Vision Section */}
         <section className="py-6 md:py-10 bg-white/70 backdrop-blur-xs border border-rose-100/60 rounded-3xl p-6 sm:p-8 shadow-xs">
           <div className="flex items-center gap-2 mb-4 justify-center md:justify-start">
             <FloralAccent flower={3} size="sm" animation="sway" />
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 flex items-center font-serif">
+            <h2 className="text-2xl md:text-3xl font-normal text-[#4e1a27] flex items-center font-cormorant">
               <HiOutlineSparkles className="text-pink-600 mr-2" /> Our Vision & Promise
             </h2>
           </div>

@@ -6,6 +6,7 @@ import {
   Darker_Grotesque,
   Caveat,
   Playfair_Display,
+  Cormorant_Garamond,
 } from "next/font/google";
 import NotFoundPage from "./(site)/not-found";
 import HeaderSection from "@/components/HeaderSection";
@@ -56,11 +57,19 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
 export default function RootNotFound() {
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} ${caveat.variable} ${playfair.variable} antialiased custom-scrollbar overflow-x-hidden`}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} ${caveat.variable} ${playfair.variable} ${cormorantGaramond.variable} antialiased custom-scrollbar overflow-x-hidden`}
       >
         <AnnouncementBand />
         <HeaderSection />
