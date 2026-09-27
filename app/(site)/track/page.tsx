@@ -8,6 +8,7 @@ import { MdErrorOutline } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
 import { Check, X, Clock, MapPin, Truck, CreditCard, Tag, Copy, CheckCheck, PackageCheck } from "lucide-react";
 import { productUrl } from "@/lib/slug";
+import BreadcrumbHome from "@/components/BreadcrumbHome";
 import CancelOrderModal from "@/components/CancelOrderModal";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
@@ -213,28 +214,51 @@ export default function TrackOrderPage() {
     order?.couponCode ? Math.max(0, subtotal + shippingCharge - firstOrderDiscount - (order?.totalAmount ?? 0)) : 0
   );
   return (
-    <div className="min-h-[80vh] bg-[#fffafc] px-4 py-8 sm:py-12">
-      <div className="mx-auto max-w-4xl space-y-6">
+    <div className="min-h-[80vh] bg-[#fffafb] px-4 py-6 sm:py-10 relative overflow-hidden">
+      {/* Background ambient florals */}
+      <div className="pointer-events-none absolute right-[-25px] top-24 hidden opacity-20 lg:block select-none">
+        <FloralAccent flower={1} size="xl" animation="float" />
+      </div>
+      <div className="pointer-events-none absolute left-[-20px] bottom-32 hidden opacity-20 lg:block select-none">
+        <FloralAccent flower={2} size="lg" animation="sway" />
+      </div>
+
+      <div className="mx-auto max-w-4xl space-y-6 relative z-10">
+        {/* Breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 text-xs md:text-sm text-neutral-500"
+        >
+          <BreadcrumbHome />
+          <span className="text-neutral-300">/</span>
+          <span className="font-semibold text-neutral-900 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200/50">
+            Track Order
+          </span>
+        </nav>
         
         {/* Search Header */}
-        <div className="relative overflow-hidden rounded-[1.75rem] bg-[#3d071e] px-5 py-7 text-white shadow-[0_18px_50px_rgba(91,13,55,0.16)] sm:px-8">
-          <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full border-[24px] border-white/10" />
+        <div className="relative overflow-hidden rounded-3xl sm:rounded-4xl bg-gradient-to-br from-[#4e1a27] via-[#5a1a2a] to-[#3a0f1b] px-6 py-8 text-white shadow-[0_18px_50px_rgba(78,26,39,0.18)] sm:px-10">
+          <div className="absolute -right-14 -top-16 h-48 w-48 rounded-full border-[20px] border-white/10" />
           <div className="pointer-events-none absolute -bottom-8 -right-8 opacity-25">
             <FloralAccent flower={1} size="lg" variant="float" />
           </div>
 
           <div className="relative z-10">
-            <div className="mb-5 flex items-start justify-between gap-4">
+            <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-pink-200">Delivery desk</p>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-pink-200 backdrop-blur-xs mb-2.5">
+                  Live Dispatch Desk
+                </span>
                 <div className="flex items-center gap-2.5">
-                  <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl font-serif">
+                  <h1 className="flex items-center gap-2 text-2xl sm:text-3xl md:text-4xl font-normal tracking-[0.01em] font-cormorant text-white">
                     <BsBoxSeam className="h-6 w-6 text-pink-300" />
-                    Track your order
+                    Track Your Parcel
                   </h1>
                   <FloralAccent flower={1} size="xs" variant="pulse" className="opacity-80" />
                 </div>
-                <p className="mt-2 max-w-md text-sm text-pink-100/75">Follow your parcel from preparation to your doorstep.</p>
+                <p className="mt-2 max-w-md text-xs sm:text-sm text-pink-100/80 leading-relaxed font-sans">
+                  Follow your accessories in real-time from our packing studio right to your doorstep.
+                </p>
               </div>
               <PackageCheck className="hidden h-12 w-12 text-pink-200/40 sm:block" />
             </div>

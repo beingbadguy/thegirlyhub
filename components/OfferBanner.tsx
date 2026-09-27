@@ -90,18 +90,18 @@ export default function OfferBanner() {
       <div className="relative z-10 flex flex-col items-center justify-between gap-6 md:flex-row md:gap-8 lg:gap-12">
         {/* Left: Heading & Promo Text */}
         <div className="text-center md:text-left max-w-md">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold tracking-wider text-white backdrop-blur-md border border-white/20 mb-3 shadow-xs">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3.5 py-1 text-[11px] font-semibold tracking-widest text-white backdrop-blur-md border border-white/25 mb-3 shadow-xs">
             <Sparkles className="size-3 text-amber-200" />
-            <span>FLASH OFFER • LIMITED TIME</span>
+            <span>LIMITED TIME SPARKLE OFFER</span>
           </div>
           <h2
             id="offer-heading"
-            className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight drop-shadow-xs"
+            className="font-cormorant text-3xl sm:text-4xl lg:text-5xl font-normal leading-tight drop-shadow-xs"
           >
-            Offer miss mat kar yaar <span aria-hidden="true">💖</span>
+            Special Treats For You <span aria-hidden="true">💖</span>
           </h2>
-          <p className="mt-2 text-xs sm:text-sm text-white/90 leading-relaxed">
-            Grab your favorite aesthetic hair claws & jewellery before the clock runs out!
+          <p className="mt-2 text-xs sm:text-sm text-white/90 leading-relaxed font-sans">
+            Grab your favorite aesthetic hair claws, satin scrunchies & jewellery before the clock runs out!
           </p>
         </div>
 

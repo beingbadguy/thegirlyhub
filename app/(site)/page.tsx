@@ -8,6 +8,7 @@ import TrustStrip from "@/components/TrustStrip";
 import HomeConnect from "@/components/HomeConnect";
 import StaggeringCategories from "@/components/StaggeringCategories";
 import InstagramShowcase from "@/components/InstagramShowcase";
+import FloralAccent from "@/components/decorations/FloralAccent";
 import {
   getSSRBanners,
   getSSRHomeCategories,
@@ -35,9 +36,23 @@ export default async function Home() {
     ]);
 
   return (
-    <main className="w-full">
+    <main className="w-full bg-[#fffafb] relative overflow-hidden">
+      {/* Background ambient florals for cohesive luxury aesthetic */}
+      <div className="pointer-events-none absolute right-[-30px] top-40 hidden opacity-25 lg:block select-none z-0">
+        <FloralAccent flower={1} size="xl" animation="float" />
+      </div>
+      <div className="pointer-events-none absolute left-[-25px] top-[32%] hidden opacity-20 lg:block select-none z-0">
+        <FloralAccent flower={3} size="lg" animation="sway" />
+      </div>
+      <div className="pointer-events-none absolute right-[-25px] top-[55%] hidden opacity-20 lg:block select-none z-0">
+        <FloralAccent flower={2} size="xl" animation="float-delayed" />
+      </div>
+      <div className="pointer-events-none absolute left-[-30px] top-[78%] hidden opacity-20 lg:block select-none z-0">
+        <FloralAccent flower={1} size="lg" animation="pulse" />
+      </div>
+
       {/* Category Navigation Strip */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <StaggeringCategories initialCategories={categories} />
       </div>
 
