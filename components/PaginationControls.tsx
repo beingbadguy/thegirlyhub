@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,16 +13,17 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
 
+  const safeCurrent = Math.max(1, Math.min(total, current));
   const pages: (number | "...")[] = [1];
 
-  if (current > 3) pages.push("...");
+  if (safeCurrent > 3) pages.push("...");
 
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
+  const start = Math.max(2, safeCurrent - 1);
+  const end = Math.min(total - 1, safeCurrent + 1);
 
   for (let i = start; i <= end; i++) pages.push(i);
 
-  if (current < total - 2) pages.push("...");
+  if (safeCurrent < total - 2) pages.push("...");
 
   pages.push(total);
   return pages;
@@ -40,81 +42,112 @@ export default function PaginationControls({
 }) {
   if (totalPages <= 1) return null;
 
-  const pages = getPageNumbers(page, totalPages);
+  const safePage = Math.max(1, Math.min(totalPages, page));
+  const pages = getPageNumbers(safePage, totalPages);
 
-  const btnBase =
-    "inline-flex size-9 items-center justify-center rounded-lg border border-rose-200 bg-white text-rose-700 transition hover:border-rose-300 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40";
+  const isPrevDisabled = safePage <= 1;
+  const isNextDisabled = safePage >= totalPages;
+
+  const btnIconBase =
+    "inline-flex size-9 items-center justify-center rounded-xl border border-rose-200/90 bg-white text-rose-700 shadow-2xs transition-all hover:border-rose-300 hover:bg-rose-50 active:scale-95 disabled:pointer-events-none disabled:opacity-40 cursor-pointer";
+
+  const btnNavBase =
+    "inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-rose-200/90 bg-white px-3 text-xs sm:text-sm font-semibold text-rose-800 shadow-2xs transition-all hover:border-rose-300 hover:bg-rose-50 active:scale-95 disabled:pointer-events-none disabled:opacity-40 cursor-pointer";
 
   return (
     <nav
-      className={`flex flex-wrap items-center justify-center gap-1.5 ${className}`}
-      aria-label="Pagination"
+      className={`flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 ${className}`}
+      aria-label="Pagination Navigation"
     >
+      {/* First Page Button */}
       <button
         type="button"
-        aria-label="First page"
-        disabled={page === 1}
-        onClick={() => onPageChange(1)}
-        className={btnBase}
+        title="First page"
+        aria-label="Go to first page"
+        disabled={isPrevDisabled}
+        onClick={() => {
+          if (!isPrevDisabled) onPageChange(1);
+        }}
+        className={btnIconBase}
       >
         <ChevronsLeft className="size-4" />
       </button>
 
+      {/* Prev Page Button with visible label */}
       <button
         type="button"
-        aria-label="Previous page"
-        disabled={page === 1}
-        onClick={() => onPageChange(page - 1)}
-        className={btnBase}
+        title="Previous page"
+        aria-label="Go to previous page"
+        disabled={isPrevDisabled}
+        onClick={() => {
+          if (!isPrevDisabled) onPageChange(safePage - 1);
+        }}
+        className={btnNavBase}
       >
-        <ChevronLeft className="size-4" />
+        <ChevronLeft className="size-4 flex-shrink-0" />
+        <span>Prev</span>
       </button>
 
-      {pages.map((p, idx) =>
-        p === "..." ? (
-          <span
-            key={`ellipsis-${idx}`}
-            className="px-1 text-sm text-rose-400"
-          >
-            …
-          </span>
-        ) : (
-          <button
-            key={p}
-            type="button"
-            aria-label={`Page ${p}`}
-            aria-current={p === page ? "page" : undefined}
-            onClick={() => onPageChange(p)}
-            className={`inline-flex size-9 items-center justify-center rounded-lg text-sm font-medium transition ${
-              p === page
-                ? "bg-rose-600 text-white shadow-sm"
-                : "border border-rose-200 bg-white text-rose-700 hover:border-rose-300 hover:bg-rose-50"
-            }`}
-          >
-            {p}
-          </button>
-        ),
-      )}
+      {/* Page Numbers */}
+      <div className="flex items-center gap-1">
+        {pages.map((p, idx) =>
+          p === "..." ? (
+            <span
+              key={`ellipsis-${idx}`}
+              className="px-1.5 text-sm font-bold text-rose-300 select-none"
+            >
+              …
+            </span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              aria-label={`Page ${p}`}
+              aria-current={p === safePage ? "page" : undefined}
+              onClick={() => {
+                if (p !== safePage) onPageChange(p);
+              }}
+              className={`inline-flex size-9 items-center justify-center rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                p === safePage
+                  ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200 ring-offset-1 pointer-events-none"
+                  : "border border-rose-200/80 bg-white text-neutral-700 hover:border-rose-300 hover:bg-rose-50 active:scale-95"
+              }`}
+            >
+              {p}
+            </button>
+          ),
+        )}
+      </div>
 
+      {/* Next Page Button with visible label */}
       <button
         type="button"
-        aria-label="Next page"
-        disabled={page === totalPages}
-        onClick={() => onPageChange(page + 1)}
-        className={btnBase}
+        title="Next page"
+        aria-label="Go to next page"
+        disabled={isNextDisabled}
+        onClick={() => {
+          if (!isNextDisabled) onPageChange(safePage + 1);
+        }}
+        className={btnNavBase}
       >
-        <ChevronRight className="size-4" />
+        <span>Next</span>
+        <ChevronRight className="size-4 flex-shrink-0" />
       </button>
 
+      {/* Last Page Button */}
       <button
         type="button"
-        aria-label="Last page"
-        disabled={page === totalPages}
-        onClick={() => onPageChange(totalPages)}
-        className={btnBase}
+        title="Last page"
+        aria-label="Go to last page"
+        disabled={isNextDisabled}
+        onClick={() => {
+          if (!isNextDisabled) onPageChange(totalPages);
+        }}
+        className={btnIconBase}
       >
         <ChevronsRight className="size-4" />
       </button>
     </nav>
   );
 }
+

@@ -3,7 +3,7 @@
 import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
 import { cachedApiGet } from "@/lib/apiCache";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Sparkles, SlidersHorizontal, ChevronDown } from "lucide-react";
 import FilterSidebar from "@/components/FilterSidebar";
@@ -26,13 +26,17 @@ export default function CategoryPageClient({
   initialTotal = 0,
   initialTotalPages = 1,
 }: CategoryPageClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const qPage = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+
   const hasInitial = Array.isArray(initialProducts) && initialProducts.length > 0;
   const [isInitialLoading, setIsInitialLoading] = useState(!hasInitial);
   const [isFetching, setIsFetching] = useState(false);
   const [products, setProducts] = useState<Product[]>(
     hasInitial ? (initialProducts as Product[]) : [],
   );
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(qPage);
   const [totalPages, setTotalPages] = useState(
     hasInitial ? initialTotalPages : 1,
   );
@@ -41,8 +45,14 @@ export default function CategoryPageClient({
   const [maxValue, setMaxValue] = useState(100000);
   const [debouncedMaxPrice, setDebouncedMaxPrice] = useState(100000);
   const [sortBy, setSortBy] = useState("default");
-  const router = useRouter();
   const hasLoadedOnce = useRef(hasInitial);
+  const isFirstMount = useRef(true);
+
+  // Sync state when URL searchParams change
+  useEffect(() => {
+    const urlPage = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+    setPage((prev) => (prev !== urlPage ? urlPage : prev));
+  }, [searchParams]);
 
   // Debounce max price slider
   useEffect(() => {
@@ -83,17 +93,40 @@ export default function CategoryPageClient({
   };
 
   useEffect(() => {
-    // If we have initial products and default filters on page 1, skip re-fetching
-    if (
-      hasInitial &&
-      page === 1 &&
-      debouncedMaxPrice === 100000 &&
-      sortBy === "default"
-    ) {
-      return;
+    // Only skip initial fetch if SSR already provided the products for page 1 on first render
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      if (
+        hasInitial &&
+        page === 1 &&
+        debouncedMaxPrice === 100000 &&
+        sortBy === "default"
+      ) {
+        return;
+      }
     }
     fetchProducts(page);
   }, [categoryName, page, debouncedMaxPrice, sortBy]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage === page || newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage > 1) {
+      params.set("page", String(newPage));
+    } else {
+      params.delete("page");
+    }
+    const qs = params.toString();
+    router.push(
+      qs
+        ? `/category/${encodeURIComponent(categoryName)}?${qs}`
+        : `/category/${encodeURIComponent(categoryName)}`,
+      { scroll: false },
+    );
+  };
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -107,6 +140,7 @@ export default function CategoryPageClient({
     setDebouncedMaxPrice(100000);
     setSortBy("default");
     setPage(1);
+    router.push(`/category/${encodeURIComponent(categoryName)}`);
   };
 
   return (
@@ -261,10 +295,7 @@ export default function CategoryPageClient({
               <PaginationControls
                 page={page}
                 totalPages={totalPages}
-                onPageChange={(p) => {
-                  setPage(p);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+                onPageChange={handlePageChange}
               />
             </div>
 

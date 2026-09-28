@@ -4,6 +4,7 @@ import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
 import axios from "axios";
 import { Search, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import FloralAccent from "@/components/decorations/FloralAccent";
@@ -11,12 +12,26 @@ import FloralAccent from "@/components/decorations/FloralAccent";
 type Products = React.ComponentProps<typeof ProductCard>["product"];
 
 export default function SearchClient() {
-  const [query, setQuery] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const urlQuery = searchParams.get("q") || searchParams.get("search") || "";
+  const urlPage = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+
+  const [query, setQuery] = useState(urlQuery);
   const [products, setProducts] = useState<Products[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(urlPage);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Sync state on browser back/forward
+  useEffect(() => {
+    const q = searchParams.get("q") || searchParams.get("search") || "";
+    const p = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+    setQuery(q);
+    setPage((prev) => (prev !== p ? p : prev));
+  }, [searchParams]);
 
   useEffect(() => {
     const timer = window.setTimeout(async () => {
@@ -44,6 +59,24 @@ export default function SearchClient() {
   useEffect(() => {
     setPage(1);
   }, [query]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage === page || newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage > 1) {
+      params.set("page", String(newPage));
+    } else {
+      params.delete("page");
+    }
+    if (query.trim()) {
+      params.set("q", query.trim());
+    }
+    const qs = params.toString();
+    router.push(qs ? `/search?${qs}` : "/search", { scroll: false });
+  };
 
   const grid = (items: Products[]) => (
     <div className="my-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -108,10 +141,7 @@ export default function SearchClient() {
                 <PaginationControls
                   page={page}
                   totalPages={totalPages}
-                  onPageChange={(p) => {
-                    setPage(p);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
+                  onPageChange={handlePageChange}
                 />
                 <p className="mt-3 text-center text-sm text-rose-900/50">
                   Showing page {page} of {totalPages} ({totalItems} products)

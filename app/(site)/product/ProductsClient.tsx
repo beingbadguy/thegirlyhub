@@ -74,6 +74,7 @@ export default function ProductsClient({
   const [sortBy, setSortBy] = useState<string>(qSort);
 
   const hasLoadedOnce = useRef(hasInitial);
+  const isFirstMount = useRef(true);
 
   // Sync state when URL searchParams change
   useEffect(() => {
@@ -86,7 +87,7 @@ export default function ProductsClient({
     setDebouncedMaxPrice(urlMaxPrice);
     setSelectedCategory(urlCategory);
     setSortBy(urlSort);
-    setPage(urlPage);
+    setPage((prev) => (prev !== urlPage ? urlPage : prev));
   }, [searchParams]);
 
   // Debounce max price slider to prevent rapid API requests and flicker
@@ -148,11 +149,31 @@ export default function ProductsClient({
 
   // Fetch products when filters or page change
   useEffect(() => {
-    if (hasInitial && isDefaultQuery && page === 1) {
-      return;
+    // Only skip the initial fetch if SSR already provided the products for the first render
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      if (hasInitial && isDefaultQuery && page === 1) {
+        return;
+      }
     }
     fetchAllProducts(page);
   }, [page, selectedCategory, debouncedMaxPrice, sortBy]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage === page || newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Sync URL so refreshing or browser back/forward maintains current page
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage > 1) {
+      params.set("page", String(newPage));
+    } else {
+      params.delete("page");
+    }
+    const qs = params.toString();
+    router.push(qs ? `/product?${qs}` : "/product", { scroll: false });
+  };
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -379,10 +400,7 @@ export default function ProductsClient({
               <PaginationControls
                 page={page}
                 totalPages={totalPages}
-                onPageChange={(p) => {
-                  setPage(p);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+                onPageChange={handlePageChange}
               />
             </div>
 
