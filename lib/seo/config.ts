@@ -20,7 +20,7 @@ export const SITE_CONFIG = {
     "affordable jewellery store",
   ],
   logo: "https://girlyhub.in/girlyhub_logo_flower_transparent.png",
-  ogImage: "https://girlyhub.in/girlyhub_logo_flower_transparent.png",
+  ogImage: "https://girlyhub.in/og.png",
   socials: {
     instagram: "https://www.instagram.com/officialgirlyhub",
     facebook: "https://www.facebook.com/officialgirlyhub",

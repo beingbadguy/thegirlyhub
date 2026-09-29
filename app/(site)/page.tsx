@@ -28,22 +28,31 @@ const CountVisitor = dynamic(() => import("@/components/CountVisitor"));
 export const revalidate = 60; // Revalidate every 60 seconds (ISR hybrid)
 
 export const metadata: Metadata = {
-  title: { absolute: SITE_CONFIG.defaultTitle },
-  description: SITE_CONFIG.defaultDescription,
+  title: { absolute: "Trendy Earrings @ ₹109 | GirlyHub" },
+  description:
+    "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
   alternates: { canonical: SITE_CONFIG.url },
   openGraph: {
-    title: SITE_CONFIG.defaultTitle,
-    description: SITE_CONFIG.defaultDescription,
+    title: "Trendy Earrings @ ₹109 | GirlyHub",
+    description: "Free delivery + COD available. Shop now!",
     url: SITE_CONFIG.url,
     siteName: SITE_CONFIG.name,
     type: "website",
-    images: [{ url: SITE_CONFIG.ogImage, width: 1200, height: 630, alt: "GirlyHub jewellery and accessories" }],
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Trendy Earrings @ ₹109 | GirlyHub",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_CONFIG.defaultTitle,
-    description: SITE_CONFIG.defaultDescription,
-    images: [SITE_CONFIG.ogImage],
+    title: "Trendy Earrings @ ₹109 | GirlyHub",
+    description:
+      "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
+    images: ["/og.png"],
   },
 };
 

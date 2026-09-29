@@ -96,7 +96,7 @@ export const metadata: Metadata = {
     description: SITE_CONFIG.defaultDescription,
     images: [
       {
-        url: "/girlyhub_logo_flower_transparent.png",
+        url: "/og.png",
         width: 1200,
         height: 630,
         alt: `${SITE_CONFIG.name} - Trendy Jewellery & Accessories`,
@@ -107,7 +107,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SITE_CONFIG.defaultTitle,
     description: SITE_CONFIG.defaultDescription,
-    images: ["/girlyhub_logo_flower_transparent.png"],
+    images: ["/og.png"],
   },
   robots: {
     index: true,
