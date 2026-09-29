@@ -24,13 +24,13 @@ export default function CategoryEmptyState({
 
       {/* Decorative Shopping Bag Illustration */}
       <div className="relative inline-block my-0 sm:my-1">
-        {/* Top-Right Cursive Note: "Kuch aur dekho?" */}
-        <div className="absolute -top-5 -right-12 sm:-right-18 flex flex-col items-start select-none pointer-events-none">
+        {/* Top-Right Cursive Note: "Discover more?" */}
+        <div className="absolute -top-5 -right-10 sm:-right-16 flex flex-col items-start select-none pointer-events-none">
           <span
-            className="text-[#6E4F58] text-lg sm:text-xl leading-none rotate-[6deg]"
+            className="text-[#6E4F58] text-base sm:text-lg leading-none rotate-[4deg]"
             style={{ fontFamily: "var(--font-caveat), 'Caveat', cursive" }}
           >
-            Kuch aur dekho?
+            Discover more?
           </span>
           <svg className="w-9 h-4 -mt-0.5 -ml-1 text-[#ECAFB9]" viewBox="0 0 50 25" fill="none">
             <path d="M4 18 C 14 4, 28 24, 44 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
