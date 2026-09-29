@@ -5,7 +5,7 @@ import Category from "@/models/category.model";
 import { buildProductSlug } from "@/lib/slug";
 import { SITE_CONFIG } from "@/lib/seo/config";
 
-export const revalidate = 3600; // Cache sitemap for 1 hour
+export const revalidate = 60; // Revalidate every 60 seconds for fresh updates when new products/categories are added
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE_CONFIG.url;

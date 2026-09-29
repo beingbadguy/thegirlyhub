@@ -15,6 +15,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import AnnouncementBand from "@/components/AnnouncementBand";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import StickyMenuBar from "@/components/StickyMenuBar";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import {
@@ -139,6 +140,8 @@ export default function RootLayout({
 }>) {
   const organizationSchema = generateOrganizationSchema();
   const webSiteSchema = generateWebSiteSchema();
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+  const isProduction = process.env.NODE_ENV === "production";
 
   return (
     <html lang="en">
@@ -161,6 +164,7 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
       </body>
+      {isProduction && gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
   );
 }
