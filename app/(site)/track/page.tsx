@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
+import Image from "next/image";
 import { FaSearch } from "react-icons/fa";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { MdErrorOutline } from "react-icons/md";
@@ -375,16 +376,20 @@ export default function TrackOrderPage() {
                     <div key={idx} className="flex gap-3 items-start p-3 bg-gray-50/50 border border-gray-100 rounded-xl">
                       {itemUrl ? (
                         <Link href={itemUrl} className="w-14 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0 transition hover:opacity-80">
-                          <img
+                          <Image
                             src={getProductImage(item)}
                             alt={getProductTitle(item)}
+                            width={56}
+                            height={64}
                             className="w-full h-full object-cover"
                           />
                         </Link>
                       ) : (
-                        <img
+                        <Image
                           src={getProductImage(item)}
                           alt={getProductTitle(item)}
+                          width={56}
+                          height={64}
                           className="w-14 h-16 object-cover rounded-lg bg-gray-100 shrink-0"
                         />
                       )}

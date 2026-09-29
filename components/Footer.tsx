@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import React from "react";
 import {
   FaFacebookF,
@@ -23,9 +24,11 @@ const Footer = () => {
 
       {/* Bow – centered on the top edge */}
       <div className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
-        <img
+        <Image
           src="/bow.png"
           alt="Decorative bow"
+          width={96}
+          height={96}
           className="h-20 w-auto object-contain drop-shadow-md sm:h-24"
         />
       </div>

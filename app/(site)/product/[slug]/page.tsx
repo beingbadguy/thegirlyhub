@@ -108,7 +108,7 @@ export async function generateMetadata({
   const cleanDescription = rawDescription
     .replace(/<[^>]*>/g, "")
     .trim()
-    .slice(0, 160);
+    .slice(0, 155);
 
   const images: string[] = [];
   if (Array.isArray(product.images) && product.images.length > 0) {
@@ -125,13 +125,13 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${titleText} | Buy Online at ₹${price} | ${SITE_CONFIG.name}`,
+    title: { absolute: `${titleText.slice(0, 44)} | ${SITE_CONFIG.name}` },
     description: cleanDescription,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: `${titleText} | ${SITE_CONFIG.name}`,
+      title: `${titleText.slice(0, 48)} | ${SITE_CONFIG.name}`,
       description: cleanDescription,
       url: canonicalUrl,
       siteName: SITE_CONFIG.name,
@@ -145,7 +145,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${titleText} | ${SITE_CONFIG.name}`,
+      title: `${titleText.slice(0, 48)} | ${SITE_CONFIG.name}`,
       description: cleanDescription,
       images,
     },

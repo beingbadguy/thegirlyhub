@@ -148,9 +148,9 @@ export default function OfferBanner() {
               reduceMotion
                 ? undefined
                 : {
-                    scale: 1.05,
-                    boxShadow: "0 14px 28px rgba(126, 34, 61, 0.28)",
-                  }
+                  scale: 1.05,
+                  boxShadow: "0 14px 28px rgba(126, 34, 61, 0.28)",
+                }
             }
             whileTap={reduceMotion ? undefined : { scale: 0.97 }}
             className="inline-flex items-center gap-2.5 rounded-full bg-[#ffe7a8] px-7 py-3.5 text-sm font-bold text-[#7c3f4e] shadow-[0_10px_22px_rgba(126,34,61,0.18)] transition-all duration-200 hover:bg-[#fff0c7] active:scale-95"

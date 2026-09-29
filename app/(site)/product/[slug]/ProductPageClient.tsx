@@ -2067,7 +2067,7 @@ const ProductPageClient = ({
           You May Also Like{" "}
           <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
         </h2>
-        <div className="my-4 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <div className="my-4 grid grid-cols-2 gap-2.5 sm:gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4">
           {similarProducts.length > 0 ? (
             similarProducts.map((p) => <ProductCard key={p._id} product={p} />)
           ) : (
@@ -2083,7 +2083,7 @@ const ProductPageClient = ({
           <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-neutral-800 md:text-xl">
             Recently viewed <Clock3 className="size-4 text-rose-500" />
           </h2>
-          <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4">
             {recentlyViewedProducts.map((recentProduct) => (
               <ProductCard key={recentProduct._id} product={recentProduct} />
             ))}
@@ -2199,10 +2199,12 @@ const ProductPageClient = ({
                 }}
                 className="relative max-h-[78vh] max-w-[92vw] flex items-center justify-center will-change-transform"
               >
-                <img
+                <Image
                   key={lightboxImage}
                   src={lightboxImage}
                   alt="Fullscreen Product View"
+                  width={1600}
+                  height={1600}
                   draggable={false}
                   className="max-h-[76vh] max-w-[88vw] object-contain shadow-2xl rounded-sm select-none pointer-events-none"
                 />
@@ -2235,9 +2237,11 @@ const ProductPageClient = ({
                           : "opacity-45 hover:opacity-85"
                       }`}
                     >
-                      <img
+                      <Image
                         src={thumb}
                         alt={`Thumbnail ${tIdx + 1}`}
+                        width={44}
+                        height={44}
                         className="h-full w-full object-cover"
                       />
                     </button>

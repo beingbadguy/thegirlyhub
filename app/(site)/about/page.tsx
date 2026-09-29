@@ -25,7 +25,7 @@ import { generateBreadcrumbSchema } from "@/lib/seo/schema";
 import OurStorySection from "@/components/OurStorySection";
 
 export const metadata: Metadata = {
-  title: "About Us | Our Story, Mission & Craft",
+  title: "About GirlyHub",
   description:
     "Discover the story behind GirlyHub — handcrafted hair claws, hypoallergenic dainty jewellery, satin scrunchies, and cute daily essentials delivered across India with love.",
   alternates: {
@@ -154,7 +154,7 @@ const AboutUs = () => {
   ]);
 
   return (
-    <div className="py-6 sm:py-10 bg-[#fffafb] min-h-[70vh] relative overflow-hidden">
+    <main className="py-6 sm:py-10 bg-[#fffafb] min-h-[70vh] relative overflow-hidden">
       {/* Background ambient florals */}
       <div className="pointer-events-none absolute right-[-20px] top-28 hidden opacity-25 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -465,7 +465,7 @@ const AboutUs = () => {
           </div>
         </section>
       </div>
-    </div>
+    </main>
   );
 };
 

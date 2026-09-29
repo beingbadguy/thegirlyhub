@@ -263,7 +263,7 @@ export default function CategoryPageClient({
         {/* Content Area */}
         {isInitialLoading ? (
           /* Shimmer Skeleton */
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, idx) => (
               <div
                 key={idx}
@@ -284,7 +284,7 @@ export default function CategoryPageClient({
               isFetching ? "opacity-60 pointer-events-none" : "opacity-100"
             }`}
           >
-            <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <section className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.map((product) => (
                 <ProductCard key={product._id} product={product} />
               ))}

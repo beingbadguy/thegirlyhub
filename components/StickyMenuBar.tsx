@@ -19,14 +19,14 @@ const StickyMenuBar = () => {
   const cartCount =
     userCart?.products !== undefined
       ? userCart.products
-          .filter((item) => item.productId)
-          .reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
+        .filter((item) => item.productId)
+        .reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
       : (typeof window !== "undefined" && !user
-          ? readGuestCart().reduce(
-              (sum, item) => sum + (Number(item.quantity) || 1),
-              0,
-            )
-          : 0);
+        ? readGuestCart().reduce(
+          (sum, item) => sum + (Number(item.quantity) || 1),
+          0,
+        )
+        : 0);
   const wishlistCount = userWishlist?.products?.length ?? 0;
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const StickyMenuBar = () => {
       href: user ? "/profile" : "/login",
     },
     { name: "Collections", icon: MdDashboard, href: "/category" },
-    { name: "Wishlist", icon: Heart, href: "/wishlist"},
+    { name: "Wishlist", icon: Heart, href: "/wishlist" },
     { name: "Cart", icon: BsBagHeart, href: "/cart", badge: cartCount },
   ];
 
@@ -86,8 +86,8 @@ const StickyMenuBar = () => {
                 <Icon
                   size={22}
                   className={`transition-colors ${item.name === "Wishlist" && typeof item.badge === "number" && item.badge > 0
-                      ? " "
-                      : ""
+                    ? " "
+                    : ""
                     }`}
                 />
 

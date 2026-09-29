@@ -53,7 +53,7 @@ export default function HeroBannerSlider({
         setBanners(data.banners);
         setActiveIndex(0);
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       mounted = false;
@@ -267,11 +267,10 @@ export default function HeroBannerSlider({
               type="button"
               aria-label={`Go to slide ${index + 1}`}
               onClick={() => setActiveIndex(index)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                index === activeIndex
+              className={`h-1.5 rounded-full transition-all duration-300 ${index === activeIndex
                   ? "w-6 bg-rose-700"
                   : "w-1.5 bg-neutral-300 hover:bg-neutral-400"
-              }`}
+                }`}
             />
           ))}
         </div>

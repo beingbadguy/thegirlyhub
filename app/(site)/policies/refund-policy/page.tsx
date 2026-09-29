@@ -9,11 +9,19 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${SITE_CONFIG.url}/policies/refund-policy`,
   },
+  openGraph: {
+    title: `Return & Refund Policy | ${SITE_CONFIG.name}`,
+    description: "Read the GirlyHub return, refund, and exchange policy for accessories and jewellery orders.",
+    url: `${SITE_CONFIG.url}/policies/refund-policy`,
+    type: "website",
+    images: [SITE_CONFIG.ogImage],
+  },
+  twitter: { card: "summary_large_image", images: [SITE_CONFIG.ogImage] },
 };
 
 export default function RefundPolicy() {
   return (
-    <div className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+    <main className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
       {/* Background ambient flower */}
       <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -155,6 +163,6 @@ export default function RefundPolicy() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

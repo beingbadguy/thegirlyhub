@@ -9,14 +9,14 @@ import { getSSRHomeCategories } from "@/lib/ssrData";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Shop All Categories | Trendy Accessories & Jewellery",
+  title: "Shop Categories",
   description:
     "Explore all product categories at GirlyHub. Discover stylish hair accessories, Korean clips, scrunchies, earrings, and fashion jewellery.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/category`,
   },
   openGraph: {
-    title: `Shop All Categories | ${SITE_CONFIG.name}`,
+    title: `Shop Categories | ${SITE_CONFIG.name}`,
     description:
       "Explore all product categories at GirlyHub. Discover stylish hair accessories, Korean clips, scrunchies, earrings, and fashion jewellery.",
     url: `${SITE_CONFIG.url}/category`,
@@ -40,7 +40,7 @@ export default async function CategoryIndexPage() {
   ]);
 
   return (
-    <div className="min-h-[70vh] bg-[#fffafb]">
+    <main className="min-h-[70vh] bg-[#fffafb]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <JsonLd data={breadcrumbSchema} />
         <nav
@@ -57,7 +57,6 @@ export default async function CategoryIndexPage() {
           initialCategories={categories}
         />
       </div>
-    </div>
+    </main>
   );
 }
-

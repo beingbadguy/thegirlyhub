@@ -14,7 +14,7 @@ import { Sparkles, Heart, ShieldCheck, Truck, Flame } from "lucide-react";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "New Arrivals | Latest Korean Hair Accessories & Dainty Jewellery",
+  title: "New Arrivals: Hair Accessories",
   description:
     "Discover the freshest drops at GirlyHub. Explore trending hair claws, new earrings, bows, scrunchies, and aesthetic accessories just added to our collection.",
   alternates: {
@@ -37,7 +37,7 @@ export default async function NewArrivalsPage() {
   ]);
 
   return (
-    <div className="min-h-[75vh] bg-[#fffafb] relative overflow-hidden py-6 sm:py-10">
+    <main className="min-h-[75vh] bg-[#fffafb] relative overflow-hidden py-6 sm:py-10">
       {/* Background ambient florals */}
       <div className="pointer-events-none absolute right-[-25px] top-24 hidden opacity-25 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -108,6 +108,6 @@ export default async function NewArrivalsPage() {
         {/* Product Grid */}
         <NewArrivals limit={100} initialProducts={products} />
       </div>
-    </div>
+    </main>
   );
 }

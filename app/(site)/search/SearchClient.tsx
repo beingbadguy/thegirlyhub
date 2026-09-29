@@ -79,7 +79,7 @@ export default function SearchClient() {
   };
 
   const grid = (items: Products[]) => (
-    <div className="my-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+    <div className="my-4 grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
       {items.map((product) => (
         <ProductCard key={product._id} product={product} />
       ))}

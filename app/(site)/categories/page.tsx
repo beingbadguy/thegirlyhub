@@ -12,7 +12,7 @@ import { Sparkles, Heart, ShieldCheck, Truck } from "lucide-react";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Explore Categories | Trendy Hair Claws, Jewellery & Accessories",
+  title: "Explore Categories",
   description:
     "Browse through GirlyHub's curated collections. From everyday Korean claw clips to anti-tarnish jewellery, satin scrunchies, and cute daily essentials.",
   alternates: {
@@ -35,7 +35,7 @@ export default async function CategoriesPage() {
   ]);
 
   return (
-    <div className="min-h-[75vh] bg-[#fffafb] relative overflow-hidden py-6 sm:py-10">
+    <main className="min-h-[75vh] bg-[#fffafb] relative overflow-hidden py-6 sm:py-10">
       {/* Background ambient florals */}
       <div className="pointer-events-none absolute right-[-25px] top-24 hidden opacity-25 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -105,6 +105,6 @@ export default async function CategoriesPage() {
           />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

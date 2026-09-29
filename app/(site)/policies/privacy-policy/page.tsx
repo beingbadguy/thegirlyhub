@@ -9,11 +9,19 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${SITE_CONFIG.url}/policies/privacy-policy`,
   },
+  openGraph: {
+    title: `Privacy Policy | ${SITE_CONFIG.name}`,
+    description: "Learn how GirlyHub collects, protects, and uses your personal data securely.",
+    url: `${SITE_CONFIG.url}/policies/privacy-policy`,
+    type: "website",
+    images: [SITE_CONFIG.ogImage],
+  },
+  twitter: { card: "summary_large_image", images: [SITE_CONFIG.ogImage] },
 };
 
 export default function PrivacyPolicy() {
   return (
-    <div className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+    <main className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
       {/* Background ambient flower */}
       <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -135,6 +143,6 @@ export default function PrivacyPolicy() {
         </div>
       </div>
     </div>
-  </div>
+    </main>
   );
 }

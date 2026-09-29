@@ -69,7 +69,7 @@ export default function RootNotFound() {
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} ${caveat.variable} ${playfair.variable} ${cormorantGaramond.variable} antialiased custom-scrollbar overflow-x-hidden`}
+        className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} ${caveat.variable} ${playfair.variable} ${cormorantGaramond.variable} antialiased custom-scrollbar overflow-x-clip`}
       >
         <AnnouncementBand />
         <HeaderSection />

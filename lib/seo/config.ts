@@ -4,9 +4,9 @@ export const SITE_CONFIG = {
   domain: "girlyhub.in",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://girlyhub.in",
   tagline: "Trendy Jewellery, Hair Accessories & Scrunchies",
-  defaultTitle: "GirlyHub | Trendy Jewellery, Hair Accessories & Scrunchies",
+  defaultTitle: "GirlyHub: Jewellery & Accessories",
   defaultDescription:
-    "Shop premium hair accessories, Korean hair claws, scrunchies, aesthetic jewellery, earrings, and lifestyle essentials at GirlyHub with COD and fast delivery across India.",
+    "Shop hair accessories, Korean claws, scrunchies, jewellery, earrings, and lifestyle essentials at GirlyHub with COD delivery across India.",
   defaultKeywords: [
     "GirlyHub",
     "hair accessories",

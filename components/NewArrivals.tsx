@@ -85,7 +85,7 @@ const NewArrivals = ({
           <Skeleton className="mx-auto h-4 w-28 rounded-full" />
           <Skeleton className="mx-auto mt-4 h-10 w-56" />
         </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
           {[...Array(8)].map((_, index) => (
             <div key={index} className="rounded-2xl bg-white p-3">
               <Skeleton className="mb-4 aspect-[4/3] w-full rounded-xl" />
@@ -125,7 +125,7 @@ const NewArrivals = ({
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} showActions />
             ))}

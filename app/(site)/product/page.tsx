@@ -9,14 +9,14 @@ import { getSSRHomeCategories, getSSRProducts } from "@/lib/ssrData";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Shop All Products | Hair Accessories, Jewellery & More",
+  title: "Shop Hair Accessories & Jewellery",
   description:
     "Explore the complete catalog at GirlyHub. Find stylish hair clips, Korean claws, scrunchies, earrings, necklaces, and chic fashion accessories.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/product`,
   },
   openGraph: {
-    title: `Shop All Products | ${SITE_CONFIG.name}`,
+    title: `Shop Hair Accessories | ${SITE_CONFIG.name}`,
     description:
       "Explore the complete catalog at GirlyHub. Find stylish hair clips, Korean claws, scrunchies, earrings, necklaces, and chic fashion accessories.",
     url: `${SITE_CONFIG.url}/product`,
@@ -49,4 +49,3 @@ export default async function ProductsPage() {
     </>
   );
 }
-

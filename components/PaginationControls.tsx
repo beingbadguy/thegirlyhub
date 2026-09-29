@@ -107,11 +107,10 @@ export default function PaginationControls({
               onClick={() => {
                 if (p !== safePage) onPageChange(p);
               }}
-              className={`inline-flex size-9 items-center justify-center rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                p === safePage
+              className={`inline-flex size-9 items-center justify-center rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${p === safePage
                   ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200 ring-offset-1 pointer-events-none"
                   : "border border-rose-200/80 bg-white text-neutral-700 hover:border-rose-300 hover:bg-rose-50 active:scale-95"
-              }`}
+                }`}
             >
               {p}
             </button>

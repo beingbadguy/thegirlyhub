@@ -2,6 +2,7 @@
 
 import { Heart, Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Reveal, Stagger } from "@/components/MotionEffects";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
@@ -111,9 +112,11 @@ export default function HomeReviews() {
                 {/* Image */}
                 {review.image ? (
                   <div className="relative mb-3.5 h-44 w-full overflow-hidden rounded-xl bg-rose-50/40">
-                    <img
+                    <Image
                       src={review.image}
                       alt={review.product?.title || "Review image"}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                       loading="lazy"
                     />

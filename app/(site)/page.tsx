@@ -14,6 +14,9 @@ import {
   getSSRHomeCategories,
   getSSRProducts,
 } from "@/lib/ssrData";
+import type { Metadata } from "next";
+import JsonLd from "@/components/seo/JsonLd";
+import { SITE_CONFIG } from "@/lib/seo/config";
 
 const OfferBanner = dynamic(() => import("@/components/OfferBanner"));
 const OurStorySection = dynamic(() => import("@/components/OurStorySection"));
@@ -23,6 +26,26 @@ const Faqs = dynamic(() => import("@/components/Faqs"));
 const CountVisitor = dynamic(() => import("@/components/CountVisitor"));
 
 export const revalidate = 60; // Revalidate every 60 seconds (ISR hybrid)
+
+export const metadata: Metadata = {
+  title: { absolute: SITE_CONFIG.defaultTitle },
+  description: SITE_CONFIG.defaultDescription,
+  alternates: { canonical: SITE_CONFIG.url },
+  openGraph: {
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    url: SITE_CONFIG.url,
+    siteName: SITE_CONFIG.name,
+    type: "website",
+    images: [{ url: SITE_CONFIG.ogImage, width: 1200, height: 630, alt: "GirlyHub jewellery and accessories" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    images: [SITE_CONFIG.ogImage],
+  },
+};
 
 export default async function Home() {
   // Parallel fetch server-side datasets with lean projections
@@ -37,6 +60,17 @@ export default async function Home() {
 
   return (
     <main className="w-full bg-[#fffafb] relative overflow-hidden">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "@id": `${SITE_CONFIG.url}/#webpage`,
+          name: SITE_CONFIG.defaultTitle,
+          url: SITE_CONFIG.url,
+          description: SITE_CONFIG.defaultDescription,
+          isPartOf: { "@id": `${SITE_CONFIG.url}/#website` },
+        }}
+      />
       {/* Background ambient florals for cohesive luxury aesthetic */}
       <div className="pointer-events-none absolute right-[-30px] top-40 hidden opacity-25 lg:block select-none z-0">
         <FloralAccent flower={1} size="xl" animation="float" />

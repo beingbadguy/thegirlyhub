@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { cachedApiGet } from "@/lib/apiCache";
 import { Heart } from "lucide-react";
 import {
@@ -50,10 +51,12 @@ const Faqs = () => {
       {faqSchema && <JsonLd data={faqSchema} />}
       <div className="relative overflow-hidden rounded-3xl border border-rose-100/60 bg-[#FFF9FA] px-6 py-12  sm:px-10 md:grid md:grid-cols-2 md:gap-16 md:px-16 md:py-16">
         {/* Very subtle background hearts */}
-        <img
+        <Image
           src="/hearts.png"
           alt=""
           aria-hidden="true"
+          fill
+          sizes="100vw"
           className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center opacity-[0.12]"
         />
 
@@ -110,4 +113,3 @@ const Faqs = () => {
 };
 
 export default Faqs;
-

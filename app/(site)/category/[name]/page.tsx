@@ -41,17 +41,18 @@ export async function generateMetadata({
     console.error("Error fetching category metadata:", err);
   }
 
-  const title = `${categoryName} Collection | Buy ${categoryName} Online | ${SITE_CONFIG.name}`;
+  const title = `${categoryName.slice(0, 37)} Collection`;
+  const description = categoryDesc.replace(/<[^>]*>/g, "").trim().slice(0, 155);
 
   return {
     title,
-    description: categoryDesc.slice(0, 160),
+    description,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
       title,
-      description: categoryDesc,
+      description,
       url: canonicalUrl,
       siteName: SITE_CONFIG.name,
       type: "website",
@@ -67,7 +68,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description: categoryDesc,
+      description,
       images: ["/girlyhub_logo_flower_transparent.png"],
     },
   };
@@ -107,4 +108,3 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     </>
   );
 }
-

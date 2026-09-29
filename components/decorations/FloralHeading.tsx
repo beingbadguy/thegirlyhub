@@ -30,8 +30,8 @@ export default function FloralHeading({
     align === "center"
       ? "text-center items-center justify-center"
       : align === "right"
-      ? "text-right items-end justify-end"
-      : "text-left items-start justify-start";
+        ? "text-right items-end justify-end"
+        : "text-left items-start justify-start";
 
   return (
     <div className={`relative mb-6 sm:mb-8 flex flex-col ${alignClass} ${className}`}>

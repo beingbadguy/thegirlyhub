@@ -210,11 +210,11 @@ export default function ProductCard({
 
   return (
     <div
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-neutral-100/80 shadow-xs hover:shadow-md transition-all duration-300 md:p-3 p-1.5 ${className}`}
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-neutral-100/90 shadow-xs hover:shadow-md transition-all duration-300 ${className}`}
     >
-      {/* Image Container */}
+      {/* Image Container - edge-to-edge with card for maximum size */}
       <div
-        className="relative aspect-square w-full overflow-hidden rounded-xl bg-neutral-50 cursor-pointer select-none touch-pan-y"
+        className="relative aspect-square w-full overflow-hidden bg-neutral-50 cursor-pointer select-none touch-pan-y"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={goToProduct}
@@ -230,17 +230,17 @@ export default function ProductCard({
       >
         {/* Out of Stock or Discount Badge on the top left */}
         {!inStock ? (
-          <div className="absolute left-3 top-3 z-10 rounded-full bg-neutral-900/85 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white shadow-xs uppercase tracking-wider">
+          <div className="absolute left-2 top-2 sm:left-2.5 sm:top-2.5 z-10 rounded-full bg-neutral-900/85 backdrop-blur-xs px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-xs uppercase tracking-wider">
             Out of Stock
           </div>
         ) : product.discountPercentage > 0 ? (
-          <div className="absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-semibold text-rose-600 shadow-sm border border-neutral-100/50 uppercase tracking-wider">
+          <div className="absolute left-2 top-2 sm:left-2.5 sm:top-2.5 z-10 rounded-full bg-white/95 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold text-rose-600 shadow-sm border border-neutral-100/50 uppercase tracking-wider">
             {Math.floor(product.discountPercentage)}% Off
           </div>
         ) : null}
 
         {/* Wishlist/Close Button on the top right */}
-        <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+        <div className="absolute right-2 top-2 sm:right-2.5 sm:top-2.5 z-10 flex items-center gap-1.5">
           {!onRemove && (
             <button
               type="button"
@@ -249,11 +249,10 @@ export default function ProductCard({
                   ? "In wishlist"
                   : "Add to wishlist"
               }
-              className={`group/heart flex size-8 items-center justify-center rounded-full bg-white shadow-md active:scale-95 border transition-all duration-200 cursor-pointer ${
-                user && alreadyInWishlist
+              className={`group/heart flex size-7 sm:size-8 items-center justify-center rounded-full bg-white shadow-md active:scale-95 border transition-all duration-200 cursor-pointer ${user && alreadyInWishlist
                   ? "border-rose-300 bg-rose-50/80 hover:bg-rose-100 shadow-rose-200/50"
                   : "border-neutral-100/80 hover:border-rose-300 hover:bg-rose-50/40 hover:scale-110"
-              }`}
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (user) {
@@ -264,9 +263,9 @@ export default function ProductCard({
               }}
             >
               {user && alreadyInWishlist ? (
-                <Heart className="size-4 fill-rose-500 text-rose-500 transition-transform duration-200 group-hover/heart:scale-110" />
+                <Heart className="size-3.5 sm:size-4 fill-rose-500 text-rose-500 transition-transform duration-200 group-hover/heart:scale-110" />
               ) : (
-                <Heart className="size-4 text-neutral-400 group-hover/heart:text-rose-500 group-hover/heart:stroke-rose-500 transition-all duration-200" />
+                <Heart className="size-3.5 sm:size-4 text-neutral-400 group-hover/heart:text-rose-500 group-hover/heart:stroke-rose-500 transition-all duration-200" />
               )}
             </button>
           )}
@@ -274,13 +273,13 @@ export default function ProductCard({
             <button
               type="button"
               aria-label="Remove"
-              className="flex size-8 items-center justify-center rounded-full bg-white text-rose-500 shadow-md hover:bg-rose-50"
+              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white text-rose-500 shadow-md hover:bg-rose-50 active:scale-95"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove();
               }}
             >
-              <IoCloseOutline className="size-5" />
+              <IoCloseOutline className="size-4 sm:size-5" />
             </button>
           )}
         </div>
@@ -295,56 +294,55 @@ export default function ProductCard({
               fill
               draggable={false}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className={`object-cover transition-all duration-300 ease-out group-hover:scale-105 pointer-events-none select-none ${
-                idx === activeImageIndex
+              className={`object-cover transition-all duration-300 ease-out group-hover:scale-105 pointer-events-none select-none ${idx === activeImageIndex
                   ? "opacity-100 z-1"
                   : "opacity-0 z-0"
-              }`}
+                }`}
             />
           ))}
         </div>
 
         {/* Slideshow dots indicator */}
         {images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
             {images.map((_, idx) => (
               <span
                 key={idx}
-                className={`size-1.5 rounded-full transition-all duration-300 ${
-                  idx === activeImageIndex
+                className={`size-1.5 rounded-full transition-all duration-300 ${idx === activeImageIndex
                     ? "bg-rose-600 w-3"
                     : "bg-neutral-300/80"
-                }`}
+                  }`}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="flex-1 flex flex-col px-2 pb-3 md:px-0 md:pb-0">
+      {/* Info - compact padding so text has maximum width */}
+      <div className="flex-1 flex flex-col px-2.5 pt-2 pb-1 sm:px-3 sm:pt-2.5 sm:pb-1.5">
         {product.category && (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 mb-1 block">
+          <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-0.5 block truncate">
             {product.category}
           </span>
         )}
 
         <h3
-          className="line-clamp-2 cursor-pointer font-sans text-[13px] font-bold leading-tight text-neutral-800 transition-colors hover:text-rose-600"
+          className="line-clamp-2 cursor-pointer font-sans text-xs sm:text-[13px] font-bold leading-snug text-neutral-800 transition-colors hover:text-rose-600"
           onClick={goToProduct}
+          title={product.title}
         >
           {product.title}
         </h3>
 
         <div
-          className="mt-1.5 flex cursor-pointer items-baseline gap-2 text-xs font-semibold mb-2"
+          className="mt-1 flex cursor-pointer items-baseline gap-1.5 font-semibold"
           onClick={goToProduct}
         >
-          <span className="text-neutral-900 font-bold text-sm">
+          <span className="text-neutral-900 font-bold text-sm sm:text-base">
             ₹{product.discountedPrice}
           </span>
           {product.price > product.discountedPrice && (
-            <span className="text-neutral-400 line-through text-[10px]">
+            <span className="text-neutral-400 line-through text-[10px] sm:text-xs">
               ₹{product.price}
             </span>
           )}
@@ -353,9 +351,8 @@ export default function ProductCard({
 
       {showStock && (
         <p
-          className={`mx-2 mt-1 mb-2 text-xs font-medium md:mx-0 ${
-            inStock ? "text-green-600" : "text-rose-600"
-          }`}
+          className={`px-2.5 pb-1 text-[11px] sm:text-xs font-medium sm:px-3 ${inStock ? "text-green-600" : "text-rose-600"
+            }`}
         >
           {inStock ? "In Stock" : "Out of Stock"}
         </p>
@@ -363,18 +360,18 @@ export default function ProductCard({
 
       {showActions &&
         (inStock ? (
-          <div className="mx-2 mt-2 mb-3 grid grid-cols-2 gap-2 md:mx-0 md:mb-0">
+          <div className="px-2 pb-2.5 pt-1 sm:px-3 sm:pb-3 grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={handleCardAddToCart}
-              className="w-full rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-100 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-300"
+              className="w-full rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 py-2 px-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-tight sm:tracking-normal transition-all duration-200 text-center leading-none whitespace-nowrap flex items-center justify-center cursor-pointer active:scale-95"
             >
               {addedText ? "Added!" : "Add to Cart"}
             </button>
             <button
               type="button"
               onClick={handleCardBuyNow}
-              className="relative w-full overflow-hidden rounded-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-300"
+              className="relative w-full overflow-hidden rounded-full bg-rose-600 hover:bg-rose-700 text-white py-2 px-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-tight sm:tracking-normal transition-all duration-200 text-center leading-none whitespace-nowrap flex items-center justify-center shadow-xs cursor-pointer active:scale-95"
             >
               <span
                 aria-hidden="true"
@@ -384,13 +381,15 @@ export default function ProductCard({
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            disabled
-            className="mx-2 mt-2 mb-3 w-auto cursor-not-allowed rounded-full border border-neutral-100 bg-neutral-50 py-2 text-xs font-medium text-neutral-400 uppercase tracking-wide md:mx-0 md:mb-0"
-          >
-            Out of stock
-          </button>
+          <div className="px-2 pb-2.5 pt-1 sm:px-3 sm:pb-3">
+            <button
+              type="button"
+              disabled
+              className="w-full cursor-not-allowed rounded-full border border-neutral-100 bg-neutral-50 py-2 text-[11px] font-medium text-neutral-400 uppercase tracking-wide text-center"
+            >
+              Out of stock
+            </button>
+          </div>
         ))}
     </div>
   );

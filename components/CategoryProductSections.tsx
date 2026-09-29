@@ -79,7 +79,7 @@ export default function CategoryProductSections({
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
               {categoryProducts.slice(0, 4).map((product) => (
                 <ProductCard key={product._id} product={product} showActions />
               ))}

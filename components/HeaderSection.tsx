@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { BiHomeAlt2 } from "react-icons/bi";
 import { MdOutlineCategory } from "react-icons/md";
@@ -64,6 +64,11 @@ const HeaderSection = () => {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setIsHeaderVisible(true);
+  }, [pathname]);
 
   if (userCart) {
     // console.log(userCart.products);
@@ -131,9 +136,9 @@ const HeaderSection = () => {
   const cartBadgeCount =
     validCartProducts !== undefined
       ? validCartProducts.reduce(
-          (sum, item) => sum + (Number(item.quantity) || 1),
-          0,
-        )
+        (sum, item) => sum + (Number(item.quantity) || 1),
+        0,
+      )
       : totalNumberOfProducts;
 
   useEffect(() => {
@@ -151,47 +156,69 @@ const HeaderSection = () => {
   }, []);
 
   useEffect(() => {
-    lastScrollY.current = window.scrollY;
+    lastScrollY.current = typeof window !== "undefined" ? window.scrollY : 0;
 
     const handleScroll = () => {
-      if (searchOpen) return;
-      const currentScrollY = window.scrollY;
-      const scrollDelta = currentScrollY - lastScrollY.current;
-
-      if (menu || currentScrollY <= 8) {
+      // Only do this for mobile device (< 768px)
+      if (window.innerWidth >= 768) {
         setIsHeaderVisible(true);
-      } else if (scrollDelta > 8) {
-        setIsHeaderVisible(false);
-      } else if (scrollDelta < -8) {
-        setIsHeaderVisible(true);
+        return;
       }
 
-      lastScrollY.current = currentScrollY;
+      if (searchOpen || menu) {
+        setIsHeaderVisible(true);
+        return;
+      }
+
+      const currentScrollY = Math.max(0, window.scrollY);
+      const scrollDelta = currentScrollY - lastScrollY.current;
+
+      // Always show near top of page
+      if (currentScrollY <= 15) {
+        setIsHeaderVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      // Prevent iOS bounce at bottom triggering scroll-up
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
+      if (currentScrollY >= maxScroll - 10) {
+        return;
+      }
+
+      if (scrollDelta > 8) {
+        // Scrolling down -> hide with transition up
+        setIsHeaderVisible(false);
+        lastScrollY.current = currentScrollY;
+      } else if (scrollDelta < -8) {
+        // Scrolling up -> show with transition down
+        setIsHeaderVisible(true);
+        lastScrollY.current = currentScrollY;
+      }
+    };
+
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsHeaderVisible(true);
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [menu, searchOpen]);
 
   return (
-    <div className="sticky top-0 z-[998]">
-      {/* <div className="text-[10px] bg-pink-800 text-white w-full text-center sm:text-[12px] py-2 ">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.span
-            key={announcementIndex}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="inline-block"
-          >
-            {announcements[announcementIndex]}
-          </motion.span>
-        </AnimatePresence>
-      </div> */}
-      <nav
-        className={`border-b border-rose-100 bg-white shadow-xs transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
-      >
+    <header
+      className={`sticky top-0 z-[998] bg-white transition-transform duration-300 ease-in-out md:translate-y-0 ${
+        isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
+      <nav className="border-b border-rose-100 bg-white shadow-xs">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="hidden md:block font-bold">
             <Link href={"/"}>
@@ -201,82 +228,81 @@ const HeaderSection = () => {
             </Link>
           </div>
 
-        <div
-          className={` ${
-            menu ? "translate-x-0" : "-translate-x-[100%]"
-          } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-6 md:mt-0 flex-col w-full h-screen bg-white gap-3 p-4 text-[17px] lg:p-0 lg:text-base flex lg:static lg:bg-transparent lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[9999] `}
-        >
-          <p
-            className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"
-            onClick={() => {
-              setMenu(false);
-            }}
+          <div
+            className={` ${menu ? "translate-x-0" : "-translate-x-[100%]"
+              } lg:translate-x-0 duration-300 transition-all absolute top-0 left-0 pt-6 md:mt-0 flex-col w-full h-screen bg-white gap-3 p-4 text-[17px] lg:p-0 lg:text-base flex lg:static lg:bg-transparent lg:flex-row lg:w-auto lg:h-auto lg:items-center lg:justify-center lg:gap-8 z-[9999] `}
           >
-            <X className="w-6 h-6" />
-          </p>
-          <div className="flex items-start relative top-0 -left-8  justify-start  lg:hidden ">
-            <span className="relative flex h-5 w-44 items-center overflow-visible">
-              <LogoMark />
-            </span>
-          </div>
-          <Separator className="bg-gray-100 h-0.5 w-full lg:hidden" />
-          <p
-            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-            onClick={() => {
-              setMenu(false);
-            }}
-          >
-            <BiHomeAlt2 className="size-4 lg:hidden" />
-            <Link href={"/"}>Home</Link>
-          </p>
-          <p
-            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-            onClick={() => {
-              setMenu(false);
-            }}
-          >
-            <MdOutlineCategory className="size-4 lg:hidden" />
-            <Link href={"/category"}>Categories</Link>
-          </p>
-          <p
-            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-            onClick={() => {
-              setMenu(false);
-            }}
-          >
-            <PackagePlus className="size-4 lg:hidden" />
-            <Link href={"/newarrivals"}>New Arrivals</Link>
-          </p>
-          <p
-            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-            onClick={() => {
-              setMenu(false);
-            }}
-          >
-            <GalleryVerticalEnd className="size-4 lg:hidden" />
-            <Link href={"/product"}>Products</Link>
-          </p>
-          <p
-            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-            onClick={() => {
-              setMenu(false);
-            }}
-          >
-            <LucideCableCar className="size-4 lg:hidden" />
-            <Link href={"track"}>Track Order</Link>
-          </p>
-          <p
-            className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-            onClick={() => {
-              setMenu(false);
-            }}
-          >
-            <IoPhonePortraitOutline className="size-4 lg:hidden" />
-            <Link href={"/contact"}>Contact</Link>
-          </p>
-          <Separator className="bg-gray-100 h-0.5 w-full lg:hidden my-2" />
+            <p
+              className=" absolute top-4 right-4  lg:hidden cursor-pointer   rounded text-gray-600"
+              onClick={() => {
+                setMenu(false);
+              }}
+            >
+              <X className="w-6 h-6" />
+            </p>
+            <div className="flex items-start relative top-0 -left-8  justify-start  lg:hidden ">
+              <span className="relative flex h-5 w-44 items-center overflow-visible">
+                <LogoMark />
+              </span>
+            </div>
+            <Separator className="bg-gray-100 h-0.5 w-full lg:hidden" />
+            <p
+              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
+              onClick={() => {
+                setMenu(false);
+              }}
+            >
+              <BiHomeAlt2 className="size-4 lg:hidden" />
+              <Link href={"/"}>Home</Link>
+            </p>
+            <p
+              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
+              onClick={() => {
+                setMenu(false);
+              }}
+            >
+              <MdOutlineCategory className="size-4 lg:hidden" />
+              <Link href={"/category"}>Categories</Link>
+            </p>
+            <p
+              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
+              onClick={() => {
+                setMenu(false);
+              }}
+            >
+              <PackagePlus className="size-4 lg:hidden" />
+              <Link href={"/newarrivals"}>New Arrivals</Link>
+            </p>
+            <p
+              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
+              onClick={() => {
+                setMenu(false);
+              }}
+            >
+              <GalleryVerticalEnd className="size-4 lg:hidden" />
+              <Link href={"/product"}>Products</Link>
+            </p>
+            <p
+              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
+              onClick={() => {
+                setMenu(false);
+              }}
+            >
+              <LucideCableCar className="size-4 lg:hidden" />
+              <Link href={"track"}>Track Order</Link>
+            </p>
+            <p
+              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
+              onClick={() => {
+                setMenu(false);
+              }}
+            >
+              <IoPhonePortraitOutline className="size-4 lg:hidden" />
+              <Link href={"/contact"}>Contact</Link>
+            </p>
+            <Separator className="bg-gray-100 h-0.5 w-full lg:hidden my-2" />
 
-          {/* <div
+            {/* <div
             className="w-full mx-auto lg:hidden"
             onClick={() => {
               setMenu(false);
@@ -291,140 +317,139 @@ const HeaderSection = () => {
 
 
           </div> */}
-          <div className="lg:hidden">Best Sellers</div>
-          <div className="grid grid-cols-2 gap-3 mt-2 lg:hidden">
-            {products.slice(0, 2).map((product) => (
-              <div
-                key={product._id}
-                className="group cursor-pointer"
-                onClick={() => {
-                  setMenu(false);
-                  router.push(productUrl(product.title, product._id, (product as any).slug));
-                }}
-              >
-                {/* Image */}
-                <div className="relative w-full h-44 overflow-hidden rounded-2xl bg-gray-100">
-                  <Image
-                    src={product.image}
-                    alt={product.title}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 160px"
-                    className="object-cover transition duration-500 group-hover:scale-110"
-                  />
+            <div className="lg:hidden">Best Sellers</div>
+            <div className="grid grid-cols-2 gap-3 mt-2 lg:hidden">
+              {products.slice(0, 2).map((product) => (
+                <div
+                  key={product._id}
+                  className="group cursor-pointer"
+                  onClick={() => {
+                    setMenu(false);
+                    router.push(productUrl(product.title, product._id, (product as any).slug));
+                  }}
+                >
+                  {/* Image */}
+                  <div className="relative w-full h-44 overflow-hidden rounded-2xl bg-gray-100">
+                    <Image
+                      src={product.image}
+                      alt={product.title}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 160px"
+                      className="object-cover transition duration-500 group-hover:scale-110"
+                    />
 
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition" />
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition" />
 
-                  {/* Quick view / badge */}
-                  <div className="absolute top-2 left-2 text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-magenda">
-                    NEW
+                    {/* Quick view / badge */}
+                    <div className="absolute top-2 left-2 text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-magenda">
+                      NEW
+                    </div>
+
+                    {/* Wishlist icon */}
+                    <div className="absolute top-2 right-2 bg-white/80 backdrop-blur p-1.5 rounded-full shadow">
+                      ❤️
+                    </div>
                   </div>
 
-                  {/* Wishlist icon */}
-                  <div className="absolute top-2 right-2 bg-white/80 backdrop-blur p-1.5 rounded-full shadow">
-                    ❤️
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="mt-2 px-1">
-                  <p className="text-sm font-medium line-clamp-1">
-                    {product.title}
-                  </p>
-
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm font-semibold text-black">
-                      ₹{product.discountedPrice}
+                  {/* Content */}
+                  <div className="mt-2 px-1">
+                    <p className="text-sm font-medium line-clamp-1">
+                      {product.title}
                     </p>
 
-                    <p className="text-xs text-gray-500 line-through">
-                      ₹{product.price}
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-sm font-semibold text-black">
+                        ₹{product.discountedPrice}
+                      </p>
+
+                      <p className="text-xs text-gray-500 line-through">
+                        ₹{product.price}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="flex w-full gap-4 items-center md:hidden">
-          <Search
-            className="cursor-pointer md:hidden"
-            onClick={() => {
-              setSearchOpen(true);
-            }}
-          />
-
-          <div className="absolute left-1/2 -translate-x-1/2 md:hidden mt-2">
-            <Link href={"/"}>
-              <span className="flex h-24 w-44 items-center justify-center">
-                <LogoMark />
-              </span>
-            </Link>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-5">
-          <Search
-            className="cursor-pointer hidden md:block"
-            onClick={() => {
-              setSearchOpen(true);
-            }}
-          />
-
-          <div
-            className="cursor-pointer relative hidden md:block group"
-            onClick={() => {
-              router.push("/wishlist");
-            }}
-            title="Wishlist"
-          >
-            <Heart
-              className={`transition-all duration-200   ${
-                wishlistCount > 0 ? "" : "text-neutral-700 "
-              }`}
+          <div className="flex w-full gap-4 items-center md:hidden">
+            <Search
+              className="cursor-pointer md:hidden"
+              onClick={() => {
+                setSearchOpen(true);
+              }}
             />
-            {wishlistCount > 0 && (
-              <p className="absolute -top-2 -right-4 bg-rose-500 text-white rounded-full size-[23px] flex items-center text-[10px] font-bold justify-center shadow-xs">
-                {wishlistCount}
-              </p>
-            )}
+
+            <div className="absolute left-1/2 -translate-x-1/2 md:hidden mt-2">
+              <Link href={"/"}>
+                <span className="flex h-24 w-44 items-center justify-center">
+                  <LogoMark />
+                </span>
+              </Link>
+            </div>
           </div>
 
-          <div
-            className="cursor-pointer relative"
-            onClick={() => {
-              router.push("/cart");
-            }}
-            title="Cart"
-          >
-            <ShoppingBag />
-            {cartBadgeCount > 0 && (
-              <p className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white rounded-full size-[22px] flex items-center text-[10px] font-bold justify-center shadow-xs">
-                {cartBadgeCount}
-              </p>
-            )}
-          </div>
+          <div className="flex items-center justify-center gap-5">
+            <Search
+              className="cursor-pointer hidden md:block"
+              onClick={() => {
+                setSearchOpen(true);
+              }}
+            />
 
-          <UserRound
-            className="hidden cursor-pointer md:block"
-            onClick={() => {
-              router.push("/profile");
-            }}
-          />
-          <div
-            className="block lg:hidden cursor-pointer"
-            onClick={() => {
-              setMenu(true);
-            }}
-          >
-            <AlignJustify className="cursor-pointer" />
+            <div
+              className="cursor-pointer relative hidden md:block group"
+              onClick={() => {
+                router.push("/wishlist");
+              }}
+              title="Wishlist"
+            >
+              <Heart
+                className={`transition-all duration-200   ${wishlistCount > 0 ? "" : "text-neutral-700 "
+                  }`}
+              />
+              {wishlistCount > 0 && (
+                <p className="absolute -top-2 -right-4 bg-rose-500 text-white rounded-full size-[23px] flex items-center text-[10px] font-bold justify-center shadow-xs">
+                  {wishlistCount}
+                </p>
+              )}
+            </div>
+
+            <div
+              className="cursor-pointer relative"
+              onClick={() => {
+                router.push("/cart");
+              }}
+              title="Cart"
+            >
+              <ShoppingBag />
+              {cartBadgeCount > 0 && (
+                <p className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white rounded-full size-[22px] flex items-center text-[10px] font-bold justify-center shadow-xs">
+                  {cartBadgeCount}
+                </p>
+              )}
+            </div>
+
+            <UserRound
+              className="hidden cursor-pointer md:block"
+              onClick={() => {
+                router.push("/profile");
+              }}
+            />
+            <div
+              className="block lg:hidden cursor-pointer"
+              onClick={() => {
+                setMenu(true);
+              }}
+            >
+              <AlignJustify className="cursor-pointer" />
+            </div>
           </div>
-        </div>
         </div>
       </nav>
       <SearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
-    </div>
+    </header>
   );
 };
 

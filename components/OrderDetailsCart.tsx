@@ -1,6 +1,7 @@
 "use client";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
+import Image from "next/image";
 import { Copy, Check, MapPin, Phone, Truck, CreditCard, Package, ChevronDown, ChevronUp, ExternalLink, Clock, X, Tag } from "lucide-react";
 import { useState } from "react";
 import { VscLoading } from "react-icons/vsc";
@@ -420,9 +421,11 @@ export default function OrderDetailsCard({
                       className="relative size-9 rounded-lg border-2 border-white bg-gray-100 overflow-hidden shrink-0 shadow-xs"
                     >
                       {getProductImage(item) ? (
-                        <img
+                        <Image
                           src={getProductImage(item)}
                           alt={getProductTitle(item)}
+                          width={36}
+                          height={36}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -586,17 +589,21 @@ export default function OrderDetailsCard({
                       <li key={i} className="flex gap-3 items-start p-3 rounded-xl bg-gray-50/80 border border-gray-100">
                         {itemUrl ? (
                           <Link href={itemUrl} className="w-14 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 hover:opacity-80 transition">
-                            <img
+                            <Image
                               src={getProductImage(item)}
                               alt={getProductTitle(item)}
+                              width={56}
+                              height={64}
                               className="w-full h-full object-cover"
                             />
                           </Link>
                         ) : (
                           <div className="w-14 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                            <img
+                            <Image
                               src={getProductImage(item)}
                               alt={getProductTitle(item)}
+                              width={56}
+                              height={64}
                               className="w-full h-full object-cover"
                             />
                           </div>

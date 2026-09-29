@@ -9,11 +9,19 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${SITE_CONFIG.url}/policies/shipping-policy`,
   },
+  openGraph: {
+    title: `Shipping Policy | ${SITE_CONFIG.name}`,
+    description: "Learn about GirlyHub's shipping timelines, delivery costs, COD, and order tracking across India.",
+    url: `${SITE_CONFIG.url}/policies/shipping-policy`,
+    type: "website",
+    images: [SITE_CONFIG.ogImage],
+  },
+  twitter: { card: "summary_large_image", images: [SITE_CONFIG.ogImage] },
 };
 
 export default function ShippingPolicy() {
   return (
-    <div className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+    <main className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
       {/* Background ambient flower */}
       <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -166,6 +174,6 @@ export default function ShippingPolicy() {
         </div>
       </div>
     </div>
-  </div>
+    </main>
   );
 }

@@ -588,7 +588,7 @@ function ProfileContent() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
                       {paginatedWishlist.map((item: any) => (
                         <ProductCard
                           key={item.productId?._id || item._id}
@@ -658,7 +658,7 @@ function ProfileContent() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
                       {paginatedCart.map((item: any) => (
                         <ProductCard
                           key={item.productId?._id || item._id}
