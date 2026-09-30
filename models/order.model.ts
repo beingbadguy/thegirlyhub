@@ -132,10 +132,85 @@ const orderSchema = new mongoose.Schema({
   phone: { type: Number, required: true },
   couponCode: { type: String, default: null },
   paymentId: { type: String, default: null },
+
+  // ── Shipping Integration Fields (NimbusPost & Couriers) ───────────────────
+  orderId: { type: String, default: null },
+  customerName: { type: String, default: null },
+  pincode: { type: String, default: null },
+  shippingProvider: { type: String, default: "nimbuspost" },
+  items: [
+    {
+      name: { type: String },
+      sku: { type: String },
+      units: { type: Number, default: 1 },
+      selling_price: { type: Number, default: 0 },
+      size: { type: String },
+      image: { type: String },
+    },
+  ],
+  totalPrice: { type: Number, default: null },
+  shipmentStatus: {
+    type: String,
+    enum: ["Pending", "Shipped", "Delivered", "Cancelled", "RTO"],
+    default: "Pending",
+  },
+  shipmentId: { type: String, default: null },
+  awbCode: { type: String, default: null },
+  courierName: { type: String, default: null },
+  courierId: { type: Number, default: null },
+  labelUrl: { type: String, default: null },
+  weight: { type: Number, default: 0.2 },
+  dimensions: {
+    length: { type: Number, default: 10 },
+    breadth: { type: Number, default: 10 },
+    height: { type: Number, default: 2 },
+  },
+  pickupPincode: { type: String, default: null },
+  shipmentCost: { type: Number, default: null },
+  estimatedDeliveryDays: { type: String, default: null },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
+// Automatic sync hook for backwards and forwards compatibility
+orderSchema.pre("save", function (next) {
+  if (!this.orderId && this._id) {
+    this.orderId = this._id.toString();
+  }
+  if (!this.customerName && this.recipientName) {
+    this.customerName = this.recipientName;
+  }
+  if (!this.pincode && this.zip) {
+    this.pincode = String(this.zip);
+  }
+  if (this.totalPrice === null || this.totalPrice === undefined) {
+    this.totalPrice = this.totalAmount;
+  }
+  if ((!this.items || this.items.length === 0) && this.products && this.products.length > 0) {
+    this.items = this.products.map((p: any) => ({
+      name: p.title || "Product",
+      sku: p.productId ? p.productId.toString() : "SKU",
+      units: p.quantity || 1,
+      selling_price: p.price || 0,
+      size: p.size,
+      image: p.image,
+    })) as any;
+  }
+  if (this.awbCode && !this.awbNumber) {
+    this.awbNumber = this.awbCode;
+  }
+  if (this.awbNumber && !this.awbCode) {
+    this.awbCode = this.awbNumber;
+  }
+  next();
+});
+
+orderSchema.index({ orderId: 1 }, { sparse: true });
+orderSchema.index({ shipmentId: 1 }, { sparse: true });
+orderSchema.index({ awbCode: 1 }, { sparse: true });
+orderSchema.index({ awbNumber: 1 }, { sparse: true });
+orderSchema.index({ shipmentStatus: 1, createdAt: -1 });
 orderSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
 orderSchema.index({ refundId: 1 }, { sparse: true });
 orderSchema.index({ refundStatus: 1, createdAt: -1 });
