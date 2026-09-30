@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databaseConnection } from "@/config/databseConnection";
 import Order from "@/models/order.model";
-import { mapNimbusPostStatusToInternal } from "@/lib/nimbuspost";
+import {
+  mapNimbusPostStatusToInternal,
+  verifyNimbusPostWebhookSignature,
+  getNimbusPostConfig,
+} from "@/lib/nimbuspost";
 import mongoose from "mongoose";
 
 /**
@@ -16,7 +20,28 @@ export async function POST(req: NextRequest) {
   await databaseConnection();
 
   try {
-    const payload = await req.json().catch(() => null);
+    const rawBody = await req.text();
+    const signature =
+      req.headers.get("x-nimbuspost-signature") ||
+      req.headers.get("x-signature") ||
+      req.headers.get("signature") ||
+      req.headers.get("x-api-secret");
+
+    // Verify webhook signature with NIMBUSPOST_SECRET if provided
+    if (signature && !verifyNimbusPostWebhookSignature(rawBody, signature)) {
+      console.warn("[NimbusPost Webhook] Invalid webhook signature detected");
+      return NextResponse.json(
+        { success: false, message: "Invalid webhook signature" },
+        { status: 401 }
+      );
+    }
+
+    let payload: any = null;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      payload = null;
+    }
 
     if (!payload || typeof payload !== "object") {
       return NextResponse.json(

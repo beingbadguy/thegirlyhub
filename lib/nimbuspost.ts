@@ -1,4 +1,5 @@
 import axios from "axios";
+import crypto from "crypto";
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
@@ -97,11 +98,104 @@ interface TokenCache {
 let cachedNimbusToken: TokenCache | null = null;
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+export interface NimbusPostConfig {
+  key: string;
+  secret: string;
+  email: string;
+  warehouseName: string;
+  pickupPincode: string;
+  isConfigured: boolean;
+  hasKey: boolean;
+  hasSecret: boolean;
+  maskedKey: string;
+}
+
+export function getNimbusPostConfig(): NimbusPostConfig {
+  const key = process.env.NIMBUSPOST_KEY?.trim() || "";
+  const secret = process.env.NIMBUSPOST_SECRET?.trim() || "";
+  const email = process.env.NIMBUSPOST_EMAIL?.trim() || "";
+  const warehouseName = process.env.NIMBUSPOST_WAREHOUSE_NAME?.trim() || "work";
+  const pickupPincode = process.env.NIMBUSPOST_PICKUP_PINCODE?.trim() || "110032";
+
+  const hasKey = key.length > 5;
+  const hasSecret = secret.length > 5;
+  const isConfigured = hasKey || (Boolean(email) && Boolean(process.env.NIMBUSPOST_PASSWORD));
+
+  const maskedKey = hasKey
+    ? `${key.slice(0, 8)}...${key.slice(-4)}`
+    : "Not configured";
+
+  return {
+    key,
+    secret,
+    email,
+    warehouseName,
+    pickupPincode,
+    isConfigured,
+    hasKey,
+    hasSecret,
+    maskedKey,
+  };
+}
+
 export function areNimbusPostCredentialsConfigured(): boolean {
-  const key = process.env.NIMBUSPOST_KEY?.trim();
-  const email = process.env.NIMBUSPOST_EMAIL?.trim();
-  const password = process.env.NIMBUSPOST_PASSWORD?.trim();
-  return Boolean((key && key.startsWith("npk_")) || (email && password));
+  return getNimbusPostConfig().isConfigured;
+}
+
+/**
+ * Standardized NimbusPost API Headers:
+ * Dispatches Authorization Bearer, plus official api-key / secret-key / x-api-key / x-api-secret headers.
+ */
+export function getNimbusPostHeaders(token: string): Record<string, string> {
+  const config = getNimbusPostConfig();
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+
+  if (config.key) {
+    headers["api-key"] = config.key;
+    headers["x-api-key"] = config.key;
+  }
+  if (config.secret) {
+    headers["secret-key"] = config.secret;
+    headers["x-api-secret"] = config.secret;
+  }
+
+  return headers;
+}
+
+/**
+ * Validates HMAC SHA-256 webhook signatures from NimbusPost using NIMBUSPOST_SECRET
+ */
+export function verifyNimbusPostWebhookSignature(
+  rawBody: string,
+  signatureHeader?: string | null
+): boolean {
+  const config = getNimbusPostConfig();
+  if (!config.secret) {
+    return true; // No secret configured, allow in dev
+  }
+  if (!signatureHeader) {
+    // If sender didn't include signature header, allow in development
+    return process.env.NODE_ENV !== "production";
+  }
+  try {
+    const computed = crypto
+      .createHmac("sha256", config.secret)
+      .update(rawBody)
+      .digest("hex");
+
+    const bufA = Buffer.from(computed);
+    const bufB = Buffer.from(signatureHeader);
+    if (bufA.length !== bufB.length) {
+      return false;
+    }
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch (err) {
+    console.warn("[NimbusPost Webhook] Signature verification error:", err);
+    return false;
+  }
 }
 
 /**
@@ -114,18 +208,16 @@ export async function getNimbusPostToken(forceRefresh = false): Promise<string> 
     return cachedNimbusToken.token;
   }
 
-  const email = process.env.NIMBUSPOST_EMAIL?.trim();
+  const config = getNimbusPostConfig();
   const password = process.env.NIMBUSPOST_PASSWORD?.trim();
-  const secret = process.env.NIMBUSPOST_SECRET?.trim();
-  const key = process.env.NIMBUSPOST_KEY?.trim();
 
-  // Try direct login if email + password or secret is available
-  const pwdToTry = password || secret;
-  if (email && pwdToTry) {
+  // 1. Try direct login if email + password or email + secret is available
+  const pwdToTry = password || config.secret;
+  if (config.email && pwdToTry) {
     try {
       const res = await axios.post(
         `${NIMBUSPOST_BASE_URL}/users/login`,
-        { email, password: pwdToTry },
+        { email: config.email, password: pwdToTry },
         { headers: { "Content-Type": "application/json" }, timeout: 10000 }
       );
 
@@ -133,7 +225,7 @@ export async function getNimbusPostToken(forceRefresh = false): Promise<string> 
         const token = typeof res.data.data === "string" ? res.data.data : res.data.data?.token;
         if (token) {
           cachedNimbusToken = { token, expiresAt: now + TOKEN_TTL_MS };
-          console.log("[NimbusPost] Successfully authenticated with NimbusPost API");
+          console.log("[NimbusPost] Successfully authenticated with NimbusPost API via login");
           return token;
         }
       }
@@ -142,13 +234,13 @@ export async function getNimbusPostToken(forceRefresh = false): Promise<string> 
     }
   }
 
-  // If Key is available, test if key can be used as bearer token
-  if (key) {
-    cachedNimbusToken = { token: key, expiresAt: now + TOKEN_TTL_MS };
-    return key;
+  // 2. If Key is available, cache key as token
+  if (config.hasKey) {
+    cachedNimbusToken = { token: config.key, expiresAt: now + TOKEN_TTL_MS };
+    return config.key;
   }
 
-  // In development / test, fallback to simulated token
+  // 3. In development / test, fallback to simulated token
   console.warn("[NimbusPost] Using simulated dev token for NimbusPost.");
   const mockToken = "mock_nimbuspost_token_" + Buffer.from(`${Date.now()}`).toString("base64");
   cachedNimbusToken = { token: mockToken, expiresAt: now + 3600 * 1000 };
@@ -288,10 +380,7 @@ export async function checkNimbusPostServiceability(
         weight: weightInGrams,
       },
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: getNimbusPostHeaders(token),
         timeout: 12000,
       }
     );
@@ -511,10 +600,7 @@ export async function createNimbusPostShipment(
       `${NIMBUSPOST_BASE_URL}/shipments`,
       shipmentPayload,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: getNimbusPostHeaders(token),
         timeout: 15000,
       }
     );
@@ -581,7 +667,7 @@ export async function generateNimbusPostLabel(shipmentId: string | number): Prom
     const res = await axios.post(
       `${NIMBUSPOST_BASE_URL}/shipments/print_label`,
       { ids: [String(shipmentId)] },
-      { headers: { Authorization: `Bearer ${token}` }, timeout: 12000 }
+      { headers: getNimbusPostHeaders(token), timeout: 12000 }
     );
     return res.data?.data || res.data?.label || `https://api.nimbuspost.com/v1/shipments/print_label?ids=${shipmentId}`;
   } catch {
@@ -615,11 +701,30 @@ export async function trackNimbusPostShipment(awbCode: string): Promise<any> {
     const res = await axios.post(
       `${NIMBUSPOST_BASE_URL}/shipments/track`,
       { awb: awbCode },
-      { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
+      { headers: getNimbusPostHeaders(token), timeout: 10000 }
     );
     return res.data;
   } catch (err: any) {
-    console.error("[NimbusPost] Tracking error:", err.message);
+    console.warn("[NimbusPost] Live tracking endpoint error:", err.message);
+    if (process.env.NODE_ENV !== "production") {
+      return {
+        status: true,
+        data: {
+          awb: awbCode,
+          current_status: "IN TRANSIT",
+          location: "Regional Sorting Facility (110032)",
+          estimated_delivery: "2-3 business days",
+          history: [
+            {
+              event_time: new Date().toISOString(),
+              location: "Shahdara Hub (110032)",
+              status: "Shipment Picked Up & Manifested",
+            },
+          ],
+        },
+        is_simulated: true,
+      };
+    }
     throw err;
   }
 }
