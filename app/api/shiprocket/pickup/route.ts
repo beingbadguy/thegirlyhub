@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateShiprocketPickup } from "@/lib/shiprocket";
+import { generateShiprocketPickup, isPlaceholderShiprocketAwb } from "@/lib/shiprocket";
 import { databaseConnection } from "@/config/databseConnection";
 import Order from "@/models/order.model";
 import mongoose from "mongoose";
@@ -14,22 +14,36 @@ export async function POST(req: NextRequest) {
     const { shipmentId, orderId, pickupDate } = body;
 
     let targetShipmentId = shipmentId;
+    let order: any = null;
 
-    if (!targetShipmentId && orderId) {
+    if (orderId) {
       await databaseConnection();
-      let order: any = null;
 
       if (mongoose.Types.ObjectId.isValid(orderId)) {
-        order = await Order.findById(orderId).select("shipmentId").lean();
+        order = await Order.findById(orderId).select("shipmentId awbCode awbNumber").lean();
       }
       if (!order) {
-        order = await Order.findOne({ orderId }).select("shipmentId").lean();
+        order = await Order.findOne({ orderId }).select("shipmentId awbCode awbNumber").lean();
       }
       if (!order) {
-        order = await Order.findOne({ paymentId: orderId }).select("shipmentId").lean();
+        order = await Order.findOne({ paymentId: orderId }).select("shipmentId awbCode awbNumber").lean();
       }
 
-      targetShipmentId = order?.shipmentId;
+      if (!targetShipmentId) {
+        targetShipmentId = order?.shipmentId;
+      }
+
+      const awb = order?.awbCode || order?.awbNumber;
+      if (awb && isPlaceholderShiprocketAwb(awb)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "This order only has a placeholder AWB (not assigned by Shiprocket). Recreate the shipment so a live AWB is assigned, then request pickup.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     if (!targetShipmentId || isNaN(Number(targetShipmentId)) || Number(targetShipmentId) <= 0) {
@@ -44,6 +58,23 @@ export async function POST(req: NextRequest) {
     }
 
     const res = await generateShiprocketPickup([targetShipmentId], pickupDate);
+
+    if (res.success && orderId) {
+      try {
+        await databaseConnection();
+        const query = mongoose.Types.ObjectId.isValid(orderId)
+          ? { $or: [{ _id: orderId }, { orderId }, { paymentId: orderId }] }
+          : { $or: [{ orderId }, { paymentId: orderId }] };
+        await Order.findOneAndUpdate(query, {
+          $set: {
+            pickupStatus: "scheduled",
+            pickupMessage: res.message,
+          },
+        });
+      } catch (updateErr) {
+        console.warn("[POST /api/shiprocket/pickup] Could not persist pickup status:", updateErr);
+      }
+    }
 
     return NextResponse.json(res, { status: res.success ? 200 : 400 });
   } catch (err: any) {

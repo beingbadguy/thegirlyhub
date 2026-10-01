@@ -68,6 +68,7 @@ export interface CreateShipmentInput {
   breadth: number; // in cm, default 10
   height: number; // in cm, default 2
   pickup_location?: string;
+  forceRecreate?: boolean;
   // Order details from DB:
   customerName: string;
   phone: string | number;
@@ -92,6 +93,70 @@ export interface CreateShipmentResult {
   trackingLink: string;
   is_simulated?: boolean;
   message?: string;
+  pickupScheduled?: boolean;
+  pickupMessage?: string;
+}
+
+export function isPlaceholderShiprocketAwb(awb?: string | null): boolean {
+  const value = String(awb || "").trim();
+  if (!value) return true;
+  return /^AWB\d+$/i.test(value) || /^SR\d+IN$/i.test(value) || value.toLowerCase().includes("demo");
+}
+
+function normalizeIndianPhone(phone: string | number | undefined): string {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (digits.length >= 10) return digits.slice(-10);
+  return digits || "9999999999";
+}
+
+function shiprocketErrorMessage(payload: any, fallback: string): string {
+  if (!payload) return fallback;
+  if (typeof payload === "string") return payload;
+  const nested =
+    payload.response?.data?.awb_assign_error ||
+    payload.response?.awb_assign_error ||
+    payload.data?.awb_assign_error ||
+    payload.awb_assign_error ||
+    payload.message ||
+    payload.error ||
+    payload.errors;
+  if (typeof nested === "string" && nested.trim()) return nested;
+  if (Array.isArray(nested) && nested.length) return nested.map(String).join(", ");
+  if (nested && typeof nested === "object") {
+    try {
+      return JSON.stringify(nested);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
+function unwrapAwbAssignPayload(awbData: any): Record<string, any> {
+  const candidates = [
+    awbData,
+    awbData?.response,
+    awbData?.response?.data,
+    awbData?.data,
+    awbData?.data?.data,
+  ];
+  for (const candidate of candidates) {
+    const obj = Array.isArray(candidate) ? candidate[0] : candidate;
+    if (obj && (obj.awb_code || obj.awb_number || obj.courier_name)) {
+      return obj;
+    }
+  }
+  const last = candidates[2];
+  return (Array.isArray(last) ? last[0] : last) || {};
+}
+
+function extractPdfUrl(...values: any[]): string {
+  for (const value of values) {
+    if (typeof value === "string" && /^https?:\/\//i.test(value) && !value.includes("/v1/external/")) {
+      return value;
+    }
+  }
+  return "";
 }
 
 export interface ShiprocketWebhookPayload {
@@ -484,12 +549,101 @@ export async function getRegisteredPickupLocations(token: string): Promise<strin
   }
 }
 
+async function shiprocketRequest<T = any>(
+  token: string,
+  method: "get" | "post",
+  path: string,
+  data?: any,
+  retried = false
+): Promise<T> {
+  try {
+    const res = await axios({
+      method,
+      url: `${SHIPROCKET_BASE_URL}${path}`,
+      data: method === "post" ? data : undefined,
+      params: method === "get" ? data : undefined,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 20000,
+    });
+    return res.data;
+  } catch (err: any) {
+    if (err.response?.status === 401 && !retried) {
+      invalidateShiprocketToken();
+      const freshToken = await getShiprocketToken(true);
+      return shiprocketRequest(freshToken, method, path, data, true);
+    }
+    throw err;
+  }
+}
+
+async function fetchShiprocketOrderDetails(token: string, shiprocketOrderId: string | number) {
+  try {
+    return await shiprocketRequest(token, "get", `/orders/show/${shiprocketOrderId}`);
+  } catch (err: any) {
+    console.warn("[Shiprocket] Could not fetch order details:", err.response?.data || err.message);
+    return null;
+  }
+}
+
+function detailsToAwb(details: any): { awbCode?: string; courierName?: string; shipmentId?: string } {
+  const data = details?.data || details;
+  const shipment = Array.isArray(data?.shipments) ? data.shipments[0] : data?.shipments;
+  const awbCode =
+    data?.awb ||
+    data?.awb_code ||
+    shipment?.awb ||
+    shipment?.awb_code;
+  const courierName = data?.courier || data?.courier_name || shipment?.courier || shipment?.courier_name;
+  const shipmentId = data?.shipment_id || shipment?.id || shipment?.shipment_id;
+  return {
+    awbCode: awbCode ? String(awbCode) : undefined,
+    courierName: courierName ? String(courierName) : undefined,
+    shipmentId: shipmentId ? String(shipmentId) : undefined,
+  };
+}
+
+async function assignShiprocketAwb(
+  token: string,
+  shipmentId: number,
+  courierId?: number,
+  reassign = false
+): Promise<{ awbCode: string; courierName: string; courierId: number; raw: any }> {
+  const payload: Record<string, any> = { shipment_id: shipmentId };
+  if (courierId && Number.isFinite(courierId) && courierId > 0) {
+    payload.courier_id = courierId;
+  }
+  if (reassign) {
+    payload.status = "reassign";
+  }
+
+  const awbData = await shiprocketRequest(token, "post", "/courier/assign/awb", payload);
+  const assignStatus = Number(awbData?.awb_assign_status);
+  const parsed = unwrapAwbAssignPayload(awbData);
+  const awbCode = String(parsed.awb_code || parsed.awb_number || "").trim();
+  const courierName = String(parsed.courier_name || parsed.child_courier_name || "").trim();
+  const assignedCourierId = Number(parsed.courier_company_id || parsed.courier_id || courierId || 0);
+
+  if (assignStatus === 0 || !awbCode) {
+    throw new Error(
+      shiprocketErrorMessage(
+        awbData,
+        "Shiprocket did not assign an AWB. Check wallet balance, pickup location, and courier serviceability."
+      )
+    );
+  }
+
+  return { awbCode, courierName: courierName || "Assigned Courier", courierId: assignedCourierId, raw: awbData };
+}
+
 /**
  * Creates Forward Shipment in Shiprocket:
  * 1. Creates Adhoc Order
- * 2. Assigns AWB with selected courier
- * 3. Generates Shipping Label PDF
- * 4. Returns shipmentId, awbCode, courierName, labelUrl, trackingLink
+ * 2. Assigns AWB with selected courier (fails if Shiprocket does not return awb_code)
+ * 3. Schedules courier pickup (required before manifest)
+ * 4. Generates Shipping Label PDF
  */
 export async function createForwardShipment(
   input: CreateShipmentInput
@@ -526,38 +680,38 @@ export async function createForwardShipment(
       labelUrl: `https://shiprocket.co/tracking/label-demo-${randomAwb}.pdf`,
       trackingLink: `https://shiprocket.co/tracking/${randomAwb}`,
       is_simulated: true,
+      pickupScheduled: true,
+      pickupMessage: "Pickup scheduled in test/simulation mode",
       message: "Shipment generated successfully in test/simulation mode",
     };
   }
 
   try {
-    // ── STEP 1: Create Adhoc Order in Shiprocket ──
     const isCod =
       String(input.paymentMethod).toUpperCase() === "COD" ||
       String(input.paymentMethod).toLowerCase() === "cod";
 
-    let pickupLocation =
-      input.pickup_location ||
+    let pickupLocation = (
       process.env.SHIPROCKET_PICKUP_LOCATION ||
-      "work";
+      input.pickup_location ||
+      "work"
+    ).trim();
 
-    try {
-      const registered = await getRegisteredPickupLocations(token);
-      if (registered.length > 0 && !registered.includes(pickupLocation)) {
-        console.log(`[Shiprocket] Pickup location '${pickupLocation}' not found in registered locations [${registered.join(', ')}]. Using '${registered[0]}'.`);
-        pickupLocation = registered[0];
-      }
-    } catch {
-      // fallback to pickupLocation
+    const registered = await getRegisteredPickupLocations(token);
+    if (registered.length > 0 && !registered.includes(pickupLocation)) {
+      console.log(
+        `[Shiprocket] Pickup location '${pickupLocation}' not found in registered locations [${registered.join(", ")}]. Using '${registered[0]}'.`
+      );
+      pickupLocation = registered[0];
     }
 
     const orderItems =
       input.items && input.items.length > 0
-        ? input.items.map((item, idx) => ({
-            name: item.name || `Item ${idx + 1}`,
+        ? input.items.map((item: any, idx) => ({
+            name: item.name || item.title || `Item ${idx + 1}`,
             sku: item.sku || `SKU-${idx + 1}`,
-            units: Number(item.units) || 1,
-            selling_price: Number(item.selling_price) || 100,
+            units: Number(item.units || item.quantity) || 1,
+            selling_price: Number(item.selling_price || item.price) || 100,
             discount: Number(item.discount) || 0,
             tax: Number(item.tax) || 0,
             hsn: item.hsn || 0,
@@ -574,14 +728,22 @@ export async function createForwardShipment(
             },
           ];
 
-    const orderPayload = {
-      order_id: String(input.orderId),
+    const customerName = String(input.customerName || "Customer").trim();
+    const nameParts = customerName.split(/\s+/);
+    const billingFirstName = nameParts[0] || "Customer";
+    const billingLastName = nameParts.slice(1).join(" ") || "";
+
+    const orderRef = input.forceRecreate
+      ? `${String(input.orderId).slice(0, 30)}-${Date.now().toString().slice(-8)}`
+      : String(input.orderId);
+
+    const orderPayload: Record<string, any> = {
+      order_id: orderRef,
       order_date: formatShiprocketDate(),
       pickup_location: pickupLocation,
-      channel_id: "",
       comment: "Shipment created from Girlyhub Admin",
-      billing_customer_name: input.customerName || "Customer",
-      billing_last_name: "",
+      billing_customer_name: billingFirstName,
+      billing_last_name: billingLastName,
       billing_address: input.address || "Delivery Address",
       billing_address_2: "",
       billing_city: input.city || "New Delhi",
@@ -589,7 +751,7 @@ export async function createForwardShipment(
       billing_state: input.state || "Delhi",
       billing_country: "India",
       billing_email: input.email || "support@girlyhub.com",
-      billing_phone: String(input.phone).replace(/\D/g, "") || "9999999999",
+      billing_phone: normalizeIndianPhone(input.phone),
       shipping_is_billing: true,
       order_items: orderItems,
       payment_method: isCod ? "COD" : "Prepaid",
@@ -604,111 +766,87 @@ export async function createForwardShipment(
       weight,
     };
 
-    console.log("[Shiprocket] Creating adhoc order:", input.orderId);
-    const orderRes = await axios.post(
-      `${SHIPROCKET_BASE_URL}/orders/create/adhoc`,
-      orderPayload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 15000,
-      }
-    );
-
-    const orderData = orderRes.data;
-    const shipmentId = orderData.shipment_id || orderData.data?.shipment_id;
+    console.log("[Shiprocket] Creating adhoc order:", orderRef);
+    const orderData = await shiprocketRequest(token, "post", "/orders/create/adhoc", orderPayload);
+    const shipmentId = Number(orderData.shipment_id || orderData.data?.shipment_id);
     const srOrderId = orderData.order_id || orderData.data?.order_id;
 
     if (!shipmentId) {
       throw new Error(
-        orderData.message ||
+        shiprocketErrorMessage(
+          orderData,
           "Failed to obtain shipment_id from Shiprocket create order response."
+        )
       );
     }
 
     console.log(`[Shiprocket] Order created with shipment_id: ${shipmentId}, order_id: ${srOrderId}`);
 
-    // ── STEP 2: Assign Courier & Generate AWB ──
-    console.log(`[Shiprocket] Assigning courier ${courierIdNum} to shipment ${shipmentId}`);
-    const awbRes = await axios.post(
-      `${SHIPROCKET_BASE_URL}/courier/assign/awb`,
-      {
-        shipment_id: shipmentId,
-        courier_id: courierIdNum,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 15000,
+    let awbCode = "";
+    let courierName = "";
+    let assignedCourierId = courierIdNum;
+
+    const tryAssign = async (courierId?: number, reassign = false) => {
+      const assigned = await assignShiprocketAwb(token, shipmentId, courierId, reassign);
+      awbCode = assigned.awbCode;
+      courierName = assigned.courierName;
+      assignedCourierId = assigned.courierId || courierId || assignedCourierId;
+    };
+
+    try {
+      await tryAssign(courierIdNum);
+    } catch (firstAssignErr: any) {
+      console.warn("[Shiprocket] AWB assign with selected courier failed:", firstAssignErr.message);
+      try {
+        await tryAssign(undefined);
+      } catch (recommendedErr: any) {
+        console.warn("[Shiprocket] Recommended courier AWB assign failed:", recommendedErr.message);
+        const details = srOrderId ? await fetchShiprocketOrderDetails(token, srOrderId) : null;
+        const fromDetails = detailsToAwb(details);
+        if (fromDetails.awbCode && !isPlaceholderShiprocketAwb(fromDetails.awbCode)) {
+          awbCode = fromDetails.awbCode;
+          courierName = fromDetails.courierName || courierName;
+        } else {
+          throw new Error(
+            recommendedErr.message ||
+              firstAssignErr.message ||
+              "Shiprocket AWB assignment failed. Pickup cannot be generated without a live AWB."
+          );
+        }
       }
-    );
+    }
 
-    const awbData = awbRes.data;
-    const awbResponseData = awbData.response?.data || awbData.data || {};
-    const awbCode =
-      awbResponseData.awb_code ||
-      awbData.awb_code ||
-      awbResponseData.awb_number;
-    const courierName =
-      awbResponseData.courier_name ||
-      awbData.courier_name ||
-      "Assigned Courier";
-
-    if (!awbCode) {
-      console.warn(
-        "[Shiprocket] AWB assignment response didn't contain awb_code directly:",
-        awbData
+    if (!awbCode || isPlaceholderShiprocketAwb(awbCode)) {
+      throw new Error(
+        "Shiprocket created the order but did not assign a live AWB. Pickup, invoice, and manifest stay disabled until AWB assignment succeeds."
       );
     }
 
-    const effectiveAwb =
-      awbCode || `AWB${shipmentId}`;
-
-    // ── STEP 3: Generate Shipping Label ──
+    const pickupResult = await generateShiprocketPickup([shipmentId]);
     let labelUrl = "";
     try {
-      console.log(`[Shiprocket] Generating label for shipment ${shipmentId}`);
-      const labelRes = await axios.post(
-        `${SHIPROCKET_BASE_URL}/courier/generate/label`,
-        {
-          shipment_id: [shipmentId],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          timeout: 15000,
-        }
-      );
-
-      labelUrl =
-        labelRes.data?.label_url ||
-        labelRes.data?.response?.label_url ||
-        `https://apiv2.shiprocket.in/v1/external/courier/generate/label?shipment_id=${shipmentId}`;
+      labelUrl = await generateShiprocketLabel(shipmentId);
     } catch (labelErr: any) {
       console.warn("[Shiprocket] Label generation notice:", labelErr.message);
-      // Fallback label generation URL
-      labelUrl = `https://shiprocket.co/tracking/label?shipment_id=${shipmentId}`;
     }
 
-    const trackingLink = `https://shiprocket.co/tracking/${effectiveAwb}`;
+    const trackingLink = `https://shiprocket.co/tracking/${awbCode}`;
 
     return {
       success: true,
       shipmentId: String(shipmentId),
       shiprocketOrderId: srOrderId ? String(srOrderId) : String(shipmentId),
-      awbCode: effectiveAwb,
-      courierName,
-      courierId: courierIdNum,
+      awbCode,
+      courierName: courierName || "Assigned Courier",
+      courierId: assignedCourierId,
       labelUrl,
       trackingLink,
       is_simulated: false,
-      message: "Shipment created and AWB generated successfully",
+      pickupScheduled: pickupResult.success,
+      pickupMessage: pickupResult.message,
+      message: pickupResult.success
+        ? "Shipment created, AWB assigned, pickup scheduled, and label generated"
+        : `Shipment created and AWB assigned, but pickup failed: ${pickupResult.message}`,
     };
   } catch (error: any) {
     if (error.response?.status === 401) {
@@ -720,29 +858,8 @@ export async function createForwardShipment(
       error.response?.data || error.message
     );
 
-    // If running in development and API failed, provide fallback simulation
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Shiprocket] Returning simulated shipment for development test.");
-      const randomAwb = `SR${Math.floor(100000000 + Math.random() * 900000000)}IN`;
-      const randomShipmentId = `SHIP${Math.floor(100000 + Math.random() * 900000)}`;
-
-      return {
-        success: true,
-        shipmentId: randomShipmentId,
-        shiprocketOrderId: "SR_ORD_" + randomShipmentId,
-        awbCode: randomAwb,
-        courierName: "Delhivery Surface (Simulated)",
-        courierId: courierIdNum,
-        labelUrl: `https://shiprocket.co/tracking/demo-label-${randomAwb}.pdf`,
-        trackingLink: `https://shiprocket.co/tracking/${randomAwb}`,
-        is_simulated: true,
-        message: "Live API rejected request; generated simulated shipment for testing.",
-      };
-    }
-
     const detailedMessage =
-      error.response?.data?.message ||
-      JSON.stringify(error.response?.data?.errors || "") ||
+      shiprocketErrorMessage(error.response?.data, "") ||
       error.message ||
       "Failed to create forward shipment on Shiprocket";
 
@@ -765,26 +882,26 @@ export async function generateShiprocketLabel(shipmentId: string | number): Prom
     return `https://shiprocket.co/tracking/demo-label-${shipmentId}.pdf`;
   }
 
-  try {
-    const res = await axios.post(
-      `${SHIPROCKET_BASE_URL}/courier/generate/label`,
-      {
-        shipment_id: [validNum],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 15000,
-      }
-    );
+  const resData = await shiprocketRequest(token, "post", "/courier/generate/label", {
+    shipment_id: [validNum],
+  });
 
-    return res.data?.label_url || `https://apiv2.shiprocket.in/v1/external/courier/generate/label?shipment_id=${shipmentId}`;
-  } catch (err: any) {
-    console.error("[Shiprocket] Error generating label:", err.message);
-    return `https://shiprocket.co/tracking/label?shipment_id=${shipmentId}`;
+  const labelUrl = extractPdfUrl(
+    resData?.label_url,
+    resData?.response?.label_url,
+    resData?.payload?.label_url
+  );
+
+  if (!labelUrl) {
+    throw new Error(
+      shiprocketErrorMessage(
+        resData,
+        "Shiprocket did not return a label PDF URL. Assign a live AWB first, then retry label generation."
+      )
+    );
   }
+
+  return labelUrl;
 }
 
 /**
@@ -815,41 +932,67 @@ export async function generateShiprocketPickup(
     };
   }
 
-  try {
-    const payload: any = { shipment_id: ids };
-    if (pickupDate) {
-      payload.pickup_date = [pickupDate];
+  const shipmentId = ids[0];
+  const payload: Record<string, any> = { shipment_id: [shipmentId] };
+  if (pickupDate) {
+    payload.pickup_date = [pickupDate];
+  }
+
+  const requestPickup = async (body: Record<string, any>) => {
+    try {
+      return { ok: true as const, data: await shiprocketRequest(token, "post", "/courier/generate/pickup", body) };
+    } catch (err: any) {
+      return {
+        ok: false as const,
+        data: err.response?.data,
+        message: shiprocketErrorMessage(err.response?.data, err.message || "Failed to schedule pickup"),
+      };
     }
+  };
 
-    const res = await axios.post(
-      `${SHIPROCKET_BASE_URL}/courier/generate/pickup`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 15000,
-      }
-    );
+  let result = await requestPickup(payload);
+  const failedMsg = !result.ok ? result.message : "";
+  const needsRetry =
+    !result.ok ||
+    Number(result.data?.pickup_status) === 0 ||
+    Number(result.data?.status_code) >= 400;
 
-    const data = res.data;
-    const responseData = data.response || data;
-    const isSuccess = data.status_code === 200 || data.pickup_status === 1 || !data.status_code;
-    return {
-      success: isSuccess,
-      message: data.message || responseData?.message || (isSuccess ? "Pickup generated successfully" : "Pickup request error"),
-      response: responseData,
-    };
-  } catch (err: any) {
-    console.error("[Shiprocket] Error generating pickup:", err.response?.data || err.message);
-    const msg = err.response?.data?.message || err.message || "Failed to schedule pickup";
+  if (needsRetry) {
+    result = await requestPickup({ ...payload, status: "retry" });
+  }
+
+  const data = result.data || {};
+  const responseData = data.response || data;
+  const alreadyLaunched = /already/i.test(
+    String(data.message || responseData?.message || responseData?.data || "")
+  );
+  const isSuccess =
+    result.ok &&
+    (Number(data.pickup_status) === 1 ||
+      Number(responseData?.status) === 1 ||
+      alreadyLaunched);
+
+  if (!isSuccess) {
     return {
       success: false,
-      message: msg,
-      response: err.response?.data,
+      message:
+        failedMsg ||
+        shiprocketErrorMessage(
+          data,
+          "Pickup could not be scheduled. Shiprocket requires a live AWB on this shipment first."
+        ),
+      response: data,
     };
   }
+
+  return {
+    success: true,
+    message:
+      data.message ||
+      responseData?.message ||
+      (alreadyLaunched ? "Pickup is already scheduled for this shipment." : "Pickup generated successfully"),
+    response: responseData,
+  };
 }
 
 /**

@@ -168,6 +168,8 @@ const orderSchema = new mongoose.Schema({
   pickupPincode: { type: String, default: null },
   shipmentCost: { type: Number, default: null },
   estimatedDeliveryDays: { type: String, default: null },
+  pickupStatus: { type: String, default: null },
+  pickupMessage: { type: String, default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

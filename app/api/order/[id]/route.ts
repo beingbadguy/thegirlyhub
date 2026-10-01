@@ -54,6 +54,10 @@ export async function GET(
     }
 
     if (!order) {
+      order = await Order.findOne({ orderId: id }).populate(populateProductOptions).lean();
+    }
+
+    if (!order) {
       order = await Order.findOne({ paymentId: id }).populate(populateProductOptions).lean();
     }
 

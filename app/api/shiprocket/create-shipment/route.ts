@@ -3,7 +3,7 @@ import { databaseConnection } from "@/config/databseConnection";
 import Order from "@/models/order.model";
 import "@/models/user.model";
 import "@/models/product.model";
-import { createForwardShipment } from "@/lib/shiprocket";
+import { createForwardShipment, isPlaceholderShiprocketAwb } from "@/lib/shiprocket";
 import mongoose from "mongoose";
 
 /**
@@ -78,26 +78,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if shipment is already created
-    if (order.awbCode || order.awbNumber) {
-      console.warn(`[Shiprocket] Order ${orderId} already has AWB ${order.awbCode || order.awbNumber}`);
-      // If force re-create is not requested, notify admin
-      if (!body.forceRecreate) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `Shipment already exists for this order with AWB: ${order.awbCode || order.awbNumber}. Pass forceRecreate: true to re-create.`,
-            existingShipment: {
-              shipmentId: order.shipmentId,
-              awbCode: order.awbCode || order.awbNumber,
-              courierName: order.courierName,
-              labelUrl: order.labelUrl,
-              trackingLink: order.trackingLink,
-            },
+    const existingAwb = order.awbCode || order.awbNumber;
+    const hasLiveAwb = Boolean(existingAwb) && !isPlaceholderShiprocketAwb(existingAwb);
+    if (hasLiveAwb && !body.forceRecreate) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Shipment already exists for this order with AWB: ${existingAwb}. Pass forceRecreate: true to re-create.`,
+          existingShipment: {
+            shipmentId: order.shipmentId,
+            awbCode: existingAwb,
+            courierName: order.courierName,
+            labelUrl: order.labelUrl,
+            trackingLink: order.trackingLink,
           },
-          { status: 409 }
-        );
-      }
+        },
+        { status: 409 }
+      );
     }
 
     // 2. Prepare Order Details for Shiprocket
@@ -146,7 +143,8 @@ export async function POST(req: NextRequest) {
       length,
       breadth,
       height,
-      pickup_location: body.pickup_location,
+      pickup_location: body.pickup_location || process.env.SHIPROCKET_PICKUP_LOCATION,
+      forceRecreate: Boolean(body.forceRecreate) || Boolean(existingAwb),
       customerName,
       phone,
       email: order.email || order.userId?.email || "customer@girlyhub.com",
@@ -159,43 +157,59 @@ export async function POST(req: NextRequest) {
       paymentMethod,
     });
 
-    if (!shipmentResult.success) {
+    if (!shipmentResult.success || isPlaceholderShiprocketAwb(shipmentResult.awbCode)) {
       return NextResponse.json(
         {
           success: false,
-          message: shipmentResult.message || "Failed to create shipment in Shiprocket",
+          message:
+            shipmentResult.message ||
+            "Shiprocket did not assign a live AWB. Pickup cannot be generated until AWB assignment succeeds.",
         },
-        { status: 500 }
+        { status: 502 }
       );
     }
 
-    // 4. Save shipment data into MongoDB
-    order.shipmentId = shipmentResult.shipmentId;
-    if (shipmentResult.shiprocketOrderId) {
-      order.shiprocketOrderId = shipmentResult.shiprocketOrderId;
-    }
-    order.awbCode = shipmentResult.awbCode;
-    order.awbNumber = shipmentResult.awbCode;
-    order.courierName = shipmentResult.courierName;
-    order.courierId = shipmentResult.courierId;
-    order.labelUrl = shipmentResult.labelUrl;
-    order.trackingLink = shipmentResult.trackingLink;
-    order.weight = weight;
-    order.dimensions = { length, breadth, height };
-    order.shipmentStatus = "Shipped";
-    order.status = "shipped";
-
-    // Record in statusHistory
-    if (!Array.isArray(order.statusHistory)) {
-      order.statusHistory = [];
-    }
-    order.statusHistory.push({
+    const shipmentFields: Record<string, any> = {
+      shipmentId: String(shipmentResult.shipmentId),
+      shiprocketOrderId: shipmentResult.shiprocketOrderId || order.shiprocketOrderId,
+      awbCode: shipmentResult.awbCode,
+      awbNumber: shipmentResult.awbCode,
+      courierName: shipmentResult.courierName,
+      courierId: shipmentResult.courierId,
+      labelUrl: shipmentResult.labelUrl || order.labelUrl || "",
+      trackingLink: shipmentResult.trackingLink,
+      weight,
+      dimensions: { length, breadth, height },
+      shipmentStatus: "Shipped",
       status: "shipped",
-      changedAt: new Date(),
-      note: `Shipment created via Shiprocket (${shipmentResult.courierName}) | AWB: ${shipmentResult.awbCode}`,
-    });
+      pickupStatus: shipmentResult.pickupScheduled ? "scheduled" : "pending",
+      pickupMessage: shipmentResult.pickupMessage || null,
+    };
 
-    await order.save();
+    const historyNote = `Shipment created via Shiprocket (${shipmentResult.courierName}) | AWB: ${shipmentResult.awbCode}${
+      shipmentResult.pickupScheduled ? " | Pickup scheduled" : ` | Pickup pending: ${shipmentResult.pickupMessage || ""}`
+    }`;
+
+    const updatedOrder = await Order.findByIdAndUpdate(
+      order._id,
+      {
+        $set: shipmentFields,
+        $push: {
+          statusHistory: {
+            status: "shipped",
+            changedAt: new Date(),
+            note: historyNote,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      throw new Error("Shipment was created on Shiprocket but the order could not be updated in the database.");
+    }
+
+    Object.assign(order, shipmentFields);
 
     console.log(
       `[POST /api/shiprocket/create-shipment] Order ${order._id} updated with AWB ${shipmentResult.awbCode}`
@@ -204,7 +218,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Shipment created, AWB assigned, and label generated successfully",
+        message: shipmentResult.message || "Shipment created, AWB assigned, and label generated successfully",
         shipment: {
           shipmentId: shipmentResult.shipmentId,
           shiprocketOrderId: shipmentResult.shiprocketOrderId || order.shiprocketOrderId,
@@ -214,6 +228,8 @@ export async function POST(req: NextRequest) {
           labelUrl: shipmentResult.labelUrl,
           trackingLink: shipmentResult.trackingLink,
           is_simulated: shipmentResult.is_simulated,
+          pickupScheduled: shipmentResult.pickupScheduled,
+          pickupMessage: shipmentResult.pickupMessage,
         },
         order: {
           _id: order._id,
@@ -226,6 +242,8 @@ export async function POST(req: NextRequest) {
           courierName: order.courierName,
           labelUrl: order.labelUrl,
           trackingLink: order.trackingLink,
+          pickupStatus: order.pickupStatus,
+          pickupMessage: order.pickupMessage,
         },
       },
       { status: 200 }
