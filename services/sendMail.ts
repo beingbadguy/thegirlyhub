@@ -379,16 +379,6 @@ export const OrderConfirmationMail = async (
           <td style="padding: 6px 0; color: #6b7280;">Subtotal</td>
           <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #111827;">₹${subtotal.toFixed(2)}</td>
         </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #6b7280;">Delivery Charge</td>
-          <td style="padding: 6px 0; text-align: right; font-weight: 600;">
-            ${
-              shippingCharge === 0
-                ? '<span style="color: #16a34a; font-weight: 700;">FREE</span>'
-                : `₹${shippingCharge.toFixed(2)}`
-            }
-          </td>
-        </tr>
         ${
           firstOrderDiscount > 0
             ? `

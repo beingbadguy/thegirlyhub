@@ -2,10 +2,9 @@
 
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/store";
-import { Minus, Plus, ShoppingBag, Trash2, Truck, Sparkles, X } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { calculateShipping } from "@/lib/shipping";
 import { productUrl } from "@/lib/slug";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
@@ -32,7 +31,6 @@ export default function CartDrawer() {
         item.quantity,
     0,
   );
-  const shipping = calculateShipping(subtotal, "online");
 
   useEffect(() => {
     if (!isCartOpen) return;
@@ -223,24 +221,6 @@ export default function CartDrawer() {
             </button>
           ) : (
             <>
-              <div className="mb-5 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/90 to-teal-50/60 p-3.5 flex items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                    <Truck className="size-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-emerald-950 flex items-center gap-1">
-                      Free Delivery Unlocked <Sparkles className="size-3 text-emerald-600 animate-pulse" />
-                    </p>
-                    <p className="text-[11px] text-emerald-700 font-medium">
-                      Complimentary delivery on all orders
-                    </p>
-                  </div>
-                </div>
-                <span className="shrink-0 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wider">
-                  FREE
-                </span>
-              </div>
               <div className="mb-4 flex items-center justify-between text-base font-semibold">
                 <span>Total</span>
                 <span>₹{subtotal.toLocaleString("en-IN")}</span>

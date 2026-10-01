@@ -125,12 +125,12 @@ export default function ShippingPolicy() {
         {/* SECTION */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            💰 Shipping & Delivery Charges
+            💰 Shipping & Delivery
           </h2>
           <ul className="list-disc pl-5 space-y-2">
             <li>
-              <span className="font-semibold text-green-600">100% Free Delivery:</span>{" "}
-              Standard delivery is completely <span className="font-semibold text-gray-900">FREE</span> on all orders across India. There is no minimum spend threshold or hidden delivery fee when checking out.
+              <span className="font-semibold text-green-600">No Delivery Charges:</span>{" "}
+              We do not charge any delivery fees. The price shown on each product is all you pay, with free standard delivery on all orders across India.
             </li>
             {/* Cash on Delivery commented out for now - only paid orders implemented
             <li>

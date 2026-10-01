@@ -8,10 +8,9 @@ import { Minus, Plus, Trash2, Sparkles, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AxiosError } from "axios";
-import { calculateShipping, FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
+import { FIRST_ORDER_DISCOUNT_RATE } from "@/lib/shipping";
 import { getAvailableQuantity, isProductInStock } from "@/lib/productStock";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
-import FreeShippingBar from "@/components/FreeShippingBar";
 import CartSkeleton from "@/components/CartSkeleton";
 import { productUrl } from "@/lib/slug";
 import FloralAccent from "@/components/decorations/FloralAccent";
@@ -80,17 +79,10 @@ const CartPage = () => {
     return acc + price * item.quantity;
   }, 0);
 
-  // Dynamic shipping calculation
-  const shippingResult = calculateShipping(subtotal, "online");
-  const shippingCharge = shippingResult.shippingCharge;
-  const remainingForFreeShipping = shippingResult.remainingForFreeShipping;
-  const isFreeShipping = shippingResult.isFreeShipping;
-  const freeShippingProgress = shippingResult.freeShippingProgress;
-
   const firstTimeDiscount = user?.firstPurchase
     ? 0
-    : (subtotal + shippingCharge) * FIRST_ORDER_DISCOUNT_RATE;
-  const totalAfterDiscount = subtotal + shippingCharge - firstTimeDiscount;
+    : subtotal * FIRST_ORDER_DISCOUNT_RATE;
+  const totalAfterDiscount = subtotal - firstTimeDiscount;
 
 
   // Show rich animated Skeleton Loader while checking auth or loading cart
@@ -317,13 +309,6 @@ const CartPage = () => {
           </div>
 
           <div className="border border-pink-100 bg-white p-5 rounded-2xl shadow-sm space-y-4 h-fit text-sm">
-            <FreeShippingBar
-              isFreeShipping={isFreeShipping}
-              remainingForFreeShipping={remainingForFreeShipping}
-              subtotal={subtotal}
-              freeShippingProgress={freeShippingProgress}
-            />
-
             <h2 className="text-lg font-bold text-gray-900">Product Summary</h2>
             <hr className="w-full border-gray-100" />
             <div className="flex justify-between text-gray-600">
@@ -336,13 +321,6 @@ const CartPage = () => {
               <p>Subtotal</p>
               <p className="font-semibold text-gray-800">
                 ₹{subtotal.toFixed(2)}
-              </p>
-            </div>
-
-            <div className="flex justify-between text-gray-600">
-              <p>Delivery charge</p>
-              <p className="text-green-600 font-bold">
-                FREE
               </p>
             </div>
             {!user?.firstPurchase && (

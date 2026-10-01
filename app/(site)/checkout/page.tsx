@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import axios, { AxiosError } from "axios";
 import { VscLoading } from "react-icons/vsc";
 import { MdCancel, MdOutlinePayment } from "react-icons/md";
-import { IoCashOutline } from "react-icons/io5";
-import { TbTruckDelivery } from "react-icons/tb";
 import { Check, ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import {
@@ -1248,18 +1246,6 @@ function CheckoutContent() {
                     Items ({availableCartItems.length})
                   </p>
                   <p>₹{subtotal.toFixed(2)}</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="flex items-center gap-1.5 text-gray-600">
-                    <TbTruckDelivery className="size-4" />
-                    Delivery charge
-                  </p>
-                  <p className="text-green-600 font-bold">
-                    FREE
-                  </p>
-                </div>
-                <div className="text-[11px] text-green-700 font-medium">
-                  Free standard delivery on all orders 🎉
                 </div>
                 {!user?.firstPurchase && (
                   <div className="flex justify-between text-green-600">

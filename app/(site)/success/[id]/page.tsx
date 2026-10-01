@@ -616,13 +616,6 @@ export default function OrderConfirmedPage() {
                 </span>
               </div>
 
-              <div className="flex justify-between text-[#806475]">
-                <span>Shipping Charge</span>
-                <span className={`font-semibold ${order?.shippingCharge === 0 || !order?.shippingCharge ? "text-emerald-600 font-bold" : "text-[#402537]"}`}>
-                  {order?.shippingCharge === 0 || !order?.shippingCharge ? "FREE" : `₹${order.shippingCharge}`}
-                </span>
-              </div>
-
               {discountAmount > 0 && (
                 <div className="flex justify-between text-pink-600 font-medium">
                   <span>Discount Applied</span>
@@ -633,10 +626,10 @@ export default function OrderConfirmedPage() {
               <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-pink-50 to-rose-100/70 px-4 py-3.5 border border-pink-100">
                 <div>
                   <span className="font-bold text-sm text-[#402537] block">
-                    Cash to Pay at Delivery
+                    Total Amount Paid
                   </span>
                   <span className="text-[11px] text-[#806475]">
-                    (Exact cash or UPI upon delivery)
+                    (Inclusive of all taxes & delivery)
                   </span>
                 </div>
                 <span className="text-xl sm:text-2xl font-black text-pink-600">

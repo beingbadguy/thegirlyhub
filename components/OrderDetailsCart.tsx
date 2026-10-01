@@ -653,17 +653,6 @@ export default function OrderDetailsCard({
                     <span>Items ({products.length})</span>
                     <span>₹{subtotal.toFixed(2)}</span>
                   </div>
-                  
-                  <div className="flex justify-between items-center px-4 py-2.5 border-b border-gray-50 text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <Truck className="w-3.5 h-3.5 text-gray-400" /> Delivery charge
-                    </span>
-                    {shippingCharge > 0 ? (
-                      <span>₹{shippingCharge.toFixed(2)}</span>
-                    ) : (
-                      <span className="text-emerald-600 font-semibold">FREE</span>
-                    )}
-                  </div>
 
                   {firstOrderDiscount > 0 && (
                     <div className="flex justify-between items-center px-4 py-2.5 border-b border-gray-50 text-green-600">
