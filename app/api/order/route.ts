@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
     const decoded = await fetchTokenDetails(request);
     if (!decoded) {
       return NextResponse.json(
-        { message: "You must log in to view your orders", success: false },
+        { message: "You must log in to view your orders", success: false, orders: [], data: [] },
         { status: 401 },
       );
     }
@@ -191,13 +191,33 @@ export async function GET(request: NextRequest) {
     const statusParam = searchParams.get("status")?.trim().toLowerCase();
     const searchParam = searchParams.get("search")?.trim();
     const sortParam = searchParams.get("sort") || "newest";
+    const isAll = searchParams.get("all") === "true";
 
-    const baseFilter: Record<string, any> = {
-      $or: [
-        { userId: decoded.userId },
-        ...(decoded.email ? [{ email: decoded.email }] : []),
-      ],
-    };
+    let isAdmin =
+      decoded?.role?.toLowerCase() === "admin" ||
+      Boolean((decoded as any)?.isAdmin);
+
+    if (!isAdmin && decoded?.userId) {
+      const User = (await import("@/models/user.model")).default;
+      const dbUser = (await User.findById(decoded.userId).select("role isAdmin").lean()) as any;
+      if (dbUser?.role?.toLowerCase() === "admin" || dbUser?.isAdmin === true) {
+        isAdmin = true;
+      }
+    }
+
+    const userObjectId = mongoose.Types.ObjectId.isValid(decoded.userId)
+      ? new mongoose.Types.ObjectId(decoded.userId)
+      : null;
+
+    const baseFilterConditions: any[] = [
+      { userId: decoded.userId },
+      ...(userObjectId ? [{ userId: userObjectId }] : []),
+      ...(decoded.email ? [{ email: decoded.email }] : []),
+    ];
+
+    const baseFilter: Record<string, any> = (isAdmin && isAll)
+      ? {}
+      : { $or: baseFilterConditions };
 
     const query: Record<string, any> = { ...baseFilter };
 
@@ -208,20 +228,25 @@ export async function GET(request: NextRequest) {
     if (searchParam) {
       const searchConditions: any[] = [
         { recipientName: { $regex: searchParam, $options: "i" } },
-        { phone: { $regex: searchParam, $options: "i" } },
+        { email: { $regex: searchParam, $options: "i" } },
         { "products.title": { $regex: searchParam, $options: "i" } },
         { awbNumber: { $regex: searchParam, $options: "i" } },
+        { orderId: searchParam },
       ];
 
       if (mongoose.Types.ObjectId.isValid(searchParam)) {
         searchConditions.push({ _id: new mongoose.Types.ObjectId(searchParam) });
       }
 
-      query.$and = [
-        { ...baseFilter },
-        { $or: searchConditions },
-      ];
-      delete query.$or;
+      if (baseFilter.$or) {
+        query.$and = [
+          { $or: baseFilter.$or },
+          { $or: searchConditions },
+        ];
+        delete query.$or;
+      } else {
+        query.$or = searchConditions;
+      }
     }
 
     let sortOption: Record<string, any> = { createdAt: -1 };
@@ -233,18 +258,22 @@ export async function GET(request: NextRequest) {
       sortOption = { totalAmount: 1 };
     }
 
+    const ordersQuery = Order.find(query)
+      .sort(sortOption)
+      .populate({ path: "userId", select: "name email phone role" })
+      .populate({
+        path: "products.productId",
+        select: "title name image mainImage price discountedPrice slug",
+      })
+      .lean();
+
+    if (!isAll) {
+      ordersQuery.skip(skip).limit(limit);
+    }
+
     // Parallel fetch: Paginated Orders, Total Filtered, and Status Counts Aggregation
     const [orders, total, allUserOrders] = await Promise.all([
-      Order.find(query)
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limit)
-        .populate({ path: "userId", select: "name email phone" })
-        .populate({
-          path: "products.productId",
-          select: "title name image mainImage price discountedPrice slug",
-        })
-        .lean(),
+      ordersQuery,
       Order.countDocuments(query),
       Order.find(baseFilter, { status: 1 }).lean(),
     ]);
@@ -269,10 +298,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         orders,
+        data: orders,
         statusCounts,
         success: true,
         message: "Orders fetched successfully",
-        pagination: paginationResult(page, limit, total),
+        pagination: paginationResult(isAll ? 1 : page, isAll ? total || 1 : limit, total),
       },
       { status: 200 },
     );
