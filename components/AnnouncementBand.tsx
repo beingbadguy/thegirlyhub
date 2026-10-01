@@ -4,8 +4,10 @@ const messages = [
   "✨ 100+ Happy Customers",
   "🚚 100% Free Delivery on all orders",
   "🎁 15% off on your first order",
-  "📦 Easy Exchange & Returns",
-  "🛍️ COD Available",
+  "📱 UPI Payments Available",
+  // "📦 Easy Exchange & Returns",
+  // "📦 Replacement only for defective items (24h unboxing video)",
+  // "🛍️ COD Available",
 ];
 
 export default function AnnouncementBand() {

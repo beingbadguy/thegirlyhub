@@ -118,7 +118,7 @@ function CheckoutContent() {
   const [orderNotes, setOrderNotes] = useState("");
   const [zip, setZip] = useState("");
   const [phone, setPhone] = useState("");
-  const [paymentMode, setPaymentMode] = useState<"cod" | "online">("cod");
+  const [paymentMode, setPaymentMode] = useState<"cod" | "online">("online");
   const [promoCode, setPromoCode] = useState("");
   const [fieldErrors, setFieldErrors] = useState<OrderFieldErrors>({});
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -406,6 +406,7 @@ function CheckoutContent() {
     return true;
   };
 
+  /* COD order placement commented out for now - only paid orders implemented
   const confirmCodOrder = async (overrideToken?: string) => {
     if (availableCartItems.length === 0) {
       router.replace("/cart");
@@ -493,9 +494,11 @@ function CheckoutContent() {
       setPlacingOrder(false);
     }
   };
+  */
 
   const handleOrder = () => {
     setOrderError("");
+    /* COD orders commented out for now - only paid orders implemented
     if (paymentMode === "cod") {
       if (availableCartItems.length === 0) {
         router.replace("/cart");
@@ -507,6 +510,8 @@ function CheckoutContent() {
     } else {
       placeOnlineOrder();
     }
+    */
+    placeOnlineOrder();
   };
 
   const placeOnlineOrder = async () => {
@@ -1291,6 +1296,8 @@ function CheckoutContent() {
                 How would you like to pay?
               </h2>
               <div className="space-y-2.5">
+                {/* Cash on Delivery commented out for now - only paid orders implemented */}
+                {/*
                 <button
                   type="button"
                   onClick={() => setPaymentMode("cod")}
@@ -1321,6 +1328,7 @@ function CheckoutContent() {
                     <Check className="size-5 shrink-0 text-rose-600" />
                   )}
                 </button>
+                */}
 
                 <button
                   type="button"
@@ -1466,9 +1474,8 @@ function CheckoutContent() {
             >
               {placingOrder ? (
                 <VscLoading className="animate-spin text-xl" />
-              ) : paymentMode === "cod" ? (
-                `Place Order · ₹${finalAmount.toFixed(2)}`
               ) : (
+                /* paymentMode === "cod" ? `Place Order · ₹${finalAmount.toFixed(2)}` : */
                 `Pay Online · ₹${finalAmount.toFixed(2)}`
               )}
             </Button>
@@ -1476,11 +1483,11 @@ function CheckoutContent() {
         </div>
       </div>
 
-      {/* COD SECURITY & CONFIRMATION MODAL */}
+      {/* COD SECURITY & CONFIRMATION MODAL - commented out for now: only paid orders implemented */}
+      {/*
       {showCodModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="relative w-full max-w-md rounded-3xl border border-rose-100 bg-white p-6 shadow-2xl transition-all sm:p-7">
-            {/* Close button */}
             <button
               type="button"
               onClick={() => {
@@ -1492,7 +1499,6 @@ function CheckoutContent() {
               <X className="size-5" />
             </button>
 
-            {/* Header */}
             <div className="text-center">
               <div className="mx-auto mb-3 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
                 <ShieldCheck className="size-4 text-rose-600" />
@@ -1506,7 +1512,6 @@ function CheckoutContent() {
               </p>
             </div>
 
-            {/* Delivery & Total Summary */}
             <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50/80 p-4 text-xs space-y-2">
               <div className="flex justify-between font-medium text-gray-700">
                 <span>Amount on Delivery:</span>
@@ -1524,7 +1529,6 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* CAPTCHA Widget */}
             <div className="mt-5">
               <p className="mb-2 text-center text-xs font-medium text-gray-700">
                 Verify you are human:
@@ -1538,14 +1542,12 @@ function CheckoutContent() {
               />
             </div>
 
-            {/* Error display */}
             {codModalError && (
               <p className="mt-3 text-center text-xs font-medium text-red-600">
                 {codModalError}
               </p>
             )}
 
-            {/* Action Buttons */}
             <div className="mt-5 flex flex-col gap-2.5">
               <Button
                 type="button"
@@ -1572,6 +1574,7 @@ function CheckoutContent() {
           </div>
         </div>
       )}
+      */}
     </div>
   );
 }

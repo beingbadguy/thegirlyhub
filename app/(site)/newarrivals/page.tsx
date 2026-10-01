@@ -98,9 +98,15 @@ export default async function NewArrivalsPage() {
               <Heart className="size-3 text-rose-500 fill-rose-500" />
               <span>Handpicked Limited Batches</span>
             </span>
+            {/*
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3 py-1 shadow-2xs">
               <Truck className="size-3 text-[#8a3348]" />
               <span>Cash on Delivery Available</span>
+            </span>
+            */}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3 py-1 shadow-2xs">
+              <Truck className="size-3 text-[#8a3348]" />
+              <span>Free Delivery Available</span>
             </span>
           </div>
         </div>

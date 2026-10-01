@@ -175,7 +175,8 @@ export default function ContactClient() {
                   Email Support
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">officialgirlyhub@gmail.com</p>
-                <p className="text-[11px] text-[#8a6b70] mt-1">Order questions, returns &amp; collaborations</p>
+                {/* <p className="text-[11px] text-[#8a6b70] mt-1">Order questions, returns &amp; collaborations</p> */}
+                <p className="text-[11px] text-[#8a6b70] mt-1">Order questions, replacements &amp; collaborations</p>
               </div>
             </a>
 

@@ -5,13 +5,15 @@ import FloralAccent from "@/components/decorations/FloralAccent";
 
 export const metadata: Metadata = {
   title: "Shipping & Delivery Policy",
-  description: "Learn about GirlyHub's shipping timelines, delivery costs, Cash on Delivery (COD), and order tracking across India.",
+  // description: "Learn about GirlyHub's shipping timelines, delivery costs, Cash on Delivery (COD), and order tracking across India.",
+  description: "Learn about GirlyHub's shipping timelines, delivery costs, and order tracking across India.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/policies/shipping-policy`,
   },
   openGraph: {
     title: `Shipping Policy | ${SITE_CONFIG.name}`,
-    description: "Learn about GirlyHub's shipping timelines, delivery costs, COD, and order tracking across India.",
+    // description: "Learn about GirlyHub's shipping timelines, delivery costs, COD, and order tracking across India.",
+    description: "Learn about GirlyHub's shipping timelines, delivery costs, and order tracking across India.",
     url: `${SITE_CONFIG.url}/policies/shipping-policy`,
     type: "website",
     images: [SITE_CONFIG.ogImage],
@@ -130,17 +132,27 @@ export default function ShippingPolicy() {
               <span className="font-semibold text-green-600">100% Free Delivery:</span>{" "}
               Standard delivery is completely <span className="font-semibold text-gray-900">FREE</span> on all orders across India. There is no minimum spend threshold or hidden delivery fee when checking out.
             </li>
+            {/* Cash on Delivery commented out for now - only paid orders implemented
             <li>
               <span className="font-semibold text-pink-700">
                 Cash on Delivery (COD):
               </span>{" "}
               Available across India with ₹0 extra surcharge.
             </li>
+            */}
+            {/*
             <li>
               <span className="font-semibold text-neutral-900">
                 Return & Exchange Shipping:
               </span>{" "}
               Initial delivery is always 100% free. In the case of returns or exchanges, shipping charges apply only to the return process and are borne by the customer (unless the item received was damaged, defective, or incorrect).
+            </li>
+            */}
+            <li>
+              <span className="font-semibold text-neutral-900">
+                Return & Replacement Policy:
+              </span>{" "}
+              No exchange or return. Replacement is applicable only for defective items, with a mandatory unboxing video recorded within 24 hours of delivery.
             </li>
           </ul>
         </div>
@@ -158,10 +170,10 @@ export default function ShippingPolicy() {
             <p>
               📧{" "}
               <a
-                href="mailto:support@girlyhub.in"
+                  href="mailto:girlyhubsupport@gmail.com"
                 className="text-pink-600 hover:underline font-medium"
               >
-                support@girlyhub.in
+                  girlyhubsupport@gmail.com
               </a>
             </p>
             <p>

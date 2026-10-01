@@ -1590,10 +1590,18 @@ const ProductPageClient = ({
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-50 text-neutral-700 border border-neutral-100">
             <RotateCcw className="w-5 h-5" />
           </div>
+          {/*
           <div>
             <h4 className="font-bold text-sm text-neutral-800">Easy Returns</h4>
             <p className="text-xs text-neutral-400 font-medium">
               7-day replacement guarantee
+            </p>
+          </div>
+          */}
+          <div>
+            <h4 className="font-bold text-sm text-neutral-800">Replacement Only</h4>
+            <p className="text-xs text-neutral-400 font-medium">
+              Defective items only (24h unboxing video)
             </p>
           </div>
         </div>
@@ -1745,7 +1753,8 @@ const ProductPageClient = ({
               }
               className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-neutral-800 focus:outline-none cursor-pointer"
             >
-              <span>Shipping & Return Policies</span>
+              {/* <span>Shipping & Return Policies</span> */}
+              <span>Shipping & Replacement Policies</span>
               <span className="text-neutral-500 font-bold text-sm">
                 {openAccordions.shipping ? "–" : "+"}
               </span>
@@ -1765,13 +1774,19 @@ const ProductPageClient = ({
                       delivery on all orders across India with no minimum purchase requirement. Orders are shipped
                       within 24-48 hours.
                     </p>
+                    {/*
                     <p>
                       🔄 <strong>Easy Returns:</strong> If you are not
                       completely satisfied, you can request a return. Standard initial delivery is free; return shipping cost is borne by the customer in return cases (free return for damaged or defective items).
                     </p>
+                    */}
+                    <p>
+                      🔄 <strong>Replacement Policy:</strong> No exchange or return. Replacement is applicable only for defective items, with a mandatory unboxing video recorded within 24 hours of delivery.
+                    </p>
                     <p>
                       🛡️ <strong>Secure Checkout:</strong> All transactions are
-                      encrypted and processed securely. We accept COD, UPI,
+                      {/* encrypted and processed securely. We accept COD, UPI, Cards, and NetBanking. */}
+                      encrypted and processed securely. We accept UPI,
                       Cards, and NetBanking.
                     </p>
                   </div>

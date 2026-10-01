@@ -137,14 +137,17 @@ export default function CancelOrderModal({
                 will be automatically refunded to your original source of payment within 5–7 business days.
               </p>
             </div>
-          ) : (
+          ) : null}
+          {/* COD cancellation info commented out for now - only paid orders implemented
+          : (
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-3.5 text-xs text-gray-600">
               <span className="font-semibold text-gray-800">Cash on Delivery</span>
               <p className="mt-0.5">
                 No payment was charged for this order. It will be marked as cancelled immediately.
               </p>
             </div>
-          )}
+          )
+          */}
 
           {/* Reason Selection */}
           <div>

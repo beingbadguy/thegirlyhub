@@ -4,14 +4,16 @@ import BreadcrumbHome from "@/components/BreadcrumbHome";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
 export const metadata: Metadata = {
-  title: "Return & Refund Policy",
-  description: "Read the GirlyHub return, refund, and exchange policy for accessories and jewellery orders.",
+  title: "Replacement & Return Policy",
+  description:
+    "No exchange or return. Replacement is applicable only for defective items, with a mandatory unboxing video recorded within 24 hours of delivery.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/policies/refund-policy`,
   },
   openGraph: {
-    title: `Return & Refund Policy | ${SITE_CONFIG.name}`,
-    description: "Read the GirlyHub return, refund, and exchange policy for accessories and jewellery orders.",
+    title: `Replacement & Return Policy | ${SITE_CONFIG.name}`,
+    description:
+      "No exchange or return. Replacement is applicable only for defective items, with a mandatory unboxing video recorded within 24 hours of delivery.",
     url: `${SITE_CONFIG.url}/policies/refund-policy`,
     type: "website",
     images: [SITE_CONFIG.ogImage],
@@ -34,22 +36,65 @@ export default function RefundPolicy() {
         >
           <BreadcrumbHome />
           <span className="text-neutral-300">/</span>
-          <span className="font-semibold text-neutral-900">Return & Refund</span>
+          <span className="font-semibold text-neutral-900">Replacement Policy</span>
         </nav>
         {/* Heading */}
         <div className="flex items-center gap-2 mb-2">
           <FloralAccent flower={1} size="sm" animation="pulse" />
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight font-serif">
-            Return & Refund Policy
+            Replacement &amp; Return Policy
           </h1>
         </div>
         <p className="mb-10 text-sm text-gray-500">
-          Last updated: 29 August 2026
+          Last updated: October 2026
         </p>
 
-
         <div className="space-y-8 text-gray-700 leading-7 text-[15px]">
-          {/* Intro */}
+          {/* Main Replacement Policy Notice */}
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-5 sm:p-6 text-rose-950 shadow-xs">
+            <h2 className="text-lg sm:text-xl font-bold font-serif text-[#4e1a27] mb-2">
+              Important Policy Notice
+            </h2>
+            <p className="text-sm sm:text-base font-semibold text-[#8a2a44] leading-relaxed">
+              No exchange or return. Replacement is applicable only for defective items, with a mandatory unboxing video recorded within 24 hours of delivery.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              1. Policy Guidelines &amp; Unboxing Video Requirement
+            </h2>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <span className="font-semibold text-gray-900">No Return or Exchange:</span> We do not accept returns or exchanges for change of mind, sizing, or styling preference.
+              </li>
+              <li>
+                <span className="font-semibold text-gray-900">Defective Piece Replacement Only:</span> A replacement will be provided solely in the event that an item arrived damaged or with a manufacturing defect.
+              </li>
+              <li>
+                <span className="font-semibold text-gray-900">Mandatory Unboxing Video:</span> An unboxing video is compulsory for all replacement claims. The video must start before opening the sealed courier bag and clearly show the shipping label, packaging, and the defect without any cuts or editing.
+              </li>
+              <li>
+                <span className="font-semibold text-gray-900">Strict 24-Hour Window:</span> You must notify us with the unboxing video within <span className="font-semibold text-rose-700">24 hours of delivery</span>. Claims submitted after 24 hours or without an unboxing video will not be entertained.
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              2. How to Request a Defective Item Replacement
+            </h2>
+            <p>
+              If you received a defective piece, please reach out to our team within 24 hours of delivery with your order ID, photos of the item, and the unboxing video:
+            </p>
+
+            <div className="mt-3 space-y-1.5 rounded-xl border border-gray-100 bg-gray-50/80 p-4">
+              <p>📧 Email: <strong className="text-gray-900">officialgirlyhub@gmail.com</strong></p>
+              <p>📱 WhatsApp / Phone: <strong className="text-gray-900">+91 836 842 2490</strong></p>
+            </div>
+          </div>
+
+          {/* Previous Return & Refund Policy - Commented out for now
           <p>
             At <span className="font-semibold text-gray-900">GirlyHub</span>, we
             strive to deliver high-quality products and a smooth shopping
@@ -57,7 +102,6 @@ export default function RefundPolicy() {
             request a return or exchange under the conditions below.
           </p>
 
-          {/* RETURN */}
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               1. Return Policy
@@ -100,15 +144,9 @@ export default function RefundPolicy() {
                 <span className="font-medium">Shipping Charges:</span>{" "}
                 Non-refundable for return shipments.
               </li>
-
-              <li>
-                <span className="font-medium">COD Orders:</span> Refunds will be
-                provided as store credit in your GirlyHub account.
-              </li>
             </ul>
           </div>
 
-          {/* EXCHANGE */}
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               2. Exchange Policy
@@ -121,7 +159,6 @@ export default function RefundPolicy() {
             </ul>
           </div>
 
-          {/* NON RETURNABLE */}
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               3. Non-Returnable Items
@@ -135,7 +172,6 @@ export default function RefundPolicy() {
             </ul>
           </div>
 
-          {/* DAMAGED */}
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               4. Damaged or Incorrect Items
@@ -146,6 +182,7 @@ export default function RefundPolicy() {
               images for faster resolution.
             </p>
           </div>
+          */}
 
           {/* CONTACT */}
           <div>

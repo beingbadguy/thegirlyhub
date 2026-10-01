@@ -130,7 +130,8 @@ const Footer = () => {
                 href="/policies/refund-policy"
                 className="transition-colors hover:text-pink-200"
               >
-                Return & Refund Policy
+                {/* Return & Refund Policy */}
+                Replacement Policy
               </Link>
             </li>
             <li>

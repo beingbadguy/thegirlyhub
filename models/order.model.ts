@@ -77,7 +77,7 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    default: "cod",
+    default: "online", // Paid orders only; COD commented out for now
     enum: ["cod", "online"],
   },
   status: {

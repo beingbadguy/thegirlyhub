@@ -29,12 +29,14 @@ export const revalidate = 60; // Revalidate every 60 seconds (ISR hybrid)
 
 export const metadata: Metadata = {
   title: { absolute: "Trendy Earrings @ ₹109 | GirlyHub" },
+  // description: "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
   description:
-    "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
+    "Shop trendy jewellery starting ₹109 😍 Free delivery across India. Limited stock ⚡",
   alternates: { canonical: SITE_CONFIG.url },
   openGraph: {
     title: "Trendy Earrings @ ₹109 | GirlyHub",
-    description: "Free delivery + COD available. Shop now!",
+    // description: "Free delivery + COD available. Shop now!",
+    description: "Free delivery across India. Shop now!",
     url: SITE_CONFIG.url,
     siteName: SITE_CONFIG.name,
     type: "website",
@@ -50,8 +52,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Trendy Earrings @ ₹109 | GirlyHub",
+    // description: "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
     description:
-      "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
+      "Shop trendy jewellery starting ₹109 😍 Free delivery across India. Limited stock ⚡",
     images: ["/og.png"],
   },
 };

@@ -89,9 +89,15 @@ export default async function CategoriesPage() {
               <ShieldCheck className="size-3 text-emerald-600" />
               <span>Skin & Hair Friendly</span>
             </span>
+            {/*
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3 py-1 shadow-2xs">
               <Truck className="size-3 text-[#8a3348]" />
               <span>Cash on Delivery Across India</span>
+            </span>
+            */}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3 py-1 shadow-2xs">
+              <Truck className="size-3 text-[#8a3348]" />
+              <span>Express Delivery Across India</span>
             </span>
           </div>
         </div>

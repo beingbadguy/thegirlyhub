@@ -91,9 +91,14 @@ export default function TermsOfService() {
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
             4. Payments
           </h2>
+          {/*
           <p>
             We accept prepaid payments via UPI, cards, and Cash on Delivery
             (COD). Orders are processed after payment confirmation (except COD).
+          </p>
+          */}
+          <p>
+            We accept prepaid payments via UPI, debit/credit cards, and net banking. Orders are processed after payment confirmation.
           </p>
         </div>
 
@@ -109,11 +114,16 @@ export default function TermsOfService() {
 
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            6. Returns & Refunds
+            6. Returns &amp; Replacements
           </h2>
+          {/*
           <p>
             Please refer to our Returns & Exchange Policy for detailed
             information.
+          </p>
+          */}
+          <p>
+            No exchange or return. Replacement is applicable only for defective items, with a mandatory unboxing video recorded within 24 hours of delivery.
           </p>
         </div>
 

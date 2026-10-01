@@ -372,7 +372,8 @@ const CartPage = () => {
             </button>
             <p className="text-xs text-gray-500">
               By selecting a payment method, you agree to our Terms of Use,
-              Sale, Return Policy, and Privacy Policy.
+              {/* Sale, Return Policy, and Privacy Policy. */}
+              Sale, Replacement Policy, and Privacy Policy.
             </p>
           </div>
         </div>

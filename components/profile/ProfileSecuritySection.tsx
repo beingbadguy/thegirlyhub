@@ -318,7 +318,7 @@ export default function ProfileSecuritySection({
               Suspect unauthorized activity or need assistance recovering your account?
             </p>
             <a
-              href="mailto:support@girlyhub.com"
+              href="mailto:girlyhubsupport@gmail.com"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 hover:text-rose-900 hover:underline"
             >
               Contact Security Support →

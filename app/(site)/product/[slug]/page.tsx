@@ -102,8 +102,8 @@ export async function generateMetadata({
   const rawDescription =
     product.metaDescription ||
     product.shortDescription ||
-    product.description ||
-    `Shop ${titleText} online at GirlyHub. Explore premium hair accessories and jewellery with fast shipping and Cash on Delivery.`;
+    // `Shop ${titleText} online at GirlyHub. Explore premium hair accessories and jewellery with fast shipping and Cash on Delivery.`;
+    `Shop ${titleText} online at GirlyHub. Explore premium hair accessories and jewellery with fast shipping.`;
 
   const cleanDescription = rawDescription
     .replace(/<[^>]*>/g, "")

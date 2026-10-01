@@ -371,14 +371,25 @@ export default function OrderConfirmedPage() {
           <div className="success-orb mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-500 text-white transition-transform duration-300 hover:scale-105">
             <Check className="size-10 stroke-[2.5]" />
           </div>
+          {/*
           <p className="mt-6 text-xs font-bold uppercase tracking-[0.22em] text-pink-600">
             ORDER CONFIRMED • CASH ON DELIVERY
+          </p>
+          */}
+          <p className="mt-6 text-xs font-bold uppercase tracking-[0.22em] text-pink-600">
+            ORDER CONFIRMED
           </p>
           <h1 className="editorial mt-2.5 text-3xl font-bold leading-tight text-[#402537] sm:text-4xl lg:text-5xl">
             Thanks {customerName}, Your Order is Confirmed!
           </h1>
+          {/*
           <p className="mx-auto mt-3.5 max-w-lg text-sm sm:text-base leading-relaxed text-[#806475]">
             We&apos;ve safely received your Cash on Delivery request. Our team will verify and prepare your parcel with love! All updates will be sent to{" "}
+            <span className="font-semibold text-[#402537] break-all">{customerEmail}</span>.
+          </p>
+          */}
+          <p className="mx-auto mt-3.5 max-w-lg text-sm sm:text-base leading-relaxed text-[#806475]">
+            We&apos;ve safely received your order. Our team will verify and prepare your parcel with love! All updates will be sent to{" "}
             <span className="font-semibold text-[#402537] break-all">{customerEmail}</span>.
           </p>
         </section>
@@ -420,9 +431,15 @@ export default function OrderConfirmedPage() {
                   </button>
                 </div>
               </div>
+              {/*
               <span className="inline-flex w-fit items-center gap-2 rounded-full bg-pink-50 px-4 py-2 text-xs sm:text-sm font-bold text-pink-700 border border-pink-100 shadow-sm">
                 <span className="size-2 rounded-full bg-pink-500 animate-pulse" />
                 COD Order Placed
+              </span>
+              */}
+              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-pink-50 px-4 py-2 text-xs sm:text-sm font-bold text-pink-700 border border-pink-100 shadow-sm">
+                <span className="size-2 rounded-full bg-pink-500 animate-pulse" />
+                Order Placed
               </span>
             </div>
 
@@ -438,7 +455,8 @@ export default function OrderConfirmedPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#a48597]">
                   PAYMENT METHOD
                 </p>
-                <p className="mt-1 font-bold text-sm text-[#402537]">Cash on Delivery (COD)</p>
+                {/* <p className="mt-1 font-bold text-sm text-[#402537]">Cash on Delivery (COD)</p> */}
+                <p className="mt-1 font-bold text-sm text-[#402537]">Online Payment</p>
               </div>
               <div className="rounded-2xl bg-white/60 p-3.5 border border-rose-50">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#a48597]">
@@ -629,7 +647,8 @@ export default function OrderConfirmedPage() {
           </article>
         </section>
 
-        {/* Special COD Advisory Banner */}
+        {/* Special COD Advisory Banner - commented out for now: only paid orders implemented */}
+        {/*
         <section className="reveal delay-3 mt-6 max-w-4xl mx-auto">
           <aside className="soft-card flex items-start gap-4 rounded-[24px] border border-amber-200/80 bg-amber-50/50 p-5">
             <div className="mt-0.5 rounded-full bg-white p-2.5 text-[#b98742] shadow-sm shrink-0 border border-amber-100">
@@ -646,6 +665,7 @@ export default function OrderConfirmedPage() {
             </div>
           </aside>
         </section>
+        */}
 
         {/* Action Buttons & Expandable Panels */}
         <section className="reveal delay-4 mt-8 text-center max-w-4xl mx-auto">

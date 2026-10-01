@@ -143,7 +143,8 @@ const customerTestimonials = [
 const milestones = [
   { value: "50,000+", label: "Happy Packages Delivered", icon: Truck },
   { value: "4.9 / 5.0", label: "Average Customer Rating", icon: Star },
-  { value: "28,000+", label: "Pincodes Covered with COD", icon: CheckCircle2 },
+  // { value: "28,000+", label: "Pincodes Covered with COD", icon: CheckCircle2 },
+  { value: "28,000+", label: "Pincodes Covered Across India", icon: CheckCircle2 },
   { value: "500+", label: "Curated Aesthetic Designs", icon: Sparkle },
 ];
 
@@ -209,9 +210,15 @@ const AboutUs = () => {
               <Heart className="size-3.5 fill-rose-500 text-rose-500" />
               <strong className="font-semibold">50,000+</strong> Happy GirlyHubbers
             </span>
+            {/*
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">
               <Truck className="size-3.5 text-[#8a3348]" />
               <strong className="font-semibold">Pan-India COD</strong> & Express Dispatch
+            </span>
+            */}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">
+              <Truck className="size-3.5 text-[#8a3348]" />
+              <strong className="font-semibold">Pan-India Delivery</strong> & Express Dispatch
             </span>
           </div>
         </section>
@@ -413,8 +420,13 @@ const AboutUs = () => {
             <p className="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed">
               At GirlyHub, our vision is to curate the most joyful, accessible, and high-quality collection of accessories in India. From trendy Korean hair claws and soft satin scrunchies to hypoallergenic earrings, delicate necklaces, and lifestyle essentials, we bring you style that speaks to your personality.
             </p>
+            {/*
             <p className="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed mt-3">
               We are dedicated to offering seamless shopping with Cash on Delivery (COD), express dispatch within 24 hours, tamper-proof packaging, and attentive customer care on WhatsApp and Email.
+            </p>
+            */}
+            <p className="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed mt-3">
+              We are dedicated to offering seamless shopping with fast online checkout, express dispatch within 24 hours, tamper-proof packaging, and attentive customer care on WhatsApp and Email.
             </p>
           </div>
         </section>
@@ -459,8 +471,13 @@ const AboutUs = () => {
               </a>
             </div>
 
+            {/*
             <p className="mt-6 text-[11px] sm:text-xs text-pink-200/60 font-sans">
               Cash on Delivery Available • Express Pan-India Shipping • Hassle-Free Support
+            </p>
+            */}
+            <p className="mt-6 text-[11px] sm:text-xs text-pink-200/60 font-sans">
+              Express Pan-India Shipping • Hassle-Free Support • 100% Free Delivery
             </p>
           </div>
         </section>

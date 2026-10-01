@@ -42,7 +42,7 @@ export default function ForgetPage() {
       const response = await axios.post("/api/forget", { email: userEmail });
       setSuccess(
         response?.data?.message ||
-          "Reset instructions have been sent to your email.",
+        "Reset instructions have been sent to your email.",
       );
       setUserEmail("");
     } catch (error: unknown) {
@@ -50,7 +50,7 @@ export default function ForgetPage() {
         console.error(error?.response?.data);
         setError(
           error.response?.data?.message ||
-            "We couldn't process that request. Please try again.",
+          "We couldn't process that request. Please try again.",
         );
       } else {
         console.error("An error occurred:", error);
@@ -193,10 +193,10 @@ export default function ForgetPage() {
           <p className="text-center text-xs text-neutral-400 mt-6">
             Still having trouble? Reach out to{" "}
             <a
-              href="mailto:support@girlyhub.com"
+              href="mailto:girlyhubsupport@gmail.com"
               className="font-semibold text-neutral-600 hover:text-rose-500 transition-colors"
             >
-              officialgirlyhub@gmail.com
+              girlyhubsupport@gmail.com
             </a>
           </p>
         </div>

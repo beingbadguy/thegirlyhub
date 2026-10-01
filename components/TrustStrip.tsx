@@ -9,10 +9,10 @@ import FloralAccent from "@/components/decorations/FloralAccent";
 
 const features = [
   { icon: Sparkles, title: "Trending Korean Styles", subtitle: "Curated weekly" },
-  { icon: BadgeCheck, title: "Loved by 50K+ Girls", subtitle: "Real verified lovers", badge: "Real" },
+  { icon: BadgeCheck, title: "Loved by 100+ Girls", subtitle: "Real verified lovers", badge: "Real" },
   { icon: ShieldCheck, title: "Skin & Hair Friendly", subtitle: "Hypoallergenic alloys" },
-  { icon: Gem, title: "Premium Finish", subtitle: "Tarnish-resistant shine" },
-  { icon: HeartHandshake, title: "Pan-India COD & Care", subtitle: "Fast & dedicated support" },
+  // { icon: HeartHandshake, title: "Pan-India COD & Care", subtitle: "Fast & dedicated support" },
+  { icon: HeartHandshake, title: "Pan-India Care", subtitle: "Fast & dedicated support" },
 ];
 
 /**

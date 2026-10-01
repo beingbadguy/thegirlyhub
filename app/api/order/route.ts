@@ -16,12 +16,23 @@ import {
 import Order from "@/models/order.model";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
+  // COD orders commented out for now - only paid orders implemented
+  return NextResponse.json(
+    {
+      message:
+        "Cash on Delivery orders are currently unavailable. Please place a prepaid order online.",
+      success: false,
+    },
+    { status: 400 },
+  );
+
+  /* COD order placement commented out for now - only paid orders implemented:
   try {
     await databaseConnection();
 
-    const ip = getClientIp(request);
-    const userAgent = getUserAgent(request);
+    const ip = getClientIp(_request);
+    const userAgent = getUserAgent(_request);
     const isDev = process.env.NODE_ENV !== "production";
     const isLocal = isLocalhost(ip);
 
@@ -71,8 +82,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const decoded = await fetchTokenDetails(request);
-    const body = await request.json();
+    const decoded = await fetchTokenDetails(_request);
+    const body = await _request.json();
 
     if (body.paymentMethod === "online") {
       return NextResponse.json(
@@ -161,6 +172,7 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+  */
 }
 
 export async function GET(request: NextRequest) {

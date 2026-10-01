@@ -23,7 +23,8 @@ export async function generateMetadata({
   const categoryName = decodeURIComponent(name);
   const canonicalUrl = `${SITE_CONFIG.url}/category/${encodeURIComponent(name)}`;
 
-  let categoryDesc = `Discover the cutest ${categoryName} collection online at GirlyHub. Explore trending hair accessories, jewellery, and essentials with COD and fast delivery across India.`;
+  // let categoryDesc = `Discover the cutest ${categoryName} collection online at GirlyHub. Explore trending hair accessories, jewellery, and essentials with COD and fast delivery across India.`;
+  let categoryDesc = `Discover the cutest ${categoryName} collection online at GirlyHub. Explore trending hair accessories, jewellery, and essentials with fast delivery across India.`;
 
   try {
     await databaseConnection();

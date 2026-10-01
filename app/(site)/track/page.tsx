@@ -328,7 +328,8 @@ export default function TrackOrderPage() {
               </div>
               <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-rose-400" />{new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                <span className="flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5 text-rose-400" />{order.paymentMethod === "cod" ? "Cash on delivery" : "Online payment"}</span>
+                {/* <span className="flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5 text-rose-400" />{order.paymentMethod === "cod" ? "Cash on delivery" : "Online payment"}</span> */}
+                <span className="flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5 text-rose-400" />Online payment</span>
               </div>
             </div>
 

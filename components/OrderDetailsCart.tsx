@@ -488,8 +488,9 @@ export default function OrderDetailsCard({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-200/80 text-gray-700 uppercase">
-              {order.paymentMethod === "cod" ? "Cash on Delivery" : "Online Paid"}
+            {/* <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-200/80 text-gray-700 uppercase">{order.paymentMethod === "cod" ? "Cash on Delivery" : "Online Paid"}</span> */}
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 uppercase">
+              Online Paid
             </span>
             {order.deliveryType === "fast" && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-50 text-orange-600 rounded-md text-[11px] font-semibold">
@@ -724,6 +725,7 @@ export default function OrderDetailsCard({
                     <CreditCard className="w-3.5 h-3.5" /> Payment
                   </h4>
                   <div className="flex items-center gap-3 rounded-xl bg-gray-50/80 border border-gray-100 px-4 py-3">
+                    {/*
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold ${
                       order.paymentMethod === "cod" ? "bg-amber-500" : "bg-blue-600"
                     }`}>
@@ -736,6 +738,16 @@ export default function OrderDetailsCard({
                       {order.paymentMethod !== "cod" && (
                         <p className="text-xs text-gray-400">Card / UPI / Net Banking</p>
                       )}
+                    </div>
+                    */}
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold bg-blue-600">
+                      ONL
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">
+                        Online Payment
+                      </p>
+                      <p className="text-xs text-gray-400">Card / UPI / Net Banking</p>
                     </div>
                   </div>
                 </section>

@@ -208,7 +208,7 @@ export function calculateCheckout(input: CheckoutCalculationInput): CheckoutCalc
     items,
     isFirstOrder = false,
     coupon = null,
-    paymentMethod = "cod",
+    paymentMethod = "online", // COD orders commented out for now; online paid orders only
     taxRate = 0,
     autoAdjustDiscount = true,
     userClaimKey = null,
