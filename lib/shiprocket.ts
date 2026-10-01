@@ -778,6 +778,207 @@ export async function generateShiprocketLabel(shipmentId: string | number): Prom
 }
 
 /**
+ * Step 6: Generate Pickup Request
+ * POST /v1/external/courier/generate/pickup
+ */
+export async function generateShiprocketPickup(
+  shipmentIds: (string | number)[],
+  pickupDate?: string
+): Promise<{ success: boolean; message: string; response?: any }> {
+  const token = await getShiprocketToken();
+  const ids = shipmentIds.map((id) => Number(id));
+
+  if (token.startsWith("mock_")) {
+    return {
+      success: true,
+      message: `Pickup scheduled successfully for shipment ${ids.join(", ")} (simulated)`,
+      response: { pickup_status: 1, pickup_scheduled_date: pickupDate || new Date().toISOString() },
+    };
+  }
+
+  try {
+    const payload: any = { shipment_id: ids };
+    if (pickupDate) {
+      payload.pickup_date = [pickupDate];
+    }
+
+    const res = await axios.post(
+      `${SHIPROCKET_BASE_URL}/courier/generate/pickup`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+
+    const data = res.data;
+    const responseData = data.response || data;
+    return {
+      success: true,
+      message: data.message || "Pickup generated successfully",
+      response: responseData,
+    };
+  } catch (err: any) {
+    console.error("[Shiprocket] Error generating pickup:", err.response?.data || err.message);
+    const msg = err.response?.data?.message || err.message || "Failed to schedule pickup";
+    return {
+      success: false,
+      message: msg,
+      response: err.response?.data,
+    };
+  }
+}
+
+/**
+ * Step 7: Generate Manifest
+ * POST /v1/external/manifests/generate
+ */
+export async function generateShiprocketManifest(
+  shipmentIds: (string | number)[]
+): Promise<{ success: boolean; message: string; manifest_url?: string; response?: any }> {
+  const token = await getShiprocketToken();
+  const ids = shipmentIds.map((id) => Number(id));
+
+  if (token.startsWith("mock_")) {
+    return {
+      success: true,
+      message: "Manifest generated successfully (simulated)",
+      manifest_url: `https://shiprocket.co/manifest-demo-${ids[0]}.pdf`,
+    };
+  }
+
+  try {
+    const res = await axios.post(
+      `${SHIPROCKET_BASE_URL}/manifests/generate`,
+      { shipment_id: ids },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+
+    const data = res.data;
+    return {
+      success: true,
+      message: data.message || "Manifest generated successfully",
+      manifest_url: data.manifest_url,
+      response: data,
+    };
+  } catch (err: any) {
+    console.error("[Shiprocket] Error generating manifest:", err.response?.data || err.message);
+    return {
+      success: false,
+      message: err.response?.data?.message || err.message || "Failed to generate manifest",
+      response: err.response?.data,
+    };
+  }
+}
+
+/**
+ * Step 8: Print Manifest
+ * POST /v1/external/manifests/print
+ */
+export async function printShiprocketManifest(
+  shipmentIds: (string | number)[]
+): Promise<{ success: boolean; manifest_url: string; message?: string }> {
+  const token = await getShiprocketToken();
+  const ids = shipmentIds.map((id) => Number(id));
+
+  if (token.startsWith("mock_")) {
+    return {
+      success: true,
+      manifest_url: `https://shiprocket.co/manifest-demo-${ids[0]}.pdf`,
+    };
+  }
+
+  try {
+    const res = await axios.post(
+      `${SHIPROCKET_BASE_URL}/manifests/print`,
+      { shipment_id: ids },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+
+    const manifestUrl =
+      res.data?.manifest_url ||
+      res.data?.response?.manifest_url ||
+      `https://apiv2.shiprocket.in/v1/external/manifests/print?shipment_id=${ids[0]}`;
+
+    return {
+      success: true,
+      manifest_url: manifestUrl,
+    };
+  } catch (err: any) {
+    console.error("[Shiprocket] Error printing manifest:", err.response?.data || err.message);
+    return {
+      success: false,
+      manifest_url: `https://apiv2.shiprocket.in/v1/external/manifests/print?shipment_id=${ids[0]}`,
+      message: err.response?.data?.message || err.message,
+    };
+  }
+}
+
+/**
+ * Step 10: Print Invoice
+ * POST /v1/external/orders/print/invoice
+ */
+export async function printShiprocketInvoice(
+  orderIds: (string | number)[]
+): Promise<{ success: boolean; invoice_url: string; message?: string }> {
+  const token = await getShiprocketToken();
+  const ids = orderIds.map((id) => Number(id));
+
+  if (token.startsWith("mock_")) {
+    return {
+      success: true,
+      invoice_url: `https://shiprocket.co/invoice-demo-${ids[0]}.pdf`,
+    };
+  }
+
+  try {
+    const res = await axios.post(
+      `${SHIPROCKET_BASE_URL}/orders/print/invoice`,
+      { ids },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+
+    const invoiceUrl =
+      res.data?.invoice_url ||
+      res.data?.response?.invoice_url ||
+      `https://apiv2.shiprocket.in/v1/external/orders/print/invoice?ids=${ids[0]}`;
+
+    return {
+      success: true,
+      invoice_url: invoiceUrl,
+    };
+  } catch (err: any) {
+    console.error("[Shiprocket] Error printing invoice:", err.response?.data || err.message);
+    return {
+      success: false,
+      invoice_url: `https://apiv2.shiprocket.in/v1/external/orders/print/invoice?ids=${ids[0]}`,
+      message: err.response?.data?.message || err.message,
+    };
+  }
+}
+
+/**
  * Track an AWB in real-time
  */
 export async function trackShiprocketShipment(awbCode: string): Promise<any> {
