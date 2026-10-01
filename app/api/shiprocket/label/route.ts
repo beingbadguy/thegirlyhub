@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateShiprocketLabel } from "@/lib/shiprocket";
 import { databaseConnection } from "@/config/databseConnection";
 import Order from "@/models/order.model";
+import mongoose from "mongoose";
 
 /**
  * POST /api/shiprocket/label
@@ -16,13 +17,29 @@ export async function POST(req: NextRequest) {
 
     if (!targetShipmentId && orderId) {
       await databaseConnection();
-      const order = await Order.findById(orderId).select("shipmentId").lean() as any;
+      let order: any = null;
+
+      if (mongoose.Types.ObjectId.isValid(orderId)) {
+        order = await Order.findById(orderId).select("shipmentId labelUrl").lean();
+      }
+      if (!order) {
+        order = await Order.findOne({ orderId }).select("shipmentId labelUrl").lean();
+      }
+      if (!order) {
+        order = await Order.findOne({ paymentId: orderId }).select("shipmentId labelUrl").lean();
+      }
+
       targetShipmentId = order?.shipmentId;
     }
 
-    if (!targetShipmentId) {
+    if (!targetShipmentId || isNaN(Number(targetShipmentId)) || Number(targetShipmentId) <= 0) {
       return NextResponse.json(
-        { success: false, message: "shipmentId or orderId is required" },
+        {
+          success: false,
+          labelUrl: "",
+          message:
+            "Cannot fetch shipping label: No valid Shiprocket shipment found for this order. Please book a shipment using 'Ship with Shiprocket' first.",
+        },
         { status: 400 }
       );
     }
@@ -41,7 +58,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error("[POST /api/shiprocket/label] Error:", err);
     return NextResponse.json(
-      { success: false, message: err.message || "Failed to generate label" },
+      { success: false, labelUrl: "", message: err.message || "Failed to generate label" },
       { status: 500 }
     );
   }

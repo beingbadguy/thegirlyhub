@@ -171,6 +171,9 @@ export async function POST(req: NextRequest) {
 
     // 4. Save shipment data into MongoDB
     order.shipmentId = shipmentResult.shipmentId;
+    if (shipmentResult.shiprocketOrderId) {
+      order.shiprocketOrderId = shipmentResult.shiprocketOrderId;
+    }
     order.awbCode = shipmentResult.awbCode;
     order.awbNumber = shipmentResult.awbCode;
     order.courierName = shipmentResult.courierName;
@@ -204,6 +207,7 @@ export async function POST(req: NextRequest) {
         message: "Shipment created, AWB assigned, and label generated successfully",
         shipment: {
           shipmentId: shipmentResult.shipmentId,
+          shiprocketOrderId: shipmentResult.shiprocketOrderId || order.shiprocketOrderId,
           awbCode: shipmentResult.awbCode,
           courierName: shipmentResult.courierName,
           courierId: shipmentResult.courierId,
@@ -214,6 +218,8 @@ export async function POST(req: NextRequest) {
         order: {
           _id: order._id,
           orderId: order.orderId,
+          shiprocketOrderId: order.shiprocketOrderId,
+          shipmentId: order.shipmentId,
           status: order.status,
           shipmentStatus: order.shipmentStatus,
           awbCode: order.awbCode,

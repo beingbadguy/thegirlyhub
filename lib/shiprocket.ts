@@ -84,6 +84,7 @@ export interface CreateShipmentInput {
 export interface CreateShipmentResult {
   success: boolean;
   shipmentId: string;
+  shiprocketOrderId?: string;
   awbCode: string;
   courierName: string;
   courierId: number;
@@ -618,6 +619,7 @@ export async function createForwardShipment(
 
     const orderData = orderRes.data;
     const shipmentId = orderData.shipment_id || orderData.data?.shipment_id;
+    const srOrderId = orderData.order_id || orderData.data?.order_id;
 
     if (!shipmentId) {
       throw new Error(
@@ -626,7 +628,7 @@ export async function createForwardShipment(
       );
     }
 
-    console.log(`[Shiprocket] Order created with shipment_id: ${shipmentId}`);
+    console.log(`[Shiprocket] Order created with shipment_id: ${shipmentId}, order_id: ${srOrderId}`);
 
     // ── STEP 2: Assign Courier & Generate AWB ──
     console.log(`[Shiprocket] Assigning courier ${courierIdNum} to shipment ${shipmentId}`);
@@ -699,6 +701,7 @@ export async function createForwardShipment(
     return {
       success: true,
       shipmentId: String(shipmentId),
+      shiprocketOrderId: srOrderId ? String(srOrderId) : String(shipmentId),
       awbCode: effectiveAwb,
       courierName,
       courierId: courierIdNum,
@@ -726,6 +729,7 @@ export async function createForwardShipment(
       return {
         success: true,
         shipmentId: randomShipmentId,
+        shiprocketOrderId: "SR_ORD_" + randomShipmentId,
         awbCode: randomAwb,
         courierName: "Delhivery Surface (Simulated)",
         courierId: courierIdNum,
@@ -751,6 +755,12 @@ export async function createForwardShipment(
  */
 export async function generateShiprocketLabel(shipmentId: string | number): Promise<string> {
   const token = await getShiprocketToken();
+  const validNum = Number(shipmentId);
+
+  if (isNaN(validNum) || validNum <= 0) {
+    throw new Error("Cannot generate label: Valid numerical Shiprocket shipment ID required.");
+  }
+
   if (token.startsWith("mock_")) {
     return `https://shiprocket.co/tracking/demo-label-${shipmentId}.pdf`;
   }
@@ -759,7 +769,7 @@ export async function generateShiprocketLabel(shipmentId: string | number): Prom
     const res = await axios.post(
       `${SHIPROCKET_BASE_URL}/courier/generate/label`,
       {
-        shipment_id: [Number(shipmentId)],
+        shipment_id: [validNum],
       },
       {
         headers: {
@@ -770,7 +780,7 @@ export async function generateShiprocketLabel(shipmentId: string | number): Prom
       }
     );
 
-    return res.data?.label_url || `https://shiprocket.co/tracking/label?shipment_id=${shipmentId}`;
+    return res.data?.label_url || `https://apiv2.shiprocket.in/v1/external/courier/generate/label?shipment_id=${shipmentId}`;
   } catch (err: any) {
     console.error("[Shiprocket] Error generating label:", err.message);
     return `https://shiprocket.co/tracking/label?shipment_id=${shipmentId}`;
@@ -786,7 +796,16 @@ export async function generateShiprocketPickup(
   pickupDate?: string
 ): Promise<{ success: boolean; message: string; response?: any }> {
   const token = await getShiprocketToken();
-  const ids = shipmentIds.map((id) => Number(id));
+  const ids = shipmentIds
+    .map((id) => Number(id))
+    .filter((n) => !isNaN(n) && n > 0);
+
+  if (ids.length === 0) {
+    return {
+      success: false,
+      message: "No valid numerical Shiprocket shipment ID found. Please book a shipment with Shiprocket first.",
+    };
+  }
 
   if (token.startsWith("mock_")) {
     return {
@@ -816,9 +835,10 @@ export async function generateShiprocketPickup(
 
     const data = res.data;
     const responseData = data.response || data;
+    const isSuccess = data.status_code === 200 || data.pickup_status === 1 || !data.status_code;
     return {
-      success: true,
-      message: data.message || "Pickup generated successfully",
+      success: isSuccess,
+      message: data.message || responseData?.message || (isSuccess ? "Pickup generated successfully" : "Pickup request error"),
       response: responseData,
     };
   } catch (err: any) {
@@ -840,7 +860,16 @@ export async function generateShiprocketManifest(
   shipmentIds: (string | number)[]
 ): Promise<{ success: boolean; message: string; manifest_url?: string; response?: any }> {
   const token = await getShiprocketToken();
-  const ids = shipmentIds.map((id) => Number(id));
+  const ids = shipmentIds
+    .map((id) => Number(id))
+    .filter((n) => !isNaN(n) && n > 0);
+
+  if (ids.length === 0) {
+    return {
+      success: false,
+      message: "No valid numerical Shiprocket shipment ID found. Please book a shipment with Shiprocket first.",
+    };
+  }
 
   if (token.startsWith("mock_")) {
     return {
@@ -888,7 +917,17 @@ export async function printShiprocketManifest(
   shipmentIds: (string | number)[]
 ): Promise<{ success: boolean; manifest_url: string; message?: string }> {
   const token = await getShiprocketToken();
-  const ids = shipmentIds.map((id) => Number(id));
+  const ids = shipmentIds
+    .map((id) => Number(id))
+    .filter((n) => !isNaN(n) && n > 0);
+
+  if (ids.length === 0) {
+    return {
+      success: false,
+      manifest_url: "",
+      message: "No valid numerical Shiprocket shipment ID found. Please book a shipment with Shiprocket first.",
+    };
+  }
 
   if (token.startsWith("mock_")) {
     return {
@@ -915,6 +954,14 @@ export async function printShiprocketManifest(
       res.data?.response?.manifest_url ||
       `https://apiv2.shiprocket.in/v1/external/manifests/print?shipment_id=${ids[0]}`;
 
+    if (!manifestUrl || manifestUrl.includes("NaN")) {
+      return {
+        success: false,
+        manifest_url: "",
+        message: res.data?.error?.message || res.data?.message || "No manifest found for this shipment yet.",
+      };
+    }
+
     return {
       success: true,
       manifest_url: manifestUrl,
@@ -923,8 +970,8 @@ export async function printShiprocketManifest(
     console.error("[Shiprocket] Error printing manifest:", err.response?.data || err.message);
     return {
       success: false,
-      manifest_url: `https://apiv2.shiprocket.in/v1/external/manifests/print?shipment_id=${ids[0]}`,
-      message: err.response?.data?.message || err.message,
+      manifest_url: "",
+      message: err.response?.data?.message || err.message || "Failed to print manifest",
     };
   }
 }
@@ -937,7 +984,17 @@ export async function printShiprocketInvoice(
   orderIds: (string | number)[]
 ): Promise<{ success: boolean; invoice_url: string; message?: string }> {
   const token = await getShiprocketToken();
-  const ids = orderIds.map((id) => Number(id));
+  const ids = orderIds
+    .map((id) => Number(id))
+    .filter((n) => !isNaN(n) && n > 0);
+
+  if (ids.length === 0) {
+    return {
+      success: false,
+      invoice_url: "",
+      message: "No valid numerical Shiprocket order ID found. Please book a shipment with Shiprocket first.",
+    };
+  }
 
   if (token.startsWith("mock_")) {
     return {
@@ -959,10 +1016,26 @@ export async function printShiprocketInvoice(
       }
     );
 
+    if (res.data && res.data.is_invoice_created === false) {
+      return {
+        success: false,
+        invoice_url: "",
+        message: res.data.message || "Shiprocket invoice could not be generated. Ensure an AWB is assigned and the order is active.",
+      };
+    }
+
     const invoiceUrl =
       res.data?.invoice_url ||
       res.data?.response?.invoice_url ||
       `https://apiv2.shiprocket.in/v1/external/orders/print/invoice?ids=${ids[0]}`;
+
+    if (!invoiceUrl || invoiceUrl.includes("NaN")) {
+      return {
+        success: false,
+        invoice_url: "",
+        message: res.data?.message || "Invoice URL could not be generated.",
+      };
+    }
 
     return {
       success: true,
@@ -972,7 +1045,7 @@ export async function printShiprocketInvoice(
     console.error("[Shiprocket] Error printing invoice:", err.response?.data || err.message);
     return {
       success: false,
-      invoice_url: `https://apiv2.shiprocket.in/v1/external/orders/print/invoice?ids=${ids[0]}`,
+      invoice_url: "",
       message: err.response?.data?.message || err.message,
     };
   }

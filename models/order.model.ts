@@ -154,6 +154,7 @@ const orderSchema = new mongoose.Schema({
     default: "Pending",
   },
   shipmentId: { type: String, default: null },
+  shiprocketOrderId: { type: String, default: null },
   awbCode: { type: String, default: null },
   courierName: { type: String, default: null },
   courierId: { type: Number, default: null },
@@ -207,6 +208,7 @@ orderSchema.pre("save", function (next) {
 
 orderSchema.index({ orderId: 1 }, { sparse: true });
 orderSchema.index({ shipmentId: 1 }, { sparse: true });
+orderSchema.index({ shiprocketOrderId: 1 }, { sparse: true });
 orderSchema.index({ awbCode: 1 }, { sparse: true });
 orderSchema.index({ awbNumber: 1 }, { sparse: true });
 orderSchema.index({ shipmentStatus: 1, createdAt: -1 });
