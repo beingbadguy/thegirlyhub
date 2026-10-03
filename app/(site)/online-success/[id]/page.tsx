@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CheckCircle, Copy, Check, Printer, ShoppingBag, Truck, ShieldCheck, X } from "lucide-react";
+import { CheckCircle, Copy, Check, Printer, ShoppingBag, Truck, ShieldCheck, X, Download } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import confetti from "canvas-confetti";
@@ -277,9 +277,19 @@ export default function OrderConfirmationPage() {
 
         {/* Action Buttons */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <a
+            href={`/invoice/${order?._id || displayOrderId || rawId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3 border border-pink-200 bg-pink-50 hover:bg-pink-100 text-pink-700 text-sm font-semibold shadow-xs transition cursor-pointer"
+          >
+            <Download className="size-4 text-pink-600" />
+            Download Invoice (PDF)
+          </a>
+
           <button
             onClick={() => window.print()}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-semibold shadow-sm transition cursor-pointer"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-semibold shadow-xs transition cursor-pointer"
           >
             <Printer className="size-4" />
             Print Receipt
@@ -287,7 +297,7 @@ export default function OrderConfirmationPage() {
 
           <button
             onClick={() => router.push(user ? "/profile" : "/track")}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3 border border-pink-600 bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3 border border-pink-600 bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold shadow-xs transition cursor-pointer"
           >
             <Truck className="size-4" />
             {user ? "View Orders" : "Track Order"}

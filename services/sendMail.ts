@@ -429,8 +429,12 @@ export const OrderConfirmationMail = async (
     
     <div style="text-align: center; margin: 30px 0 10px 0;">
       <a href="${BRAND_URL}/track?orderId=${order._id}&email=${encodeURIComponent(email)}" 
-        style="display: inline-block; padding: 13px 30px; background-color: ${BRAND_COLOR_PRIMARY}; color: #ffffff; text-decoration: none; border-radius: 50px; font-weight: 700; letter-spacing: 0.5px; font-size: 13px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(190,24,93,0.18);">
+        style="display: inline-block; padding: 13px 26px; background-color: ${BRAND_COLOR_PRIMARY}; color: #ffffff; text-decoration: none; border-radius: 50px; font-weight: 700; letter-spacing: 0.5px; font-size: 13px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(190,24,93,0.18); margin: 4px;">
         Track Your Order 🚚
+      </a>
+      <a href="${BRAND_URL}/invoice/${order._id}" 
+        style="display: inline-block; padding: 12px 24px; background-color: #ffffff; color: ${BRAND_COLOR_PRIMARY}; border: 1.5px solid ${BRAND_COLOR_PRIMARY}; text-decoration: none; border-radius: 50px; font-weight: 700; letter-spacing: 0.5px; font-size: 13px; text-transform: uppercase; margin: 4px;">
+        📄 Download Invoice
       </a>
     </div>
 

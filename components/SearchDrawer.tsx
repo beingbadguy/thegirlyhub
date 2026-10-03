@@ -3,7 +3,8 @@
 import PaginationControls from "@/components/PaginationControls";
 import ProductCard, { ProductCardProduct } from "@/components/ProductCard";
 import axios from "axios";
-import { Heart, LoaderCircle, Search, X } from "lucide-react";
+import { ArrowRight, Heart, LoaderCircle, Search, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import FloralAccent from "@/components/decorations/FloralAccent";
@@ -23,7 +24,9 @@ type ProductResponse = {
 };
 
 export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
+  const [matchingCategories, setMatchingCategories] = useState<{ name: string; _id?: string }[]>([]);
   const [products, setProducts] = useState<ProductCardProduct[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -79,13 +82,36 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await axios.get<ProductResponse>("/api/product", {
-          params: { q: query.trim() || undefined, page, limit: 12 },
-        });
+        const cleanQuery = query.trim();
+        const promises: Promise<any>[] = [
+          axios.get<ProductResponse>("/api/product", {
+            params: { q: cleanQuery || undefined, page, limit: 12 },
+          }),
+        ];
 
-        setProducts(response.data.products);
-        setTotal(response.data.pagination.total);
-        setTotalPages(response.data.pagination.totalPages || 1);
+        if (cleanQuery) {
+          promises.push(
+            axios.get("/api/search/suggest", {
+              params: { q: cleanQuery, limit: 6 },
+            })
+          );
+        }
+
+        const results = await Promise.allSettled(promises);
+        const productRes = results[0];
+        const suggestRes = cleanQuery ? results[1] : null;
+
+        if (productRes.status === "fulfilled") {
+          setProducts(productRes.value.data.products);
+          setTotal(productRes.value.data.pagination.total);
+          setTotalPages(productRes.value.data.pagination.totalPages || 1);
+        }
+
+        if (suggestRes && suggestRes.status === "fulfilled") {
+          setMatchingCategories(suggestRes.value.data.categories || []);
+        } else if (!cleanQuery) {
+          setMatchingCategories([]);
+        }
       } catch (error) {
         console.error(error);
         setProducts([]);
@@ -158,7 +184,13 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
               ref={inputRef}
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
-              placeholder="Search products..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && query.trim()) {
+                  onClose();
+                  router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+                }
+              }}
+              placeholder="Search products, categories..."
               className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder:text-gray-400"
             />
             {query && (
@@ -173,6 +205,48 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
           </div>
         </div>
 
+        {/* CATEGORY SUGGESTIONS */}
+        {query.trim() && matchingCategories.length > 0 ? (
+          <div className="shrink-0 flex items-center gap-1.5 px-5 py-2.5 overflow-x-auto no-scrollbar border-b bg-rose-50/30">
+            <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
+              <Sparkles className="size-3 text-rose-500" /> Categories:
+            </span>
+            {matchingCategories.map((cat) => (
+              <button
+                key={cat._id || cat.name}
+                type="button"
+                onClick={() => {
+                  onClose();
+                  router.push(`/category/${encodeURIComponent(cat.name)}`);
+                }}
+                className="text-xs px-2.5 py-1 rounded-full border border-rose-200 bg-white text-rose-800 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shrink-0 font-medium shadow-2xs"
+              >
+                📁 {cat.name}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="shrink-0 flex items-center gap-1.5 px-5 py-2 overflow-x-auto no-scrollbar border-b bg-rose-50/20">
+            <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-wider shrink-0">
+              Popular:
+            </span>
+            {["Jhumkas", "Hair Claws", "Bracelets", "Bangels", "Pendants", "Scrunchies"].map((term) => (
+              <button
+                key={term}
+                type="button"
+                onClick={() => handleQueryChange(term)}
+                className={`text-xs px-2.5 py-0.5 rounded-full border transition-all shrink-0 ${
+                  query.toLowerCase() === term.toLowerCase()
+                    ? "bg-rose-600 text-white border-rose-600 shadow-xs"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-rose-300 hover:text-rose-600"
+                }`}
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* CONTENT */}
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden px-5 pt-4 pb-3">
           {/* title */}
@@ -180,11 +254,25 @@ export default function SearchDrawer({ open, onClose }: SearchDrawerProps) {
             <h2 className="font-medium text-gray-800 text-sm md:text-base">
               {query ? `Results for "${query}"` : "All products"}
             </h2>
-            {!loading && (
-              <span className="text-xs text-gray-500 font-medium">
-                {total} {total === 1 ? "result" : "results"}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {!loading && (
+                <span className="text-xs text-gray-500 font-medium">
+                  {total} {total === 1 ? "result" : "results"}
+                </span>
+              )}
+              {query.trim() && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+                  }}
+                  className="text-xs font-semibold text-rose-600 hover:underline flex items-center gap-0.5"
+                >
+                  View full results <ArrowRight className="size-3" />
+                </button>
+              )}
+            </div>
           </div>
 
           {loading ? (

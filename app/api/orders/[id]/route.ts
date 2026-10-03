@@ -4,6 +4,7 @@ import Order from "@/models/order.model";
 import User from "@/models/user.model";
 import Product from "@/models/product.model";
 import { OrderStatusMail } from "@/services/sendMail";
+import { sendOrderDeliveredEmail } from "@/services/orderMail.service";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -141,7 +142,18 @@ export async function PUT(
     }
 
     try {
-      if (order.userId?.email) {
+      const customerEmail = order.email || order.userId?.email;
+      if (typeof status === "string" && status.toLowerCase() === "delivered") {
+        if (customerEmail) {
+          await sendOrderDeliveredEmail({
+            to: customerEmail,
+            recipientName: order.recipientName || order.userId?.name || "Customer",
+            orderId: order._id.toString(),
+            products: order.products || [],
+            totalAmount: order.totalAmount || 0,
+          });
+        }
+      } else if (order.userId?.email) {
         await OrderStatusMail(order.userId.email, order._id, status);
       }
     } catch (mailErr) {

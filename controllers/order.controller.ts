@@ -6,7 +6,10 @@ import {
   validateStatusTransition,
   OrderStatus,
 } from "@/utils/orderStatus.utils";
-import { sendOrderShippedEmail } from "@/services/orderMail.service";
+import {
+  sendOrderShippedEmail,
+  sendOrderDeliveredEmail,
+} from "@/services/orderMail.service";
 
 /**
  * PATCH /api/orders/:id/status
@@ -173,7 +176,23 @@ export class OrderController {
       }
     }
 
-    // ── 8. Success Response ────────────────────────────────────────────────
+    // ── 8. Email Trigger for DELIVERED ──────────────────────────────────
+    if (newStatus === "delivered") {
+      const customerEmail = order.email;
+      if (customerEmail) {
+        sendOrderDeliveredEmail({
+          to: customerEmail,
+          recipientName: order.recipientName || "Valued Customer",
+          orderId: order._id.toString(),
+          products: order.products || [],
+          totalAmount: order.totalAmount || 0,
+        }).catch((err) =>
+          console.error("[OrderController] Failed to send delivered email:", err)
+        );
+      }
+    }
+
+    // ── 9. Success Response ────────────────────────────────────────────────
     return NextResponse.json(
       {
         success: true,

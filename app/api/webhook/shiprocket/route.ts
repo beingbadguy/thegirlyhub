@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { databaseConnection } from "@/config/databseConnection";
 import Order from "@/models/order.model";
 import { mapShiprocketStatusToInternal } from "@/lib/shiprocket";
+import { sendOrderDeliveredEmail } from "@/services/orderMail.service";
 import mongoose from "mongoose";
 
 /**
@@ -106,6 +107,21 @@ export async function POST(req: NextRequest) {
     });
 
     await order.save();
+
+    if (mapped.orderStatus === "delivered" && prevOrderStatus !== "delivered") {
+      const customerEmail = order.email;
+      if (customerEmail) {
+        sendOrderDeliveredEmail({
+          to: customerEmail,
+          recipientName: order.recipientName || "Valued Customer",
+          orderId: order._id.toString(),
+          products: order.products || [],
+          totalAmount: order.totalAmount || 0,
+        }).catch((err) =>
+          console.error("[Shiprocket Webhook] Failed to send delivered email:", err)
+        );
+      }
+    }
 
     console.log(
       `[Shiprocket Webhook] Order ${order._id} updated: shipmentStatus: ${prevShipmentStatus} -> ${mapped.shipmentStatus}, status: ${prevOrderStatus} -> ${mapped.orderStatus}`

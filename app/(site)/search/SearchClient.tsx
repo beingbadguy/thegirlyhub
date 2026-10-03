@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import FloralAccent from "@/components/decorations/FloralAccent";
+import PredictiveSearchBar from "@/components/PredictiveSearchBar";
 
 type Products = React.ComponentProps<typeof ProductCard>["product"];
 
@@ -100,21 +101,25 @@ export default function SearchClient() {
           </h1>
           <FloralAccent flower={1} size="sm" animation="pulse" className="rotate-45" />
         </div>
-        <div className="my-6 flex w-[90%] items-center gap-2 rounded-full border border-rose-200 bg-white px-4 py-1.5 shadow-sm md:w-[50%] focus-within:border-rose-400">
-          <Search className="size-5 text-rose-400" />
-          <input
-            type="text"
-            className="w-full border-none bg-transparent py-2 outline-none text-rose-950 placeholder:text-rose-300"
+        <div className="my-6 w-[90%] md:w-[60%] lg:w-[50%] max-w-2xl relative z-20">
+          <PredictiveSearchBar
+            variant="page"
+            initialValue={query}
             placeholder="Search hair claws, scrunchies, jewellery..."
-            onChange={(e) => setQuery(e.target.value)}
-            value={query}
+            dropdownAlignment="left"
+            inputClassName="py-2.5 px-4 shadow-sm text-base border-rose-200 bg-white"
+            onSearchSubmit={(submittedQuery) => {
+              setQuery(submittedQuery);
+              const params = new URLSearchParams(searchParams.toString());
+              if (submittedQuery.trim()) {
+                params.set("q", submittedQuery.trim());
+              } else {
+                params.delete("q");
+              }
+              params.delete("page");
+              router.push(`/search?${params.toString()}`, { scroll: false });
+            }}
           />
-          {query.length > 0 && (
-            <X
-              className="size-5 cursor-pointer text-rose-400 hover:text-rose-600"
-              onClick={() => setQuery("")}
-            />
-          )}
         </div>
       </div>
 

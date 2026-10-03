@@ -25,6 +25,7 @@ import {
   Phone,
   Mail,
   ArrowRight,
+  Download,
   X,
 } from "lucide-react";
 import { useAuthStore } from "@/store/store";
@@ -679,6 +680,17 @@ export default function OrderConfirmedPage() {
               <ShoppingBag className="size-4" />
               Continue Shopping
             </button>
+
+            <a
+              id="download-invoice-button"
+              href={`/invoice/${orderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="action-button rounded-full border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 px-7 py-3.5 font-bold text-sm shadow-sm cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Download className="size-4 text-rose-600" />
+              Download Invoice (PDF)
+            </a>
 
             <button
               id="track-button"

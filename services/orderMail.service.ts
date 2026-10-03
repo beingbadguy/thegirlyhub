@@ -121,3 +121,135 @@ export async function sendOrderShippedEmail(
 
   await sendMail(to, "Your order has been shipped 🚚", text, html);
 }
+
+export interface DeliveredEmailPayload {
+  to: string;
+  recipientName?: string;
+  orderId: string;
+  products?: OrderProduct[];
+  totalAmount?: number;
+}
+
+/**
+ * Sends the "Your order has been delivered" email to the customer with direct link to invoice.
+ */
+export async function sendOrderDeliveredEmail(
+  payload: DeliveredEmailPayload,
+): Promise<void> {
+  const {
+    to,
+    recipientName = "Gorgeous Customer",
+    orderId,
+    products = [],
+    totalAmount = 0,
+  } = payload;
+
+  const brandUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_STORE_URL ||
+    "https://girlyhub.in";
+  const invoiceUrl = `${brandUrl}/invoice/${orderId}`;
+
+  const productRows = products.length > 0
+    ? products
+        .map(
+          (p) => `
+          <tr>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #f3e8f0; font-size: 14px; color: #374151;">${p.title || "Product"}</td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #f3e8f0; text-align: center; font-size: 13px; color: #6b7280;">${p.size || "-"}</td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #f3e8f0; text-align: center; font-size: 13px; color: #374151; font-weight: 600;">${p.quantity ?? 1}</td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #f3e8f0; text-align: right; font-size: 14px; font-weight: 600; color: #be185d;">₹${p.price ?? 0}</td>
+          </tr>`,
+        )
+        .join("")
+    : `<tr><td colspan="4" style="padding: 12px; text-align: center; color: #6b7280;">Order #${orderId}</td></tr>`;
+
+  const html = `
+    <div style="background-color: #fdf2f8; padding: 32px 16px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif; color: #1a1a1a;">
+      <div style="max-width: 620px; margin: auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(190,24,93,0.08); border: 1px solid #fbcfe8;">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #be185d 0%, #9d174d 100%); padding: 28px 32px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 2px;">GIRLYHUB 💖</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 6px 0 0; font-size: 13px; letter-spacing: 0.5px;">Your style, delivered with love</p>
+        </div>
+
+        <!-- Hero Message -->
+        <div style="padding: 36px 32px 12px; text-align: center;">
+          <div style="font-size: 48px; line-height: 1; margin-bottom: 12px;">🎁✨</div>
+          <h2 style="margin: 0; font-size: 22px; color: #be185d; font-weight: 700;">Your order has been delivered!</h2>
+          <p style="color: #4b5563; margin: 12px auto 0; font-size: 15px; line-height: 1.6; max-width: 480px;">
+            Hi <strong>${recipientName}</strong>, your GirlyHub parcel has safely arrived. We hope you fall in love with your new pieces!
+          </p>
+        </div>
+
+        <!-- 1-Click Invoice Action Card -->
+        <div style="margin: 24px 32px; background: linear-gradient(180deg, #fff0f7 0%, #fdf2f8 100%); border: 1px solid #fbcfe8; border-radius: 16px; padding: 24px; text-align: center;">
+          <p style="margin: 0 0 6px; font-size: 12px; color: #9d174d; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Order Reference</p>
+          <p style="margin: 0 0 16px; font-size: 15px; color: #111827; font-family: monospace; font-weight: 600;">#${orderId}</p>
+
+          <p style="margin: 0 0 16px; font-size: 13px; color: #4b5563;">
+            Your retail invoice and purchase bill is ready for immediate 1-click download:
+          </p>
+
+          <a href="${invoiceUrl}"
+             target="_blank"
+             style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #be185d, #9d174d); color: #ffffff; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(190,24,93,0.25);">
+            📄 Download Invoice (PDF)
+          </a>
+
+          <p style="margin: 14px 0 0; font-size: 11px; color: #9ca3af;">
+            View online or save as PDF anytime • Verified bill of supply
+          </p>
+        </div>
+
+        <!-- Order Items Summary -->
+        <div style="padding: 0 32px 24px;">
+          <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #374151; margin: 0 0 12px; font-weight: 700;">Delivered Items</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #fdf2f8;">
+                <th style="padding: 10px 12px; text-align: left; color: #9d174d; font-size: 11px; text-transform: uppercase; font-weight: 700;">Item</th>
+                <th style="padding: 10px 12px; text-align: center; color: #9d174d; font-size: 11px; text-transform: uppercase; font-weight: 700;">Size</th>
+                <th style="padding: 10px 12px; text-align: center; color: #9d174d; font-size: 11px; text-transform: uppercase; font-weight: 700;">Qty</th>
+                <th style="padding: 10px 12px; text-align: right; color: #9d174d; font-size: 11px; text-transform: uppercase; font-weight: 700;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productRows}
+            </tbody>
+          </table>
+
+          ${
+            totalAmount > 0
+              ? `
+          <div style="margin-top: 16px; padding-top: 14px; border-top: 2px solid #fbcfe8; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; font-size: 15px; color: #374151;">Total Paid</span>
+            <span style="font-weight: 800; font-size: 18px; color: #be185d;">₹${Number(totalAmount).toFixed(2)}</span>
+          </div>
+          `
+              : ""
+          }
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #fdf2f8; padding: 24px 32px; text-align: center; border-top: 1px solid #fbcfe8;">
+          <p style="margin: 0; font-size: 13px; color: #6b7280;">
+            Loved your items? Tag us on Instagram or reply with your feedback! 💕
+          </p>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">
+            Questions? Contact us at <a href="mailto:officialgirlyhub@gmail.com" style="color: #be185d; text-decoration: none; font-weight: 600;">officialgirlyhub@gmail.com</a>
+          </p>
+          <p style="margin: 8px 0 0; font-size: 11px; color: #d1d5db;">
+            © ${new Date().getFullYear()} GirlyHub. All rights reserved.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  const text = `Hi ${recipientName},\n\nYour GirlyHub order (#${orderId}) has been successfully delivered! 🎉\n\nYou can download your retail invoice PDF anytime at:\n${invoiceUrl}\n\nTotal Paid: ₹${totalAmount}\n\nThank you for supporting our small business!\nGirlyHub 💖`;
+
+  await sendMail(to, "Your order has been delivered! 🎉 | GirlyHub", text, html);
+}
