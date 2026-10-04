@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import FloralAccent from "@/components/decorations/FloralAccent";
+import JsonLd from "@/components/seo/JsonLd";
+import { generateBreadcrumbSchema, generatePolicyPageSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "Replacement & Return Policy",
@@ -22,8 +24,21 @@ export const metadata: Metadata = {
 };
 
 export default function RefundPolicy() {
+  const canonicalUrl = `${SITE_CONFIG.url}/policies/refund-policy`;
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Replacement Policy", url: "/policies/refund-policy" },
+  ]);
+  const policySchema = generatePolicyPageSchema(
+    "Replacement & Return Policy",
+    "Replacement policy guidelines for orders placed at GirlyHub.",
+    canonicalUrl
+  );
+
   return (
     <main className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={policySchema} />
       {/* Background ambient flower */}
       <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -38,6 +53,7 @@ export default function RefundPolicy() {
           <span className="text-neutral-300">/</span>
           <span className="font-semibold text-neutral-900">Replacement Policy</span>
         </nav>
+
         {/* Heading */}
         <div className="flex items-center gap-2 mb-2">
           <FloralAccent flower={1} size="sm" animation="pulse" />

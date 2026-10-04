@@ -20,6 +20,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import {
   generateOrganizationSchema,
+  generateSiteNavigationSchema,
   generateWebSiteSchema,
 } from "@/lib/seo/schema";
 
@@ -140,6 +141,7 @@ export default function RootLayout({
 }>) {
   const organizationSchema = generateOrganizationSchema();
   const webSiteSchema = generateWebSiteSchema();
+  const siteNavigationSchema = generateSiteNavigationSchema();
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const isProduction = process.env.NODE_ENV === "production";
 
@@ -148,6 +150,7 @@ export default function RootLayout({
       <head>
         <JsonLd data={organizationSchema} />
         <JsonLd data={webSiteSchema} />
+        <JsonLd data={siteNavigationSchema} />
       </head>
       <body
         className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${caveat.variable} ${cormorantGaramond.variable} antialiased custom-scrollbar overflow-x-clip`}

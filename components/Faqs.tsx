@@ -14,10 +14,41 @@ import JsonLd from "@/components/seo/JsonLd";
 import { generateFaqSchema } from "@/lib/seo/schema";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
+const DEFAULT_FAQS = [
+  {
+    _id: "faq-1",
+    question: "How long does delivery take across India?",
+    answer:
+      "All orders are processed and dispatched within 24 to 48 business hours. Delivery typically takes 3 to 6 business days depending on your delivery pincode.",
+  },
+  {
+    _id: "faq-2",
+    question: "Is your jewellery hypoallergenic and anti-tarnish?",
+    answer:
+      "Yes! Our dainty jewellery pieces are crafted with hypoallergenic, nickel-free, and lead-free alloys designed for sensitive skin and everyday wear.",
+  },
+  {
+    _id: "faq-3",
+    question: "How do I track my GirlyHub order?",
+    answer:
+      "You can track your parcel in real-time by visiting our Track Order page (/track) and entering your 24-character order ID. You will also receive live WhatsApp and SMS updates with courier tracking links upon dispatch.",
+  },
+  {
+    _id: "faq-4",
+    question: "What is your replacement or return policy?",
+    answer:
+      "We offer a 7-day hassle-free replacement policy for defective, damaged, or incorrect items received. Simply contact our support team on WhatsApp or email with your unboxing video.",
+  },
+  {
+    _id: "faq-5",
+    question: "Are GirlyHub Korean claw clips suitable for thick hair?",
+    answer:
+      "Absolutely. Our Korean hair claws feature reinforced springs and snag-free teeth engineered to provide an all-day, pain-free hold for thick, curly, wavy, and fine hair types alike.",
+  },
+];
+
 const Faqs = () => {
-  const [faqs, setFaqs] = useState<
-    { _id: string; question: string; answer: string }[]
-  >([]);
+  const [faqs, setFaqs] = useState<{ _id: string; question: string; answer: string }[]>(DEFAULT_FAQS);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -28,10 +59,12 @@ const Faqs = () => {
       { ttlMs: 10 * 60 * 1000 },
     )
       .then((data) => {
-        if (active) setFaqs(data.faqs || []);
+        if (active && data.faqs && data.faqs.length > 0) {
+          setFaqs(data.faqs);
+        }
       })
       .catch(() => {
-        if (active) setFaqs([]);
+        // Keep DEFAULT_FAQS on error
       })
       .finally(() => {
         if (active) setLoaded(true);
@@ -43,6 +76,7 @@ const Faqs = () => {
   }, []);
 
   if (loaded && faqs.length === 0) return null;
+
 
   const faqSchema = generateFaqSchema(faqs);
 

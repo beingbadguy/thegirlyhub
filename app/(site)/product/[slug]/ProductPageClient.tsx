@@ -1037,6 +1037,13 @@ const ProductPageClient = ({
           <BreadcrumbHome />
           <span className="text-neutral-300">/</span>
           <Link
+            href="/categories"
+            className="hover:text-rose-600 transition-colors"
+          >
+            Categories
+          </Link>
+          <span className="text-neutral-300">/</span>
+          <Link
             href={`/category/${encodeURIComponent(product.category)}`}
             className="capitalize hover:text-rose-600 transition-colors"
           >
@@ -1047,6 +1054,7 @@ const ProductPageClient = ({
             {product.title}
           </span>
         </nav>
+
 
         {/* Main product display */}
         <div className="grid grid-cols-1 gap-6 lg:gap-10 lg:grid-cols-12 mx-auto bg-white p-3 sm:p-5 md:p-7 rounded-2xl md:rounded-3xl border border-neutral-100 shadow-sm">

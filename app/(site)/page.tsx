@@ -28,15 +28,16 @@ const CountVisitor = dynamic(() => import("@/components/CountVisitor"));
 export const revalidate = 60; // Revalidate every 60 seconds (ISR hybrid)
 
 export const metadata: Metadata = {
-  title: { absolute: "Trendy Earrings @ ₹109 | GirlyHub" },
-  // description: "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
+  title: {
+    absolute: "GirlyHub: Trendy Jewellery, Korean Hair Claws & Accessories",
+  },
   description:
-    "Shop trendy jewellery starting ₹109 😍 Free delivery across India. Limited stock ⚡",
+    "Shop viral Korean hair claw clips, aesthetic dainty jewellery, satin scrunchies, and earrings at GirlyHub with fast delivery across India.",
   alternates: { canonical: SITE_CONFIG.url },
   openGraph: {
-    title: "Trendy Earrings @ ₹109 | GirlyHub",
-    // description: "Free delivery + COD available. Shop now!",
-    description: "Free delivery across India. Shop now!",
+    title: "GirlyHub: Trendy Jewellery, Korean Hair Claws & Accessories",
+    description:
+      "Shop viral Korean hair claw clips, aesthetic dainty jewellery, satin scrunchies, and earrings at GirlyHub with fast delivery across India.",
     url: SITE_CONFIG.url,
     siteName: SITE_CONFIG.name,
     type: "website",
@@ -45,19 +46,19 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Trendy Earrings @ ₹109 | GirlyHub",
+        alt: "GirlyHub: Trendy Jewellery, Korean Hair Claws & Accessories",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trendy Earrings @ ₹109 | GirlyHub",
-    // description: "Shop trendy jewellery starting ₹109 😍 Free delivery + COD available. Limited stock ⚡",
+    title: "GirlyHub: Trendy Jewellery, Korean Hair Claws & Accessories",
     description:
-      "Shop trendy jewellery starting ₹109 😍 Free delivery across India. Limited stock ⚡",
+      "Shop viral Korean hair claw clips, aesthetic dainty jewellery, satin scrunchies, and earrings at GirlyHub with fast delivery across India.",
     images: ["/og.png"],
   },
 };
+
 
 export default async function Home() {
   // Parallel fetch server-side datasets with lean projections
@@ -103,9 +104,10 @@ export default async function Home() {
       </div>
 
       {/* Full Width Hero Banner - Pre-rendered on SSR for sub-second LCP & zero CLS */}
-      <div className="w-full">
+      {/* todo: lets make it more beautiful latere  */}
+      {/* <div className="w-full">
         <HeroBannerSlider initialBanners={banners} />
-      </div>
+      </div> */}
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Server Component: Budget Boutique */}

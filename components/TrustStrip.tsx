@@ -11,7 +11,7 @@ const features = [
   { icon: Sparkles, title: "Trending Korean Styles", subtitle: "Curated weekly" },
   { icon: BadgeCheck, title: "Loved by 100+ Girls", subtitle: "Real verified lovers", badge: "Real" },
   { icon: ShieldCheck, title: "Skin & Hair Friendly", subtitle: "Hypoallergenic alloys" },
-  // { icon: HeartHandshake, title: "Pan-India COD & Care", subtitle: "Fast & dedicated support" },
+  { icon: Gem, title: "Premium Finish", subtitle: "Tarnish-resistant shine" },
   { icon: HeartHandshake, title: "Pan-India Care", subtitle: "Fast & dedicated support" },
 ];
 
@@ -19,6 +19,9 @@ const features = [
  * Server Component: Trust Strip (zero client JS)
  */
 export default function TrustStrip() {
+  const count = features.length;
+  const lineInset = `${100 / (count * 2)}%`;
+
   return (
     <section className="bg-gradient-to-b from-white via-[#fffdfc] to-[#fff9f9] px-4 py-10 sm:px-6 lg:py-14 rounded-3xl sm:rounded-4xl border border-[#eddcd0]/80 my-8 sm:my-12 relative overflow-hidden shadow-[0_8px_30px_-10px_rgba(78,26,39,0.05)]">
       <div className="pointer-events-none absolute -top-6 -right-6 opacity-25">
@@ -48,14 +51,20 @@ export default function TrustStrip() {
 
         {/* Desktop Grid */}
         <div className="relative mt-10 sm:mt-12 hidden sm:block">
-          <div className="absolute left-[10%] right-[10%] top-6 h-px bg-gradient-to-r from-transparent via-[#d8b5a0] to-transparent" />
+          <div
+            className="absolute top-6.5 h-px bg-gradient-to-r from-transparent via-[#d8b5a0] to-transparent pointer-events-none"
+            style={{ left: lineInset, right: lineInset }}
+          />
 
-          <div className="grid grid-cols-5 gap-3">
+          <div
+            className="grid gap-3"
+            style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
+          >
             {features.map((item, i) => {
               const Icon = item.icon;
               return (
                 <div key={i} className="flex flex-col items-center group">
-                  <div className="relative">
+                  <div className="relative z-10">
                     <div className="flex size-13 items-center justify-center rounded-2xl border border-rose-200/80 bg-white text-[#8a2a44] shadow-xs transition-all duration-300 group-hover:scale-110 group-hover:border-rose-300 group-hover:shadow-md">
                       <Icon className="size-5.5 text-[#8a2a44]" />
                     </div>

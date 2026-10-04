@@ -21,7 +21,8 @@ import JsonLd from "@/components/seo/JsonLd";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import FloralAccent from "@/components/decorations/FloralAccent";
 import { SITE_CONFIG } from "@/lib/seo/config";
-import { generateBreadcrumbSchema } from "@/lib/seo/schema";
+import { generateAboutPageSchema, generateBreadcrumbSchema } from "@/lib/seo/schema";
+
 import OurStorySection from "@/components/OurStorySection";
 
 export const metadata: Metadata = {
@@ -141,7 +142,7 @@ const customerTestimonials = [
 ];
 
 const milestones = [
-  { value: "50,000+", label: "Happy Packages Delivered", icon: Truck },
+  { value: "100+", label: "Happy Packages Delivered", icon: Truck },
   { value: "4.9 / 5.0", label: "Average Customer Rating", icon: Star },
   // { value: "28,000+", label: "Pincodes Covered with COD", icon: CheckCircle2 },
   { value: "28,000+", label: "Pincodes Covered Across India", icon: CheckCircle2 },
@@ -153,6 +154,7 @@ const AboutUs = () => {
     { name: "Home", url: "/" },
     { name: "About Us", url: "/about" },
   ]);
+  const aboutSchema = generateAboutPageSchema();
 
   return (
     <main className="py-6 sm:py-10 bg-[#fffafb] min-h-[70vh] relative overflow-hidden">
@@ -169,6 +171,7 @@ const AboutUs = () => {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <JsonLd data={breadcrumbSchema} />
+        <JsonLd data={aboutSchema} />
 
         {/* Breadcrumb Navigation */}
         <nav

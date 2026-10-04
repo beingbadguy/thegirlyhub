@@ -63,7 +63,7 @@ const StickyMenuBar = () => {
       icon: user ? UserRound : LogIn,
       href: user ? "/profile" : "/login",
     },
-    { name: "Collections", icon: MdDashboard, href: "/category" },
+    { name: "Collections", icon: MdDashboard, href: "/categories" },
     { name: "Wishlist", icon: Heart, href: "/wishlist" },
     { name: "Cart", icon: BsBagHeart, href: "/cart", badge: cartCount },
   ];

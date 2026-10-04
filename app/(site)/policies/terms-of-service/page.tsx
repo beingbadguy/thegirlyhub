@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import FloralAccent from "@/components/decorations/FloralAccent";
+import JsonLd from "@/components/seo/JsonLd";
+import { generateBreadcrumbSchema, generatePolicyPageSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -20,8 +22,21 @@ export const metadata: Metadata = {
 };
 
 export default function TermsOfService() {
+  const canonicalUrl = `${SITE_CONFIG.url}/policies/terms-of-service`;
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Terms of Service", url: "/policies/terms-of-service" },
+  ]);
+  const policySchema = generatePolicyPageSchema(
+    "Terms of Service",
+    "Read GirlyHub's terms of service, customer agreement, and legal policies for online shopping.",
+    canonicalUrl
+  );
+
   return (
     <main className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={policySchema} />
       {/* Background ambient flower */}
       <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -36,6 +51,7 @@ export default function TermsOfService() {
           <span className="text-neutral-300">/</span>
           <span className="font-semibold text-neutral-900">Terms of Service</span>
         </nav>
+
         <div className="flex items-center gap-2 mb-2">
           <FloralAccent flower={1} size="sm" animation="pulse" />
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-serif">

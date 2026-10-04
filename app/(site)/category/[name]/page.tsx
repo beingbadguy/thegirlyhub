@@ -86,15 +86,17 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   const breadcrumbsSchema = generateBreadcrumbSchema([
     { name: "Home", url: "/" },
-    { name: "Categories", url: "/category" },
+    { name: "Categories", url: "/categories" },
     { name: categoryName, url: `/category/${encodeURIComponent(name)}` },
   ]);
 
   const collectionSchema = generateCollectionSchema(
     `${categoryName} Collection`,
     `Explore trending ${categoryName} products at ${SITE_CONFIG.name}.`,
-    canonicalUrl
+    canonicalUrl,
+    ssrResult.products
   );
+
 
   return (
     <>

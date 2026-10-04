@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import ContactClient from "./ContactClient";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_CONFIG } from "@/lib/seo/config";
-import { generateBreadcrumbSchema } from "@/lib/seo/schema";
+import { generateBreadcrumbSchema, generateContactPageSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "Contact Us | Customer Support & Assistance",
-  // description: "Get in touch with GirlyHub. Contact us for questions about your order, shipping, returns, or product inquiries. We're here to help!",
   description:
     "Get in touch with GirlyHub. Contact us for questions about your order, shipping, replacements, or product inquiries. We're here to help!",
   alternates: {
@@ -14,7 +13,6 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: `Contact Us | ${SITE_CONFIG.name}`,
-    // description: "Get in touch with GirlyHub. Contact us for questions about your order, shipping, returns, or product inquiries.",
     description:
       "Get in touch with GirlyHub. Contact us for questions about your order, shipping, replacements, or product inquiries.",
     url: `${SITE_CONFIG.url}/contact`,
@@ -27,11 +25,14 @@ export default function ContactPage() {
     { name: "Home", url: "/" },
     { name: "Contact Us", url: "/contact" },
   ]);
+  const contactSchema = generateContactPageSchema();
 
   return (
     <>
       <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={contactSchema} />
       <ContactClient />
     </>
   );
 }
+

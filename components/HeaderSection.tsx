@@ -240,66 +240,83 @@ const HeaderSection = () => {
             >
               <X className="w-6 h-6" />
             </p>
-            <div className="flex items-start relative top-0 -left-8  justify-start  lg:hidden ">
+            <div className="flex items-start relative top-0 -left-8 justify-start lg:hidden">
               <span className="relative flex h-5 w-44 items-center overflow-visible">
                 <LogoMark />
               </span>
             </div>
             <Separator className="bg-gray-100 h-0.5 w-full lg:hidden" />
-            <p
-              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-              onClick={() => {
-                setMenu(false);
-              }}
-            >
-              <BiHomeAlt2 className="size-4 lg:hidden" />
-              <Link href={"/"}>Home</Link>
-            </p>
-            <p
-              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-              onClick={() => {
-                setMenu(false);
-              }}
-            >
-              <MdOutlineCategory className="size-4 lg:hidden" />
-              <Link href={"/category"}>Categories</Link>
-            </p>
-            <p
-              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-              onClick={() => {
-                setMenu(false);
-              }}
-            >
-              <PackagePlus className="size-4 lg:hidden" />
-              <Link href={"/newarrivals"}>New Arrivals</Link>
-            </p>
-            <p
-              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-              onClick={() => {
-                setMenu(false);
-              }}
-            >
-              <GalleryVerticalEnd className="size-4 lg:hidden" />
-              <Link href={"/product"}>Products</Link>
-            </p>
-            <p
-              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-              onClick={() => {
-                setMenu(false);
-              }}
-            >
-              <LucideCableCar className="size-4 lg:hidden" />
-              <Link href={"track"}>Track Order</Link>
-            </p>
-            <p
-              className="cursor-pointer hover:text-pink-700 flex items-center gap-2"
-              onClick={() => {
-                setMenu(false);
-              }}
-            >
-              <IoPhonePortraitOutline className="size-4 lg:hidden" />
-              <Link href={"/contact"}>Contact</Link>
-            </p>
+            <ul role="list" className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-7 w-full lg:w-auto">
+              <li>
+                <Link
+                  href="/"
+                  onClick={() => setMenu(false)}
+                  className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <BiHomeAlt2 className="size-4 lg:hidden" />
+                  <span>Home</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/categories"
+                  onClick={() => setMenu(false)}
+                  className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <MdOutlineCategory className="size-4 lg:hidden" />
+                  <span>Categories</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/newarrivals"
+                  onClick={() => setMenu(false)}
+                  className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <PackagePlus className="size-4 lg:hidden" />
+                  <span>New Arrivals</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/product"
+                  onClick={() => setMenu(false)}
+                  className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <GalleryVerticalEnd className="size-4 lg:hidden" />
+                  <span>Shop</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/track"
+                  onClick={() => setMenu(false)}
+                  className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <LucideCableCar className="size-4 lg:hidden" />
+                  <span>Track Order</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/about"
+                  onClick={() => setMenu(false)}
+                  className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <span>About Us</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  onClick={() => setMenu(false)}
+                  className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <IoPhonePortraitOutline className="size-4 lg:hidden" />
+                  <span>Contact</span>
+                </Link>
+              </li>
+            </ul>
             <Separator className="bg-gray-100 h-0.5 w-full lg:hidden my-2" />
 
             {/* <div
@@ -374,15 +391,19 @@ const HeaderSection = () => {
           </div>
 
           <div className="flex w-full gap-4 items-center md:hidden">
-            <Search
-              className="cursor-pointer md:hidden"
+            <button
+              type="button"
+              aria-label="Open search drawer"
+              className="cursor-pointer md:hidden p-1"
               onClick={() => {
                 setSearchOpen(true);
               }}
-            />
+            >
+              <Search className="size-5 text-gray-700" />
+            </button>
 
             <div className="absolute left-1/2 -translate-x-1/2 md:hidden mt-2">
-              <Link href={"/"}>
+              <Link href={"/"} aria-label="GirlyHub Home">
                 <span className="flex h-24 w-44 items-center justify-center">
                   <LogoMark />
                 </span>
@@ -391,61 +412,70 @@ const HeaderSection = () => {
           </div>
 
           <div className="flex items-center justify-center gap-5">
-            <Search
-              className="cursor-pointer hidden md:block"
+            <button
+              type="button"
+              aria-label="Search products"
+              className="cursor-pointer hidden md:block p-1 text-gray-700 hover:text-pink-600 transition-colors"
               onClick={() => {
                 setSearchOpen(true);
               }}
-            />
+            >
+              <Search className="size-5" />
+            </button>
 
-            <div
-              className="cursor-pointer relative hidden md:block group"
-              onClick={() => {
-                router.push("/wishlist");
-              }}
+            <Link
+              href="/wishlist"
+              className="cursor-pointer relative hidden md:block group p-1"
+              aria-label={`Wishlist (${wishlistCount} items)`}
               title="Wishlist"
             >
               <Heart
-                className={`transition-all duration-200   ${wishlistCount > 0 ? "" : "text-neutral-700 "
-                  }`}
+                className={`transition-all duration-200 size-5.5 ${
+                  wishlistCount > 0 ? "fill-rose-500 text-rose-500" : "text-neutral-700"
+                }`}
               />
               {wishlistCount > 0 && (
-                <p className="absolute -top-2 -right-4 bg-rose-500 text-white rounded-full size-[23px] flex items-center text-[10px] font-bold justify-center shadow-xs">
+                <p className="absolute -top-1.5 -right-2.5 bg-rose-500 text-white rounded-full size-[20px] flex items-center text-[10px] font-bold justify-center shadow-xs">
                   {wishlistCount}
                 </p>
               )}
-            </div>
+            </Link>
 
-            <div
-              className="cursor-pointer relative"
-              onClick={() => {
-                router.push("/cart");
-              }}
+            <Link
+              href="/cart"
+              className="cursor-pointer relative p-1"
+              aria-label={`Shopping cart (${cartBadgeCount} items)`}
               title="Cart"
             >
-              <ShoppingBag />
+              <ShoppingBag className="size-5.5 text-neutral-800" />
               {cartBadgeCount > 0 && (
-                <p className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white rounded-full size-[22px] flex items-center text-[10px] font-bold justify-center shadow-xs">
+                <p className="absolute -top-1.5 -right-2.5 bg-rose-500 text-white rounded-full size-[20px] flex items-center text-[10px] font-bold justify-center shadow-xs">
                   {cartBadgeCount}
                 </p>
               )}
-            </div>
+            </Link>
 
-            <UserRound
-              className="hidden cursor-pointer md:block"
-              onClick={() => {
-                router.push("/profile");
-              }}
-            />
-            <div
-              className="block lg:hidden cursor-pointer"
+            <Link
+              href="/profile"
+              className="hidden cursor-pointer md:block p-1 text-neutral-800 hover:text-pink-600 transition-colors"
+              aria-label="User profile and account"
+              title="Account"
+            >
+              <UserRound className="size-5.5" />
+            </Link>
+
+            <button
+              type="button"
+              aria-label="Open navigation menu"
+              className="block lg:hidden cursor-pointer p-1 text-neutral-800"
               onClick={() => {
                 setMenu(true);
               }}
             >
-              <AlignJustify className="cursor-pointer" />
-            </div>
+              <AlignJustify className="size-6" />
+            </button>
           </div>
+
         </div>
       </nav>
       <SearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />

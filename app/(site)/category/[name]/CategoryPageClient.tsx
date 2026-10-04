@@ -4,6 +4,7 @@ import PaginationControls from "@/components/PaginationControls";
 import ProductCard from "@/components/ProductCard";
 import { cachedApiGet } from "@/lib/apiCache";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Sparkles, SlidersHorizontal, ChevronDown } from "lucide-react";
 import FilterSidebar from "@/components/FilterSidebar";
@@ -160,13 +161,12 @@ export default function CategoryPageClient({
         >
           <BreadcrumbHome />
           <span className="text-neutral-300">/</span>
-          <button
-            type="button"
+          <Link
+            href="/categories"
             className="cursor-pointer hover:text-rose-600 transition"
-            onClick={() => router.push("/category")}
           >
             Categories
-          </button>
+          </Link>
           <span className="text-neutral-300">/</span>
           <span className="font-semibold text-neutral-900 capitalize">
             {categoryName}

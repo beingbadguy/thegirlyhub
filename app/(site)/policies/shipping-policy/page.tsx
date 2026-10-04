@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import FloralAccent from "@/components/decorations/FloralAccent";
+import JsonLd from "@/components/seo/JsonLd";
+import { generateBreadcrumbSchema, generatePolicyPageSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "Shipping & Delivery Policy",
-  // description: "Learn about GirlyHub's shipping timelines, delivery costs, Cash on Delivery (COD), and order tracking across India.",
   description: "Learn about GirlyHub's shipping timelines, delivery costs, and order tracking across India.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/policies/shipping-policy`,
   },
   openGraph: {
     title: `Shipping Policy | ${SITE_CONFIG.name}`,
-    // description: "Learn about GirlyHub's shipping timelines, delivery costs, COD, and order tracking across India.",
     description: "Learn about GirlyHub's shipping timelines, delivery costs, and order tracking across India.",
     url: `${SITE_CONFIG.url}/policies/shipping-policy`,
     type: "website",
@@ -22,8 +22,21 @@ export const metadata: Metadata = {
 };
 
 export default function ShippingPolicy() {
+  const canonicalUrl = `${SITE_CONFIG.url}/policies/shipping-policy`;
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Shipping Policy", url: "/policies/shipping-policy" },
+  ]);
+  const policySchema = generatePolicyPageSchema(
+    "Shipping & Delivery Policy",
+    "Learn about GirlyHub's shipping timelines, delivery costs, and order tracking across India.",
+    canonicalUrl
+  );
+
   return (
     <main className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={policySchema} />
       {/* Background ambient flower */}
       <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -38,6 +51,7 @@ export default function ShippingPolicy() {
           <span className="text-neutral-300">/</span>
           <span className="font-semibold text-neutral-900">Shipping & Delivery</span>
         </nav>
+
         <div className="flex items-center gap-2 mb-2">
           <FloralAccent flower={1} size="sm" animation="pulse" />
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-serif">

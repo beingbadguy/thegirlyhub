@@ -10,10 +10,12 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: [
           "/",
+          "/product",
           "/product/",
-          "/category/",
           "/categories",
+          "/category/",
           "/newarrivals",
+          "/track",
           "/about",
           "/contact",
           "/policies/",
@@ -39,13 +41,13 @@ export default function robots(): MetadataRoute.Robots {
           "/reset",
           "/confirm",
           "/verify",
-          "/track",
           "/success/",
           "/online-success",
           "/payment-error",
           "/*?*sort=",
           "/*?*maxPrice=",
         ],
+
       },
       {
         userAgent: "GPTBot",

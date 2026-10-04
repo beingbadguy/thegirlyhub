@@ -33,19 +33,18 @@ const Footer = () => {
         />
       </div>
 
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-10 border-b border-pink-300/25 pb-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-8 border-b border-pink-300/25 pb-10 sm:grid-cols-2 lg:grid-cols-5">
         {/* About */}
-        <div>
+        <div className="lg:col-span-1">
           <div className="mb-4">
             <LogoMark isFooter={true} className="h-10" />
           </div>
           <p className="text-sm leading-6 text-pink-100/75">
-            GirlyHub is your go-to destination for high-quality accessories,
-            scrunchies, earrings, jewellery, flats, and dresses. Shop our
-            curated collection and express your style.
+            GirlyHub is your premier online destination for aesthetic jewellery,
+            Korean hair claws, satin scrunchies, earrings, and cute daily essentials.
           </p>
 
-          <div className="mt-5 space-y-2.5 text-sm text-pink-100/70">
+          <div className="mt-5 space-y-2.5 text-xs text-pink-100/70">
             <p className="flex items-start gap-2">
               <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
               Shahdara, Delhi – 110032
@@ -63,94 +62,110 @@ const Footer = () => {
 
         {/* Quick Links */}
         <div>
-          <h3 className="mb-4 text-base font-medium">Quick Links</h3>
-          <ul className="space-y-2 text-sm text-pink-100/75">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-200">Shop & Explore</h3>
+          <ul className="space-y-2.5 text-sm text-pink-100/75">
             <li>
               <Link href="/" className="transition-colors hover:text-pink-200">
                 Home
               </Link>
             </li>
             <li>
-              <Link
-                href="/product"
-                className="transition-colors hover:text-pink-200"
-              >
-                Shop
+              <Link href="/product" className="transition-colors hover:text-pink-200">
+                Shop All Products
               </Link>
             </li>
             <li>
-              <Link
-                href="/about"
-                className="transition-colors hover:text-pink-200"
-              >
-                About Us
+              <Link href="/categories" className="transition-colors hover:text-pink-200">
+                All Categories
               </Link>
             </li>
             <li>
-              <Link
-                href="/contact"
-                className="transition-colors hover:text-pink-200"
-              >
-                Contact
+              <Link href="/newarrivals" className="transition-colors hover:text-pink-200">
+                New Arrivals
               </Link>
             </li>
             <li>
-              <Link
-                href="/track"
-                className="transition-colors hover:text-pink-200"
-              >
+              <Link href="/track" className="transition-colors hover:text-pink-200">
                 Track Order
               </Link>
             </li>
           </ul>
         </div>
 
-        {/* Policies */}
+        {/* Top Collections */}
         <div>
-          <h3 className="mb-4 text-base font-medium">Policies</h3>
-          <ul className="space-y-2 text-sm text-pink-100/75">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-200">Top Collections</h3>
+          <ul className="space-y-2.5 text-sm text-pink-100/75">
             <li>
-              <Link
-                href="/policies/terms-of-service"
-                className="transition-colors hover:text-pink-200"
-              >
-                Terms of Service
+              <Link href="/category/Korean%20Claws" className="transition-colors hover:text-pink-200">
+                Korean Hair Claws
               </Link>
             </li>
             <li>
-              <Link
-                href="/policies/privacy-policy"
-                className="transition-colors hover:text-pink-200"
-              >
-                Privacy Policy
+              <Link href="/category/Jewellery" className="transition-colors hover:text-pink-200">
+                Dainty Jewellery
               </Link>
             </li>
             <li>
-              <Link
-                href="/policies/refund-policy"
-                className="transition-colors hover:text-pink-200"
-              >
-                {/* Return & Refund Policy */}
-                Replacement Policy
+              <Link href="/category/Earrings" className="transition-colors hover:text-pink-200">
+                Aesthetic Earrings
               </Link>
             </li>
             <li>
-              <Link
-                href="/policies/shipping-policy"
-                className="transition-colors hover:text-pink-200"
-              >
-                Shipping Policy
+              <Link href="/category/Scrunchies" className="transition-colors hover:text-pink-200">
+                Satin Scrunchies
+              </Link>
+            </li>
+            <li>
+              <Link href="/category/Hair%20Accessories" className="transition-colors hover:text-pink-200">
+                Hair Accessories
               </Link>
             </li>
           </ul>
         </div>
 
-        {/* Social */}
+        {/* Customer Care & Policies */}
         <div>
-          <h3 className="mb-4 text-base font-medium">Stay Connected</h3>
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-200">Customer Care</h3>
+          <ul className="space-y-2.5 text-sm text-pink-100/75">
+            <li>
+              <Link href="/about" className="transition-colors hover:text-pink-200">
+                About GirlyHub
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="transition-colors hover:text-pink-200">
+                Contact & Support
+              </Link>
+            </li>
+            <li>
+              <Link href="/policies/shipping-policy" className="transition-colors hover:text-pink-200">
+                Shipping Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/policies/refund-policy" className="transition-colors hover:text-pink-200">
+                Replacement Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/policies/privacy-policy" className="transition-colors hover:text-pink-200">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/policies/terms-of-service" className="transition-colors hover:text-pink-200">
+                Terms of Service
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        {/* Social & Connect */}
+        <div>
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-200">Stay Connected</h3>
           <p className="text-sm leading-6 text-pink-100/70">
-            Follow us on social media for latest drops, offers & behind the
-            scenes.
+            Join 25,000+ girls on Instagram for daily styling inspiration, fresh drops, and giveaways.
           </p>
           <div className="mt-5 flex gap-3">
             {[
@@ -172,8 +187,13 @@ const Footer = () => {
               </a>
             ))}
           </div>
+          <div className="mt-6 rounded-2xl bg-pink-900/40 border border-pink-700/30 p-3.5 text-xs text-pink-100/75 space-y-1">
+            <p className="font-semibold text-pink-100">✨ Express Pan-India Delivery</p>
+            <p className="text-[11px] text-pink-200/60">Dispatched within 24-48 hours with real-time tracking updates.</p>
+          </div>
         </div>
       </div>
+
 
       <div className="relative flex flex-col items-center gap-2 pt-6 text-center text-xs text-pink-100/60">
         <p>© {new Date().getFullYear()} GirlyHub. All rights reserved.</p>

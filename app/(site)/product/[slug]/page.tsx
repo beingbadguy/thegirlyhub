@@ -198,7 +198,7 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
   const productSchema = generateProductSchema(plainProduct, canonicalUrl);
   const breadcrumbsSchema = generateBreadcrumbSchema([
     { name: "Home", url: "/" },
-    { name: "Categories", url: "/category" },
+    { name: "Categories", url: "/categories" },
     {
       name: plainProduct.category || "Jewellery",
       url: `/category/${encodeURIComponent(plainProduct.category || "jewellery")}`,

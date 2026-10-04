@@ -5,6 +5,7 @@ import { isProductInStock } from "@/lib/productStock";
 import { productUrl } from "@/lib/slug";
 import { Heart } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IoCloseOutline } from "react-icons/io5";
 import React, { useState, useEffect, useRef } from "react";
@@ -196,6 +197,8 @@ export default function ProductCard({
     router.push(productUrl(product.title, product._id, product.slug));
   };
 
+  const productHref = productUrl(product.title, product._id, product.slug);
+
   const allProductsOfWishlist =
     userWishlist?.products || user?.wishlist?.[0]?.products || [];
   const alreadyInWishlist = allProductsOfWishlist.some(
@@ -228,7 +231,14 @@ export default function ProductCard({
           touchEndY.current = null;
         }}
       >
+        <Link
+          href={productHref}
+          onClick={() => onProductClick?.()}
+          aria-label={product.title}
+          className="absolute inset-0 z-0"
+        />
         {/* Out of Stock or Discount Badge on the top left */}
+
         {!inStock ? (
           <div className="absolute left-2 top-2 sm:left-2.5 sm:top-2.5 z-10 rounded-full bg-neutral-900/85 backdrop-blur-xs px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-xs uppercase tracking-wider">
             Out of Stock
@@ -327,16 +337,22 @@ export default function ProductCard({
         )}
 
         <h3
-          className="line-clamp-2 cursor-pointer font-sans text-xs sm:text-[13px] font-bold leading-snug text-neutral-800 transition-colors hover:text-rose-600"
-          onClick={goToProduct}
+          className="line-clamp-2 font-sans text-xs sm:text-[13px] font-bold leading-snug text-neutral-800 transition-colors hover:text-rose-600"
           title={product.title}
         >
-          {product.title}
+          <Link
+            href={productHref}
+            onClick={() => onProductClick?.()}
+            className="hover:text-rose-600 transition-colors"
+          >
+            {product.title}
+          </Link>
         </h3>
 
-        <div
-          className="mt-1 flex cursor-pointer items-baseline gap-1.5 font-semibold"
-          onClick={goToProduct}
+        <Link
+          href={productHref}
+          onClick={() => onProductClick?.()}
+          className="mt-1 flex items-baseline gap-1.5 font-semibold"
         >
           <span className="text-neutral-900 font-bold text-sm sm:text-base">
             ₹{product.discountedPrice}
@@ -346,8 +362,9 @@ export default function ProductCard({
               ₹{product.price}
             </span>
           )}
-        </div>
+        </Link>
       </div>
+
 
       {showStock && (
         <p

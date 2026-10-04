@@ -49,6 +49,7 @@ export function generateWebSiteSchema() {
     "@type": "WebSite",
     "@id": `${SITE_CONFIG.url}/#website`,
     name: SITE_CONFIG.name,
+    alternateName: ["Girly Hub", "GirlyHub Store", "GirlyHub India"],
     url: SITE_CONFIG.url,
     description: SITE_CONFIG.defaultDescription,
     publisher: {
@@ -63,6 +64,57 @@ export function generateWebSiteSchema() {
       "query-input": "required name=search_term_string",
     },
     inLanguage: "en-IN",
+  };
+}
+
+/**
+ * Primary Site Navigation Schema (SiteNavigationElement)
+ * Explicitly declares core site sections to assist Google in generating accurate sitelinks.
+ */
+export function generateSiteNavigationSchema() {
+  const navItems = [
+    {
+      name: "Shop All Products",
+      description: "Explore our full catalog of trendy jewellery, Korean hair claws, and lifestyle accessories.",
+      url: `${SITE_CONFIG.url}/product`,
+    },
+    {
+      name: "Categories",
+      description: "Browse curated collections including earrings, hair claws, scrunchies, and dainty jewellery.",
+      url: `${SITE_CONFIG.url}/categories`,
+    },
+    {
+      name: "New Arrivals",
+      description: "Discover fresh weekly drops and the newest trending Korean accessories.",
+      url: `${SITE_CONFIG.url}/newarrivals`,
+    },
+    {
+      name: "Track Order",
+      description: "Live real-time order tracking and dispatch updates for all shipments across India.",
+      url: `${SITE_CONFIG.url}/track`,
+    },
+    {
+      name: "About Us",
+      description: "Learn about the GirlyHub story, our mission, and quality guarantee.",
+      url: `${SITE_CONFIG.url}/about`,
+    },
+    {
+      name: "Contact Us",
+      description: "Get in touch with GirlyHub customer support for order tracking and product inquiries.",
+      url: `${SITE_CONFIG.url}/contact`,
+    },
+  ];
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": navItems.map((item, index) => ({
+      "@type": "SiteNavigationElement",
+      "@id": `${item.url}#navigation`,
+      position: index + 1,
+      name: item.name,
+      description: item.description,
+      url: item.url,
+    })),
   };
 }
 
@@ -246,10 +298,15 @@ export function generateFaqSchema(faqs: Array<{ question: string; answer: string
 }
 
 /**
- * Collection / Category Structured Data
+ * Collection / Category Structured Data with ItemList
  */
-export function generateCollectionSchema(title: string, description: string, url: string) {
-  return {
+export function generateCollectionSchema(
+  title: string,
+  description: string,
+  url: string,
+  products?: Array<{ title?: string; name?: string; slug?: string; _id?: any }>
+) {
+  const schema: Record<string, any> = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     "@id": `${url}#collection`,
@@ -260,4 +317,90 @@ export function generateCollectionSchema(title: string, description: string, url
       "@id": `${SITE_CONFIG.url}/#website`,
     },
   };
+
+  if (Array.isArray(products) && products.length > 0) {
+    schema.mainEntity = {
+      "@type": "ItemList",
+      numberOfItems: products.length,
+      itemListElement: products.map((prod, idx) => {
+        const pName = prod.title || prod.name || "Product";
+        const pSlug = prod.slug || String(prod._id);
+        const pUrl = `${SITE_CONFIG.url}/product/${encodeURIComponent(pSlug)}`;
+        return {
+          "@type": "ListItem",
+          position: idx + 1,
+          name: pName,
+          url: pUrl,
+        };
+      }),
+    };
+  }
+
+  return schema;
 }
+
+/**
+ * About Page Structured Data
+ */
+export function generateAboutPageSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": `${SITE_CONFIG.url}/about#aboutpage`,
+    name: `About ${SITE_CONFIG.name}`,
+    url: `${SITE_CONFIG.url}/about`,
+    description: SITE_CONFIG.defaultDescription,
+    isPartOf: {
+      "@id": `${SITE_CONFIG.url}/#website`,
+    },
+    mainEntity: {
+      "@id": `${SITE_CONFIG.url}/#organization`,
+    },
+  };
+}
+
+/**
+ * Contact Page Structured Data
+ */
+export function generateContactPageSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "@id": `${SITE_CONFIG.url}/contact#contactpage`,
+    name: `Contact ${SITE_CONFIG.name}`,
+    url: `${SITE_CONFIG.url}/contact`,
+    description: `Contact ${SITE_CONFIG.name} customer support for assistance, tracking, and inquiries.`,
+    isPartOf: {
+      "@id": `${SITE_CONFIG.url}/#website`,
+    },
+    mainEntity: {
+      "@type": "ContactPoint",
+      telephone: SITE_CONFIG.contact.phone,
+      email: SITE_CONFIG.contact.email,
+      contactType: "customer service",
+      areaServed: "IN",
+      availableLanguage: ["English", "Hindi"],
+    },
+  };
+}
+
+/**
+ * Policy WebPage Structured Data
+ */
+export function generatePolicyPageSchema(name: string, description: string, url: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    name: name,
+    description: description.replace(/<[^>]*>/g, ""),
+    url: url,
+    isPartOf: {
+      "@id": `${SITE_CONFIG.url}/#website`,
+    },
+    publisher: {
+      "@id": `${SITE_CONFIG.url}/#organization`,
+    },
+  };
+}
+

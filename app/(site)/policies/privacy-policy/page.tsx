@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/lib/seo/config";
 import BreadcrumbHome from "@/components/BreadcrumbHome";
 import FloralAccent from "@/components/decorations/FloralAccent";
+import JsonLd from "@/components/seo/JsonLd";
+import { generateBreadcrumbSchema, generatePolicyPageSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -20,8 +22,21 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPolicy() {
+  const canonicalUrl = `${SITE_CONFIG.url}/policies/privacy-policy`;
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Privacy Policy", url: "/policies/privacy-policy" },
+  ]);
+  const policySchema = generatePolicyPageSchema(
+    "Privacy Policy",
+    "Learn how GirlyHub collects, protects, and uses your personal data securely.",
+    canonicalUrl
+  );
+
   return (
     <main className="relative overflow-hidden min-h-[60vh] bg-[#fffafb]">
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={policySchema} />
       {/* Background ambient flower */}
       <div className="pointer-events-none absolute right-[-40px] top-12 hidden opacity-15 lg:block select-none">
         <FloralAccent flower={1} size="xl" animation="float" />
@@ -36,6 +51,7 @@ export default function PrivacyPolicy() {
           <span className="text-neutral-300">/</span>
           <span className="font-semibold text-neutral-900">Privacy Policy</span>
         </nav>
+
         <div className="flex items-center gap-2 mb-2">
           <FloralAccent flower={1} size="sm" animation="pulse" />
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-serif">

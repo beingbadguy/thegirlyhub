@@ -88,7 +88,7 @@ export default function HomeConnect() {
 
         <p className="mt-7 text-xs text-[#8a6b70] font-sans">
           <strong className="text-[#4e1a27] font-semibold">
-            Trusted by 50,000+ happy customers.
+            Trusted by 100+ happy customers.
           </strong>{" "}
           Shop with peace of mind across India.
         </p>

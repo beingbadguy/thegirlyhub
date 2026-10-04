@@ -157,22 +157,21 @@ const StaggeringCategories = ({
         className="grid grid-cols-3 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
       >
         {categories.slice(0, categoryLimit).map((category) => (
-          <motion.li
-            key={category._id}
-            variants={itemVariants}
-            onClick={() =>
-              router.push(`/category/${encodeURIComponent(category.name)}`)
-            }
-            className="group flex cursor-pointer flex-col items-center"
-          >
-            <div className="relative size-20 overflow-hidden rounded-full transition-all duration-300 group-hover:ring-rose-200 group-hover:shadow-[0_12px_30px_-8px_rgba(190,24,93,0.2)]">
-              <CategoryImageSlider category={category} />
-              <div className="absolute inset-0 bg-rose-900/0 transition-colors duration-300 group-hover:bg-rose-900/10" />
-            </div>
+          <motion.li key={category._id} variants={itemVariants}>
+            <Link
+              href={`/category/${encodeURIComponent(category.name)}`}
+              className="group flex cursor-pointer flex-col items-center"
+              aria-label={`Shop ${category.name} collection`}
+            >
+              <div className="relative size-20 overflow-hidden rounded-full transition-all duration-300 group-hover:ring-rose-200 group-hover:shadow-[0_12px_30px_-8px_rgba(190,24,93,0.2)]">
+                <CategoryImageSlider category={category} />
+                <div className="absolute inset-0 bg-rose-900/0 transition-colors duration-300 group-hover:bg-rose-900/10" />
+              </div>
 
-            <span className="mt-4 text-sm font-medium text-rose-950 transition-colors group-hover:text-rose-600 font-instrument">
-              {category.name}
-            </span>
+              <span className="mt-4 text-sm font-medium text-rose-950 transition-colors group-hover:text-rose-600 font-instrument">
+                {category.name}
+              </span>
+            </Link>
           </motion.li>
         ))}
       </motion.ul>
