@@ -30,6 +30,7 @@
     "dayjs": "^1.11.13",
     "formidable": "^3.5.2",
     "framer-motion": "^12.7.2",
+    "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",

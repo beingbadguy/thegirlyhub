@@ -13,11 +13,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export interface MailAttachment {
+  filename: string;
+  content?: string | Buffer;
+  path?: string;
+  contentType?: string;
+  encoding?: string;
+}
+
 async function sendMail(
   to: string,
   subject: string,
   text: string,
   html: string,
+  attachments?: MailAttachment[],
 ) {
   const fromAddress = `"${process.env.SMTP_FROM_NAME || "GirlyHub 💖"}" <${smtpUser}>`;
 
@@ -27,6 +36,7 @@ async function sendMail(
     subject,
     text: text || subject,
     html,
+    attachments,
   });
 
   return info;

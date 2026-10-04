@@ -88,31 +88,31 @@ export default function InvoiceView({
     Array.isArray(order.products) && order.products.length > 0
       ? order.products
       : Array.isArray((order as any).items) && (order as any).items.length > 0
-      ? ((order as any).items as InvoiceProduct[])
-      : [];
+        ? ((order as any).items as InvoiceProduct[])
+        : [];
 
   const products: InvoiceProduct[] =
     rawProducts.length > 0
       ? rawProducts
       : [
-          {
-            title: "GirlyHub Curated Accessory Item",
-            price: order.totalAmount || 0,
-            quantity: 1,
-            size: "Standard",
-          },
-        ];
+        {
+          title: "GirlyHub Curated Accessory Item",
+          price: order.totalAmount || 0,
+          quantity: 1,
+          size: "Standard",
+        },
+      ];
 
   const computedSubtotal =
     typeof order.subtotal === "number" && order.subtotal > 0
       ? order.subtotal
       : products.reduce(
-          (sum: number, item: InvoiceProduct) =>
-            sum +
-            (Number(item.price || item.productId?.price) || 0) *
-              (Number(item.quantity) || 1),
-          0
-        );
+        (sum: number, item: InvoiceProduct) =>
+          sum +
+          (Number(item.price || item.productId?.price) || 0) *
+          (Number(item.quantity) || 1),
+        0
+      );
 
   const discountAmount =
     (order.firstOrderDiscount || 0) + (order.couponDiscount || 0);
@@ -120,42 +120,291 @@ export default function InvoiceView({
   const isOnline = order.paymentMethod === "online";
   const isPaid = order.paymentStatus === "paid" || isOnline;
 
-  // 1-Click PDF Download function using dynamic html2canvas & jspdf
+  // Direct vector jsPDF fallback in case SVG/image capture fails (NEVER calls window.print)
+  const fallbackDirectPdf = async () => {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = 210;
+      let y = 18;
+
+      // Header: GirlyHub
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(225, 29, 72);
+      doc.text("GirlyHub", 15, y);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(156, 163, 175);
+      doc.text("Boutique Curated Accessories • Official Retail Invoice", 15, y + 5);
+
+      // Invoice # & Status right aligned
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(17, 24, 39);
+      doc.text(invoiceNumber, pageWidth - 15, y, { align: "right" });
+
+      // Status pill
+      const statusText = isPaid ? "PAID IN FULL" : "PAYMENT PENDING";
+      doc.setFontSize(8);
+      if (isPaid) {
+        doc.setFillColor(236, 253, 245);
+        doc.setDrawColor(167, 243, 208);
+        doc.setTextColor(5, 150, 105);
+      } else {
+        doc.setFillColor(254, 243, 199);
+        doc.setDrawColor(253, 230, 138);
+        doc.setTextColor(217, 119, 6);
+      }
+      doc.roundedRect(pageWidth - 45, y + 2, 30, 6, 2, 2, "FD");
+      doc.text(statusText, pageWidth - 30, y + 6.2, { align: "center" });
+
+      // Divider
+      y += 14;
+      doc.setDrawColor(243, 244, 246);
+      doc.setLineWidth(0.5);
+      doc.line(15, y, pageWidth - 15, y);
+
+      // Metadata 4 sections
+      y += 8;
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(156, 163, 175);
+      doc.text("Invoice Date", 15, y);
+      doc.text("Subject", 115, y);
+
+      y += 4.5;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(17, 24, 39);
+      doc.text(formattedDate, 15, y);
+      doc.text(`Retail Order #${order.orderId || order._id}`, 115, y);
+
+      y += 8;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(156, 163, 175);
+      doc.text("Billed To", 15, y);
+      doc.text("Payment Details", 115, y);
+
+      y += 4.5;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(17, 24, 39);
+      doc.text(order.recipientName || order.customerName || "Customer", 15, y);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(55, 65, 81);
+      doc.text("Currency: INR - Indian Rupee (Rs.)", 115, y);
+      y += 4;
+      if (order.email) {
+        doc.text(order.email, 15, y);
+      }
+      doc.text(`Method: ${isOnline ? "Online (Prepaid)" : "Cash on Delivery"}`, 115, y);
+
+      y += 4;
+      const addressLine = [order.address, order.city, order.state].filter(Boolean).join(", ");
+      const zipLine = order.zip ? ` - ${order.zip}` : "";
+      const fullAddress = (addressLine + zipLine).slice(0, 55);
+      doc.text(fullAddress, 15, y);
+
+      if (order.phone) {
+        y += 4;
+        doc.text(`Phone: +91 ${order.phone}`, 15, y);
+      }
+
+      // Table Header
+      y += 9;
+      doc.setFillColor(249, 250, 251);
+      doc.rect(15, y, pageWidth - 30, 8, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(107, 114, 128);
+      doc.text("ITEM", 18, y + 5.5);
+      doc.text("QTY", 125, y + 5.5, { align: "center" });
+      doc.text("UNIT PRICE", 155, y + 5.5, { align: "right" });
+      doc.text("AMOUNT", pageWidth - 18, y + 5.5, { align: "right" });
+
+      // Table Rows
+      y += 8;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(17, 24, 39);
+
+      products.forEach((item, idx) => {
+        y += 6;
+        const title = (item.title || item.productId?.title || `Item #${idx + 1}`).slice(0, 48);
+        const qty = Number(item.quantity || 1);
+        const price = Number(item.price || item.productId?.price || 0);
+        const amount = price * qty;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(17, 24, 39);
+        doc.text(title, 18, y);
+
+        doc.setFont("helvetica", "normal");
+        doc.text(String(qty), 125, y, { align: "center" });
+        doc.text(`Rs. ${price.toFixed(2)}`, 155, y, { align: "right" });
+        doc.setFont("helvetica", "bold");
+        doc.text(`Rs. ${amount.toFixed(2)}`, pageWidth - 18, y, { align: "right" });
+
+        if (item.size && item.size.toLowerCase() !== "one size") {
+          y += 3.5;
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(156, 163, 175);
+          doc.text(`Size: ${item.size}`, 18, y);
+        }
+
+        y += 2;
+        doc.setDrawColor(243, 244, 246);
+        doc.line(15, y, pageWidth - 15, y);
+      });
+
+      // Totals
+      y += 8;
+      const rightX = pageWidth - 18;
+      const labelX = rightX - 50;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(75, 85, 99);
+
+      doc.text("Sub total", labelX, y);
+      doc.text(`Rs. ${computedSubtotal.toFixed(2)}`, rightX, y, { align: "right" });
+
+      if (discountAmount > 0) {
+        y += 5;
+        doc.setTextColor(5, 150, 105);
+        doc.text(`Discount${order.couponCode ? ` (${order.couponCode})` : ""}`, labelX, y);
+        doc.text(`-Rs. ${discountAmount.toFixed(2)}`, rightX, y, { align: "right" });
+        doc.setTextColor(75, 85, 99);
+      }
+
+      y += 5;
+      doc.text("Delivery / Shipping", labelX, y);
+      doc.text(shippingFee > 0 ? `Rs. ${shippingFee.toFixed(2)}` : "Free", rightX, y, { align: "right" });
+
+      y += 6;
+      doc.setDrawColor(229, 231, 235);
+      doc.line(labelX, y - 2, rightX, y - 2);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(225, 29, 72);
+      doc.text("Total", labelX, y + 2);
+      doc.text(`Rs. ${Number(order.totalAmount || 0).toFixed(2)}`, rightX, y + 2, { align: "right" });
+
+      y += 6;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(75, 85, 99);
+      doc.text(isPaid ? "Amount paid" : "Amount due (COD)", labelX, y);
+      doc.text(`Rs. ${Number(order.totalAmount || 0).toFixed(2)}`, rightX, y, { align: "right" });
+
+      // Footer Notes
+      y = 265;
+      doc.setDrawColor(243, 244, 246);
+      doc.line(15, y, pageWidth - 15, y);
+      y += 6;
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7.5);
+      doc.setTextColor(156, 163, 175);
+      doc.text("* This is an official computer-generated invoice from GirlyHub. No physical signature is required.", 15, y);
+      y += 4;
+      doc.text("Thank you for shopping with us! For queries, reach us at support@girlyhub.com", 15, y);
+
+      doc.save(`GirlyHub_Invoice_${invoiceNumber.replace(/\s+/g, "_")}.pdf`);
+    } catch (fallbackErr) {
+      console.error("Direct PDF generation failed:", fallbackErr);
+    }
+  };
+
+  // 1-Click PDF Download: Clean 1-Page A4 PDF, direct download, no print dialog
   const handleDownloadPdf = async () => {
     if (!invoiceRef.current || downloading) return;
     setDownloading(true);
 
     try {
-      const html2canvas = (await import("html2canvas")).default;
+      const { toPng } = await import("html-to-image");
       const { jsPDF } = await import("jspdf");
 
       const element = invoiceRef.current;
 
-      const canvas = await html2canvas(element, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        windowWidth: 1200,
-      } as any);
+      // Capture element to high-res PNG (2x pixel ratio for crisp rendering)
+      const placeholder =
+        "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23fff1f2'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23e11d48'%3EGH%3C/text%3E%3C/svg%3E";
 
-      const imgData = canvas.toDataURL("image/png");
+      let dataUrl: string;
+      try {
+        dataUrl = await toPng(element, {
+          quality: 0.98,
+          pixelRatio: 2,
+          backgroundColor: "#ffffff",
+          cacheBust: true,
+          imagePlaceholder: placeholder,
+        });
+      } catch (fontErr) {
+        console.warn("Retrying with skipFonts...", fontErr);
+        dataUrl = await toPng(element, {
+          quality: 0.98,
+          pixelRatio: 2,
+          backgroundColor: "#ffffff",
+          skipFonts: true,
+          cacheBust: true,
+          imagePlaceholder: placeholder,
+        });
+      }
+
+      // Measure dimensions
+      const img = new (window as any).Image();
+      img.src = dataUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 8;
+      const printableWidth = pageWidth - margin * 2; // 194mm
+      const printableHeight = pageHeight - margin * 2; // 281mm
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      const imgWidth = img.naturalWidth || img.width;
+      const imgHeight = img.naturalHeight || img.height;
+      const ratio = imgHeight / imgWidth;
+
+      let finalWidth = printableWidth;
+      let finalHeight = printableWidth * ratio;
+
+      // Fit strictly within 1 page (guaranteed exactly one page, no second blank/cutoff page)
+      if (finalHeight > printableHeight) {
+        finalHeight = printableHeight;
+        finalWidth = printableHeight / ratio;
+      }
+
+      // Center horizontally, align with top margin
+      const x = (pageWidth - finalWidth) / 2;
+      const y = margin;
+
+      pdf.addImage(dataUrl, "PNG", x, y, finalWidth, finalHeight, undefined, "FAST");
       pdf.save(`GirlyHub_Invoice_${invoiceNumber.replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
-      console.error("Failed to generate PDF invoice:", err);
-      // Fallback to browser print if canvas fails
-      window.print();
+      console.error("html-to-image failed, using direct PDF generator:", err);
+      await fallbackDirectPdf();
     } finally {
       setDownloading(false);
     }
@@ -306,14 +555,14 @@ export default function InvoiceView({
         </div>
 
         {/* ── Items Table ── */}
-        <div className="border-t border-b border-gray-200 py-2 mb-6 overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse min-w-[500px]">
+        <div className="border-t border-b border-gray-200 py-2 mb-6 w-full">
+          <table className="w-full text-left text-sm border-collapse table-auto">
             <thead>
               <tr className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                <th className="py-3 px-2 w-[55%]">ITEM</th>
-                <th className="py-3 px-2 text-center w-[15%]">QTY</th>
-                <th className="py-3 px-2 text-right w-[15%]">UNIT PRICE</th>
-                <th className="py-3 px-2 text-right w-[15%]">AMOUNT</th>
+                <th className="py-3 px-2 w-[52%]">ITEM</th>
+                <th className="py-3 px-2 text-center w-[12%]">QTY</th>
+                <th className="py-3 px-2 text-right w-[18%]">UNIT PRICE</th>
+                <th className="py-3 px-2 text-right w-[18%]">AMOUNT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -340,6 +589,7 @@ export default function InvoiceView({
                               width={44}
                               height={44}
                               unoptimized
+                              crossOrigin="anonymous"
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -422,45 +672,13 @@ export default function InvoiceView({
         </div>
 
         {/* ── Notes Section (No GST, Small Business Compliant) ── */}
-        <div className="border-t border-gray-100 pt-5 mb-8">
+        <div className="border-t border-gray-100 pt-5">
           <p className="text-xs text-gray-400 italic leading-relaxed">
             *Notes: Products that you have purchased cannot be returned without
             original packaging and tags. This is a computer-generated invoice from
             GirlyHub (Small Indian Boutique Enterprise) and does not require a
             physical signature. Thank you for supporting our small business 💖
           </p>
-        </div>
-
-        {/* ── Attachment Card (Exact match to reference image) ── */}
-        <div className="border-t border-gray-100 pt-6">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
-            Attachment
-          </p>
-          <div className="flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-2xl p-3.5 transition">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-rose-500 shadow-2xs">
-                <FileText className="w-5 h-5 text-rose-600" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-bold text-gray-900">
-                  GirlyHub_Invoice_{String(order.orderId || order._id).slice(-6).toUpperCase()}.PDF
-                </p>
-                <p className="text-[11px] text-gray-400">
-                  Official Bill of Supply • Verified
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              disabled={downloading}
-              onClick={handleDownloadPdf}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition cursor-pointer active:scale-95 disabled:opacity-60"
-            >
-              <Download className="w-3.5 h-3.5" />
-              {downloading ? "Downloading..." : "Download"}
-            </button>
-          </div>
         </div>
       </div>
     </div>

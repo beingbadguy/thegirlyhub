@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import { databaseConnection } from "@/config/databseConnection";
 import Order from "@/models/order.model";
+import User from "@/models/user.model";
+import Product from "@/models/product.model";
 import mongoose from "mongoose";
 import { notFound } from "next/navigation";
 import InvoiceView, { InvoiceOrder } from "@/components/invoice/InvoiceView";
@@ -27,34 +29,38 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   const { id } = await params;
   if (!id) notFound();
 
-  await databaseConnection();
-
-  const populateOptions = {
-    path: "products.productId",
-    select: "title name image mainImage price discountedPrice slug category",
-  };
-
   let orderDoc: any = null;
 
-  if (mongoose.Types.ObjectId.isValid(id)) {
-    orderDoc = await Order.findById(id)
-      .populate("userId", "name email phone")
-      .populate(populateOptions)
-      .lean();
-  }
+  try {
+    await databaseConnection();
 
-  if (!orderDoc) {
-    orderDoc = await Order.findOne({ orderId: id })
-      .populate("userId", "name email phone")
-      .populate(populateOptions)
-      .lean();
-  }
+    const populateOptions = {
+      path: "products.productId",
+      select: "title name image mainImage price discountedPrice slug category",
+    };
 
-  if (!orderDoc) {
-    orderDoc = await Order.findOne({ paymentId: id })
-      .populate("userId", "name email phone")
-      .populate(populateOptions)
-      .lean();
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      orderDoc = await Order.findById(id)
+        .populate("userId", "name email phone")
+        .populate(populateOptions)
+        .lean();
+    }
+
+    if (!orderDoc) {
+      orderDoc = await Order.findOne({ orderId: id })
+        .populate("userId", "name email phone")
+        .populate(populateOptions)
+        .lean();
+    }
+
+    if (!orderDoc) {
+      orderDoc = await Order.findOne({ paymentId: id })
+        .populate("userId", "name email phone")
+        .populate(populateOptions)
+        .lean();
+    }
+  } catch (error) {
+    console.error("Error loading invoice order from DB:", error);
   }
 
   if (!orderDoc) {

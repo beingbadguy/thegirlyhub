@@ -1,15 +1,18 @@
 import { databaseConnection } from "@/config/databseConnection";
 import Wishlist from "@/models/wishlist.model";
+import Product from "@/models/product.model";
+import User from "@/models/user.model";
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 
 export async function GET(request: NextRequest) {
-  await databaseConnection();
   try {
+    await databaseConnection();
     const decoded = await fetchTokenDetails(request);
-    if (!decoded?.userId) {
+    if (!decoded?.userId || !mongoose.Types.ObjectId.isValid(decoded.userId)) {
       return NextResponse.json(
-        { message: "You must log in to view your wishlist", success: false },
+        { message: "You must log in to view your wishlist", success: false, wishlist: { products: [] } },
         { status: 401 }
       );
     }

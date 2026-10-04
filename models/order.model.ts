@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import "./user.model";
+import "./product.model";
 
 const statusHistorySchema = new mongoose.Schema(
   {
