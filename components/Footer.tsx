@@ -12,7 +12,7 @@ import LogoMark from "@/components/LogoMark";
 
 const Footer = () => {
   return (
-    <footer className="relative mt-16 overflow-visible bg-pink-950 px-6 pb-8 pt-16 text-white md:px-20">
+    <footer className="relative mt-16 overflow-visible bg-pink-950 px-6 pb-28 pt-16 text-white md:px-20 md:pb-8">
       {/* Top decorative cut + bow */}
       <div
         className="pointer-events-none absolute inset-x-0 -top-10 h-16"
