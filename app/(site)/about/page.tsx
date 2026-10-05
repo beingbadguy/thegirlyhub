@@ -205,13 +205,13 @@ const AboutUs = () => {
 
           {/* Quick Highlights Ribbon */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs sm:text-sm text-[#532431]">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">
+            {/* <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">
               <Star className="size-3.5 fill-amber-400 text-amber-400" />
               <strong className="font-semibold">4.9/5 Rating</strong> (1,500+ Reviews)
-            </span>
+            </span> */}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">
               <Heart className="size-3.5 fill-rose-500 text-rose-500" />
-              <strong className="font-semibold">50,000+</strong> Happy GirlyHubbers
+              <strong className="font-semibold">100+</strong> Happy GirlyHubbers
             </span>
             {/*
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">

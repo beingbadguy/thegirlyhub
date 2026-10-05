@@ -5,6 +5,7 @@ import {
   AlignJustify,
   GalleryVerticalEnd,
   Heart,
+  Info,
   LucideCableCar,
   PackagePlus,
   Search,
@@ -303,6 +304,7 @@ const HeaderSection = () => {
                   onClick={() => setMenu(false)}
                   className="cursor-pointer hover:text-pink-700 flex items-center gap-2 font-medium transition-colors"
                 >
+                  <Info className="size-4 lg:hidden" />
                   <span>About Us</span>
                 </Link>
               </li>
@@ -425,15 +427,11 @@ const HeaderSection = () => {
 
             <Link
               href="/wishlist"
-              className="cursor-pointer relative hidden md:block group p-1"
+              className="cursor-pointer relative hidden md:block group p-1 text-neutral-800 hover:text-pink-600 transition-colors"
               aria-label={`Wishlist (${wishlistCount} items)`}
               title="Wishlist"
             >
-              <Heart
-                className={`transition-all duration-200 size-5.5 ${
-                  wishlistCount > 0 ? "fill-rose-500 text-rose-500" : "text-neutral-700"
-                }`}
-              />
+              <Heart className="size-5.5 text-neutral-800 group-hover:text-pink-600 transition-colors" />
               {wishlistCount > 0 && (
                 <p className="absolute -top-1.5 -right-2.5 bg-rose-500 text-white rounded-full size-[20px] flex items-center text-[10px] font-bold justify-center shadow-xs">
                   {wishlistCount}
@@ -443,11 +441,11 @@ const HeaderSection = () => {
 
             <Link
               href="/cart"
-              className="cursor-pointer relative p-1"
+              className="cursor-pointer relative p-1 text-neutral-800 hover:text-pink-600 transition-colors group"
               aria-label={`Shopping cart (${cartBadgeCount} items)`}
               title="Cart"
             >
-              <ShoppingBag className="size-5.5 text-neutral-800" />
+              <ShoppingBag className="size-5.5 text-neutral-800 group-hover:text-pink-600 transition-colors" />
               {cartBadgeCount > 0 && (
                 <p className="absolute -top-1.5 -right-2.5 bg-rose-500 text-white rounded-full size-[20px] flex items-center text-[10px] font-bold justify-center shadow-xs">
                   {cartBadgeCount}
