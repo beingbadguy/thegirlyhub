@@ -165,7 +165,12 @@ export function generateProductSchema(product: ProductSchemaInput, canonicalUrl:
     product.description ||
     product.longDescription ||
     `Shop ${name} online at GirlyHub.`;
-  const cleanDescription = rawDesc.replace(/<[^>]*>/g, "").trim().slice(0, 500);
+  const cleanDescription = rawDesc
+    .replace(/<[^>]*>/g, "")
+    .replace(/[*#_`-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 500);
 
   const images: string[] = [];
   if (Array.isArray(product.images) && product.images.length > 0) {

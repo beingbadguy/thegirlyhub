@@ -107,6 +107,8 @@ export async function generateMetadata({
 
   const cleanDescription = rawDescription
     .replace(/<[^>]*>/g, "")
+    .replace(/[*#_`-]/g, "")
+    .replace(/\s+/g, " ")
     .trim()
     .slice(0, 155);
 

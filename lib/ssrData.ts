@@ -124,13 +124,11 @@ export async function getSSRHomeCategories(limit = 12): Promise<SSRCategory[]> {
   try {
     await databaseConnection();
 
+    // Fetch all active categories to evaluate product counts across the catalog
     const categories = await Category.find({
       isActive: { $ne: false },
       isDeleted: { $ne: true },
-    })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+    }).lean();
 
     if (!categories || categories.length === 0) {
       return [];
@@ -164,16 +162,16 @@ export async function getSSRHomeCategories(limit = 12): Promise<SSRCategory[]> {
     const countsMap = new Map<string, { productCount: number; productImages: string[] }>();
     for (const item of productData) {
       if (item._id) {
-        countsMap.set(String(item._id).toLowerCase(), {
+        countsMap.set(String(item._id).toLowerCase().trim(), {
           productCount: item.productCount || 0,
           productImages: (item.productImages || []).filter(Boolean),
         });
       }
     }
 
-    return categories.map((c: any) => {
+    const mapped = categories.map((c: any) => {
       const match =
-        countsMap.get(c.name.toLowerCase()) ||
+        countsMap.get(c.name.toLowerCase().trim()) ||
         countsMap.get(c.name) || { productCount: 0, productImages: [] };
 
       return {
@@ -184,6 +182,18 @@ export async function getSSRHomeCategories(limit = 12): Promise<SSRCategory[]> {
         productCount: match.productCount,
       };
     });
+
+    // 1. Show only categories that have products (productCount > 0)
+    const withProducts = mapped.filter((c) => (c.productCount || 0) > 0);
+
+    // 2. Sort in increasing order of product count (ascending)
+    withProducts.sort((a, b) => {
+      const diff = (a.productCount || 0) - (b.productCount || 0);
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    });
+
+    return withProducts.slice(0, limit);
   } catch (error) {
     console.error("Error fetching SSR categories:", error);
     return [];

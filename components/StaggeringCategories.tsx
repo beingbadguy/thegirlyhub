@@ -16,6 +16,7 @@ interface Category {
   name: string;
   categoryImage: string;
   productImages?: string[];
+  productCount?: number;
 }
 
 const containerVariants: Variants = {
@@ -87,8 +88,10 @@ const StaggeringCategories = ({
           "/api/category",
           {
             page: 1,
-            limit: categoryLimit,
+            limit: 20,
             includeProductImages: true,
+            onlyWithProducts: true,
+            sortBy: "productCountAsc",
           },
           { ttlMs: 5 * 60 * 1000 },
         );
@@ -108,6 +111,18 @@ const StaggeringCategories = ({
       active = false;
     };
   }, [categoryLimit, hasInitial]);
+
+  // Filter out any categories with 0 products and ensure display in increasing order of product count
+  const displayCategories = categories
+    .filter((cat) => (cat.productCount !== undefined ? cat.productCount > 0 : true))
+    .sort((a, b) => {
+      if (a.productCount !== undefined && b.productCount !== undefined) {
+        const diff = a.productCount - b.productCount;
+        if (diff !== 0) return diff;
+      }
+      return 0;
+    })
+    .slice(0, categoryLimit);
 
   if (catLoading) {
     return (
@@ -156,7 +171,7 @@ const StaggeringCategories = ({
         animate="show"
         className="grid grid-cols-3 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
       >
-        {categories.slice(0, categoryLimit).map((category) => (
+        {displayCategories.map((category) => (
           <motion.li key={category._id} variants={itemVariants}>
             <Link
               href={`/category/${encodeURIComponent(category.name)}`}

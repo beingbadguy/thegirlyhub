@@ -13,6 +13,7 @@ import {
   FaInstagram,
 } from "react-icons/fa";
 import { VscLoading } from "react-icons/vsc";
+import { ShieldCheck } from "lucide-react";
 import FloralAccent from "@/components/decorations/FloralAccent";
 
 export default function ContactClient() {
@@ -210,6 +211,12 @@ export default function ContactClient() {
               <p className="mt-1 leading-relaxed text-[#8a6b70]">
                 Shahdara, New Delhi, India - 110032
               </p>
+              <div className="mt-2.5 pt-2.5 border-t border-[#eadfd5]/70 flex items-center gap-2 text-[#4e1a27]">
+                <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
+                <span className="text-[11px] text-gray-700">
+                  Govt. MSME Reg: <strong className="font-mono text-[#4e1a27] font-semibold">UDYAM-DL-07-0026329</strong>
+                </span>
+              </div>
               <p className="mt-2 text-[11px] text-gray-400">
                 Operating Hours: Monday – Saturday (10:00 AM – 7:00 PM IST)
               </p>

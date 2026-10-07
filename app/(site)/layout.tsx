@@ -146,13 +146,14 @@ export default function RootLayout({
   const isProduction = process.env.NODE_ENV === "production";
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <JsonLd data={organizationSchema} />
         <JsonLd data={webSiteSchema} />
         <JsonLd data={siteNavigationSchema} />
       </head>
       <body
+        suppressHydrationWarning
         className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${caveat.variable} ${cormorantGaramond.variable} antialiased custom-scrollbar overflow-x-clip`}
       >
         <AnnouncementBand />

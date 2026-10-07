@@ -213,15 +213,16 @@ const AboutUs = () => {
               <Heart className="size-3.5 fill-rose-500 text-rose-500" />
               <strong className="font-semibold">100+</strong> Happy GirlyHubbers
             </span>
-            {/*
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">
-              <Truck className="size-3.5 text-[#8a3348]" />
-              <strong className="font-semibold">Pan-India COD</strong> & Express Dispatch
-            </span>
-            */}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-rose-200/60 px-3.5 py-1.5 shadow-2xs">
               <Truck className="size-3.5 text-[#8a3348]" />
               <strong className="font-semibold">Pan-India Delivery</strong> & Express Dispatch
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-emerald-200/80 px-3.5 py-1.5 shadow-2xs">
+              <ShieldCheck className="size-3.5 text-emerald-600" />
+              <span className="text-[#3b2029]">
+                <strong className="font-semibold">Govt. MSME Registered:</strong>{" "}
+                <span className="font-mono text-xs font-semibold text-[#532431]">UDYAM-DL-07-0026329</span>
+              </span>
             </span>
           </div>
         </section>

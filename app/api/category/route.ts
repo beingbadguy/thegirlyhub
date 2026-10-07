@@ -154,7 +154,11 @@ export async function GET(request: NextRequest) {
         },
       ]),
     );
-    const categoriesWithCounts = categories.map((category: any) => {
+    const onlyWithProducts =
+      request.nextUrl.searchParams.get("onlyWithProducts") === "true";
+    const sortBy = request.nextUrl.searchParams.get("sortBy");
+
+    let finalCategories = categories.map((category: any) => {
       const match =
         counts.get(category.name.toLowerCase()) ||
         counts.get(category.name) || { productCount: 0, productImages: [] };
@@ -167,11 +171,23 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    if (onlyWithProducts) {
+      finalCategories = finalCategories.filter((c: any) => (c.productCount || 0) > 0);
+    }
+
+    if (sortBy === "productCountAsc") {
+      finalCategories.sort((a: any, b: any) => {
+        const diff = (a.productCount || 0) - (b.productCount || 0);
+        if (diff !== 0) return diff;
+        return a.name.localeCompare(b.name);
+      });
+    }
+
     return NextResponse.json(
       {
         success: true,
         message: "Categories fetched successfully",
-        categories: categoriesWithCounts,
+        categories: finalCategories,
         pagination: paginationResult(page, limit, total),
       },
       {

@@ -40,6 +40,7 @@ import { SiGooglepay, SiPaytm } from "react-icons/si";
 import { FaWhatsapp } from "react-icons/fa";
 import FloralAccent from "@/components/decorations/FloralAccent";
 import ProductDescriptionRenderer from "@/components/ProductDescriptionRenderer";
+import ShareModal, { getEnterpriseSharePayloads } from "@/components/product/ShareModal";
 
 type ReviewType = {
   _id?: string;
@@ -357,24 +358,35 @@ const ProductPageClient = ({
   const [lightboxPan, setLightboxPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Share state
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
 
   const handleShare = async () => {
     try {
       const url = `${window.location.origin}/product/${product.slug}`;
-      if (navigator.share) {
-        await navigator.share({
-          title: product.title,
-          text: product.description,
-          url: url,
-        });
-      } else {
-        await navigator.clipboard.writeText(url);
-        setShareSuccess(true);
-        setTimeout(() => setShareSuccess(false), 2000);
+      const payload = getEnterpriseSharePayloads(product, url);
+
+      // On devices supporting Web Share API, invoke native share with clean enterprise copy
+      if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+        try {
+          await navigator.share({
+            title: payload.title,
+            text: payload.nativeText,
+            url: payload.url,
+          });
+          return;
+        } catch (err: any) {
+          if (err?.name === "AbortError") {
+            return;
+          }
+        }
       }
+
+      // On desktop or when native share is unavailable, open Enterprise Share Modal
+      setShareModalOpen(true);
     } catch (err) {
       console.error("Error sharing:", err);
+      setShareModalOpen(true);
     }
   };
 
@@ -2525,6 +2537,13 @@ const ProductPageClient = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Enterprise Product Share Modal */}
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        product={product}
+      />
     </div>
   );
 };

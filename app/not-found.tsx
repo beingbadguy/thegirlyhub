@@ -67,8 +67,9 @@ const cormorantGaramond = Cormorant_Garamond({
 
 export default function RootNotFound() {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${poppins.variable} ${bodoniModa.variable} ${instrumentSerif.variable} ${darkerGrotesque.variable} ${caveat.variable} ${playfair.variable} ${cormorantGaramond.variable} antialiased custom-scrollbar overflow-x-clip`}
       >
         <AnnouncementBand />
