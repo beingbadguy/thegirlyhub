@@ -41,6 +41,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import FloralAccent from "@/components/decorations/FloralAccent";
 import ProductDescriptionRenderer from "@/components/ProductDescriptionRenderer";
 import ShareModal, { getEnterpriseSharePayloads } from "@/components/product/ShareModal";
+import ImageCropperModal from "@/components/ImageCropperModal";
 
 type ReviewType = {
   _id?: string;
@@ -349,6 +350,8 @@ const ProductPageClient = ({
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [reviewError, setReviewError] = useState<string>("");
   const [reviewSuccess, setReviewSuccess] = useState<string>("");
+  const [pendingReviewFiles, setPendingReviewFiles] = useState<File[]>([]);
+  const [isReviewCropperOpen, setIsReviewCropperOpen] = useState(false);
 
   // Lightbox state & full-screen zoom controls
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
@@ -465,16 +468,25 @@ const ProductPageClient = ({
       const files = Array.from(e.target.files);
       if (reviewPhotos.length + files.length > 4) {
         setReviewError("You can upload a maximum of 4 photos.");
+        e.target.value = "";
         return;
       }
 
-      const newPhotos = [...reviewPhotos, ...files];
-      setReviewPhotos(newPhotos);
-      setReviewError("");
-
-      const previews = files.map((file) => URL.createObjectURL(file));
-      setPhotoPreviews([...photoPreviews, ...previews]);
+      setPendingReviewFiles(files);
+      setIsReviewCropperOpen(true);
+      e.target.value = "";
     }
+  };
+
+  const handleReviewCropComplete = (croppedFiles: File[]) => {
+    if (!croppedFiles.length) return;
+    const newPhotos = [...reviewPhotos, ...croppedFiles];
+    setReviewPhotos(newPhotos);
+    setReviewError("");
+
+    const previews = croppedFiles.map((file) => URL.createObjectURL(file));
+    setPhotoPreviews([...photoPreviews, ...previews]);
+    setPendingReviewFiles([]);
   };
 
   // Remove photo from selection list
@@ -2543,6 +2555,20 @@ const ProductPageClient = ({
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
         product={product}
+      />
+
+      {/* Enterprise Review Photos Cropper Modal */}
+      <ImageCropperModal
+        isOpen={isReviewCropperOpen}
+        files={pendingReviewFiles}
+        aspectRatio={1}
+        title="Crop Review Photos"
+        description="Position and crop your photo before posting your review."
+        onClose={() => {
+          setIsReviewCropperOpen(false);
+          setPendingReviewFiles([]);
+        }}
+        onCropComplete={handleReviewCropComplete}
       />
     </div>
   );

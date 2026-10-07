@@ -18,6 +18,7 @@ import ProductCard from "@/components/ProductCard";
 import PaginationControls from "@/components/PaginationControls";
 import GuestAuthPrompt from "@/components/GuestAuthPrompt";
 import FloralAccent from "@/components/decorations/FloralAccent";
+import ImageCropperModal from "@/components/ImageCropperModal";
 
 // Enterprise Profile Components
 import ProfileHeroHeader from "@/components/profile/ProfileHeroHeader";
@@ -101,6 +102,8 @@ function ProfileContent() {
 
   // Photo Upload State
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
 
   const showToast = (message: string, type: ToastType = "info", title?: string) => {
     setToast({
@@ -217,14 +220,15 @@ function ProfileContent() {
     }
   }, [tabParam, statusParam, searchParam, sortParam, pageParam]);
 
-  // Image Upload Handler with Instant Optimistic Preview
-  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Image Upload Handler with Cropper
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate size (< 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("Profile image must be less than 5MB.", "error", "Image Too Large");
+    // Validate size (< 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("Profile image must be less than 10MB.", "error", "Image Too Large");
+      event.target.value = "";
       return;
     }
 
@@ -232,11 +236,22 @@ function ProfileContent() {
     const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
     if (!validTypes.includes(file.type)) {
       showToast("Please select a JPG, PNG, WEBP or AVIF image.", "error", "Invalid Format");
+      event.target.value = "";
       return;
     }
 
+    setPendingCropFile(file);
+    setIsCropperOpen(true);
+    event.target.value = "";
+  };
+
+  const handleCropComplete = async (croppedFiles: File[]) => {
+    const cropped = croppedFiles[0];
+    if (!cropped) return;
+    setPendingCropFile(null);
+
     // Instant local preview
-    const previewUrl = URL.createObjectURL(file);
+    const previewUrl = URL.createObjectURL(cropped);
     const previousImage = profileData?.image;
     if (profileData) {
       setProfileData({ ...profileData, image: previewUrl });
@@ -244,7 +259,7 @@ function ProfileContent() {
 
     setUploadingPhoto(true);
     try {
-      const compressed = await compressImage(file);
+      const compressed = await compressImage(cropped);
       const formData = new FormData();
       formData.append("image", compressed);
 
@@ -685,6 +700,20 @@ function ProfileContent() {
           </main>
         </div>
       </div>
+
+      <ImageCropperModal
+        isOpen={isCropperOpen}
+        files={pendingCropFile}
+        aspectRatio={1}
+        circularCrop={true}
+        title="Crop Profile Avatar"
+        description="Position and crop your photo inside the circle for your avatar."
+        onClose={() => {
+          setIsCropperOpen(false);
+          setPendingCropFile(null);
+        }}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   );
 }
