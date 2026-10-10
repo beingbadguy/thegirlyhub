@@ -100,6 +100,8 @@ export async function GET(
   }
 }
 
+import { verifyAdmin } from "@/lib/adminAuth";
+
 export async function PUT(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -108,7 +110,7 @@ export async function PUT(
   try {
     const { id } = await context.params;
 
-    const isAdmin = await verifyIsAdmin(req);
+    const { isAdmin, decoded } = await verifyAdmin(req);
     if (!isAdmin) {
       return NextResponse.json(
         { message: "Unauthorized. Admin privileges required.", success: false },
@@ -119,10 +121,78 @@ export async function PUT(
     const body = await req.json().catch(() => ({}));
     const { status } = body;
 
-    if (!status || typeof status !== "string") {
+    let filter: Record<string, any> = { _id: id };
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      filter = { orderId: id };
+    }
+
+    const updateData: Record<string, any> = { ...body };
+    if (body.isDeleted === false) {
+      updateData.isDeleted = false;
+      updateData.deletedAt = null;
+      updateData.deletedBy = null;
+    } else if (body.isDeleted === true) {
+      updateData.isDeleted = true;
+      updateData.deletedAt = new Date();
+      updateData.deletedBy = decoded?.userId && mongoose.Types.ObjectId.isValid(decoded.userId) ? new mongoose.Types.ObjectId(decoded.userId) : null;
+    }
+
+    const order = await Order.findOneAndUpdate(
+      filter,
+      { $set: updateData },
+      { new: true }
+    ).populate("userId");
+
+    if (!order) {
+      return NextResponse.json({ message: "Order not found", success: false }, { status: 404 });
+    }
+
+    if (status) {
+      try {
+        const customerEmail = order.email || order.userId?.email;
+        if (typeof status === "string" && status.toLowerCase() === "delivered") {
+          if (customerEmail) {
+            await sendOrderDeliveredEmail({
+              to: customerEmail,
+              recipientName: order.recipientName || order.userId?.name || "Customer",
+              orderId: order._id.toString(),
+              products: order.products || [],
+              totalAmount: order.totalAmount || 0,
+            });
+          }
+        } else if (order.userId?.email) {
+          await OrderStatusMail(order.userId.email, order._id, status);
+        }
+      } catch (mailErr) {
+        console.error(`[PUT /api/orders/${id}] Failed to send order status mail:`, mailErr);
+      }
+    }
+
+    return NextResponse.json(
+      { message: body.isDeleted === false ? "Order restored successfully" : "Order updated", order, data: order, success: true },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("[PUT /api/orders/:id] Server error updating order:", error);
+    return NextResponse.json(
+      { message: "Failed to update order", success: false },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  await databaseConnection();
+  try {
+    const { id } = await context.params;
+    const { isAdmin, decoded } = await verifyAdmin(req);
+    if (!isAdmin) {
       return NextResponse.json(
-        { message: "A valid status string is required.", success: false },
-        { status: 400 }
+        { message: "Unauthorized. Admin privileges required.", success: false },
+        { status: 401 }
       );
     }
 
@@ -131,43 +201,35 @@ export async function PUT(
       filter = { orderId: id };
     }
 
+    const now = new Date();
+    const adminId = decoded?.userId && mongoose.Types.ObjectId.isValid(decoded.userId) ? new mongoose.Types.ObjectId(decoded.userId) : null;
+
     const order = await Order.findOneAndUpdate(
       filter,
-      { $set: { status, ...body } },
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: now,
+          deletedBy: adminId,
+        },
+      },
       { new: true }
-    ).populate("userId");
+    );
 
     if (!order) {
       return NextResponse.json({ message: "Order not found", success: false }, { status: 404 });
     }
 
-    try {
-      const customerEmail = order.email || order.userId?.email;
-      if (typeof status === "string" && status.toLowerCase() === "delivered") {
-        if (customerEmail) {
-          await sendOrderDeliveredEmail({
-            to: customerEmail,
-            recipientName: order.recipientName || order.userId?.name || "Customer",
-            orderId: order._id.toString(),
-            products: order.products || [],
-            totalAmount: order.totalAmount || 0,
-          });
-        }
-      } else if (order.userId?.email) {
-        await OrderStatusMail(order.userId.email, order._id, status);
-      }
-    } catch (mailErr) {
-      console.error(`[PUT /api/orders/${id}] Failed to send order status mail:`, mailErr);
-    }
-
-    return NextResponse.json(
-      { message: "Status updated", order, data: order, success: true },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      message: "Order moved to deleted items",
+      success: true,
+      order,
+      data: order,
+    });
   } catch (error) {
-    console.error("[PUT /api/orders/:id] Server error updating order:", error);
+    console.error("[DELETE /api/orders/:id] Server error soft-deleting order:", error);
     return NextResponse.json(
-      { message: "Failed to update order", success: false },
+      { message: "Failed to delete order", success: false },
       { status: 500 }
     );
   }

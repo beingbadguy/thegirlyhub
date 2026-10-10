@@ -46,13 +46,16 @@ const itemVariants: Variants = {
 };
 
 const CategoryImageSlider = ({ category }: { category: Category }) => {
+  const [imgSrc, setImgSrc] = useState(category.categoryImage || "/placeholder.png");
+
   return (
     <div className="absolute inset-0">
       <Image
-        src={category.categoryImage || "/placeholder.png"}
-        alt={category.name}
+        src={imgSrc}
+        alt={category.name || "Category"}
         fill
         sizes="80px"
+        onError={() => setImgSrc("/placeholder.png")}
         className="object-cover transition-transform duration-300 group-hover:scale-105"
       />
     </div>
@@ -91,7 +94,7 @@ const StaggeringCategories = ({
             limit: 20,
             includeProductImages: true,
             onlyWithProducts: true,
-            sortBy: "productCountAsc",
+            sortBy: "productCountDesc",
           },
           { ttlMs: 5 * 60 * 1000 },
         );

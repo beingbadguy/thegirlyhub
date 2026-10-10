@@ -184,5 +184,8 @@ export function serializeCustomer(userDoc: any, ordersList?: any[]) {
     orders,
     notes: Array.isArray(u.notes) ? u.notes : [],
     activityLogs,
+    isDeleted: Boolean(u.isDeleted),
+    deletedAt: u.deletedAt ? new Date(u.deletedAt).toISOString() : null,
+    deletedBy: u.deletedBy ? String(u.deletedBy) : null,
   };
 }

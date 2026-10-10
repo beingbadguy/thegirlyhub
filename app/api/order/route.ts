@@ -192,6 +192,7 @@ export async function GET(request: NextRequest) {
     const searchParam = searchParams.get("search")?.trim();
     const sortParam = searchParams.get("sort") || "newest";
     const isAll = searchParams.get("all") === "true";
+    const isDeletedQuery = searchParams.get("deleted") === "true";
 
     let isAdmin =
       decoded?.role?.toLowerCase() === "admin" ||
@@ -218,6 +219,12 @@ export async function GET(request: NextRequest) {
     const baseFilter: Record<string, any> = (isAdmin && isAll)
       ? {}
       : { $or: baseFilterConditions };
+
+    if (isAdmin && isDeletedQuery) {
+      baseFilter.isDeleted = true;
+    } else {
+      baseFilter.isDeleted = { $ne: true };
+    }
 
     const query: Record<string, any> = { ...baseFilter };
 

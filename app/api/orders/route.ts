@@ -49,8 +49,15 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")?.trim().toLowerCase();
     const search = searchParams.get("search")?.trim();
     const isAll = searchParams.get("all") === "true" || !searchParams.has("page");
+    const isDeletedQuery = searchParams.get("deleted") === "true";
 
     const filter: Record<string, any> = {};
+    if (isDeletedQuery) {
+      filter.isDeleted = true;
+    } else {
+      filter.isDeleted = { $ne: true };
+    }
+
     if (status && status !== "all") {
       filter.status = status;
     }

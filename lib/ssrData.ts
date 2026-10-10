@@ -136,17 +136,20 @@ export async function getSSRHomeCategories(limit = 12): Promise<SSRCategory[]> {
 
     const categoryNames = categories.map((c: any) => c.name);
     const lowerNames = categoryNames.map((n: string) => n.toLowerCase());
+    const categoryIds = categories.map((c: any) => c._id ? c._id.toString() : "").filter(Boolean);
 
     const productData = await Product.aggregate([
       {
         $match: {
-          category: { $in: [...categoryNames, ...lowerNames] },
+          category: { $in: [...categoryNames, ...lowerNames, ...categoryIds] },
           isActive: { $ne: false },
+          isDeleted: { $ne: true },
+          status: { $nin: ["draft", "archived"] },
         },
       },
       {
         $group: {
-          _id: "$category",
+          _id: { $toLower: { $trim: { input: "$category" } } },
           productCount: { $sum: 1 },
           productImages: { $push: "$image" },
         },
@@ -170,25 +173,31 @@ export async function getSSRHomeCategories(limit = 12): Promise<SSRCategory[]> {
     }
 
     const mapped = categories.map((c: any) => {
-      const match =
-        countsMap.get(c.name.toLowerCase().trim()) ||
-        countsMap.get(c.name) || { productCount: 0, productImages: [] };
+      const byName = countsMap.get(c.name.toLowerCase().trim()) || countsMap.get(c.name);
+      const byId = c._id ? countsMap.get(c._id.toString().toLowerCase().trim()) : null;
+
+      const productCount = (byName?.productCount || 0) + (byId?.productCount || 0);
+      const productImages = [
+        ...(byName?.productImages || []),
+        ...(byId?.productImages || []),
+      ].filter(Boolean);
 
       return {
         _id: c._id ? c._id.toString() : "",
         name: c.name,
-        categoryImage: c.categoryImage || match.productImages[0] || "/placeholder.png",
-        productImages: match.productImages,
-        productCount: match.productCount,
+        categoryImage: c.categoryImage || productImages[0] || "/placeholder.png",
+        productImages: productImages.slice(0, 4),
+        productCount,
       };
     });
 
-    // 1. Show only categories that have products (productCount > 0)
+    // 1. Show only categories that contain at least one eligible product
     const withProducts = mapped.filter((c) => (c.productCount || 0) > 0);
 
-    // 2. Sort in increasing order of product count (ascending)
+    // 2. Sort in descending order of eligible product count (highest first, lowest last)
+    // Deterministic secondary sort: category name ascending
     withProducts.sort((a, b) => {
-      const diff = (a.productCount || 0) - (b.productCount || 0);
+      const diff = (b.productCount || 0) - (a.productCount || 0);
       if (diff !== 0) return diff;
       return a.name.localeCompare(b.name);
     });
@@ -254,6 +263,7 @@ export async function getSSRProducts(options: {
 
     const filter: Record<string, any> = {
       isActive: { $ne: false },
+      isDeleted: { $ne: true },
       status: { $nin: ["draft", "archived"] },
     };
 

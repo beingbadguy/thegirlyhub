@@ -142,10 +142,25 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
+userSchema.index({ isDeleted: 1, role: 1, createdAt: -1 });
+userSchema.index({ isDeleted: 1, deletedAt: -1 });
 userSchema.index({ role: 1, createdAt: -1 });
 userSchema.index({ status: 1 });
 userSchema.index({ verificationToken: 1 }, { sparse: true });

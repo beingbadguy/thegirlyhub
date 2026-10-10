@@ -10,12 +10,19 @@ const categorySchema = new mongoose.Schema(
     },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true },
 );
 
 categorySchema.index({ isActive: 1, isDeleted: 1 });
-categorySchema.index({ name: 1 }, { unique: true });
+categorySchema.index({ isDeleted: 1, deletedAt: -1 });
+categorySchema.index({ name: 1 }, { unique: true, partialFilterExpression: { isDeleted: false } });
 categorySchema.index({ createdAt: -1 });
 
 const Category =

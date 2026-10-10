@@ -173,6 +173,14 @@ const orderSchema = new mongoose.Schema({
   pickupStatus: { type: String, default: null },
   pickupMessage: { type: String, default: null },
 
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -219,11 +227,9 @@ orderSchema.index({ shipmentStatus: 1, createdAt: -1 });
 orderSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
 orderSchema.index({ refundId: 1 }, { sparse: true });
 orderSchema.index({ refundStatus: 1, createdAt: -1 });
-orderSchema.index({ userId: 1, createdAt: -1 });
-orderSchema.index({ status: 1, createdAt: -1 });
-orderSchema.index({ paymentStatus: 1, createdAt: -1 });
-orderSchema.index({ email: 1, createdAt: -1 });
-orderSchema.index({ phone: 1, createdAt: -1 });
+orderSchema.index({ isDeleted: 1, createdAt: -1 });
+orderSchema.index({ isDeleted: 1, deletedAt: -1 });
+orderSchema.index({ userId: 1, isDeleted: 1, createdAt: -1 });
 orderSchema.index({ createdAt: -1 });
 
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);

@@ -105,7 +105,7 @@ export async function prepareCheckout(
     _id: { $in: products.map((item) => item.productId) },
   })
     .select(
-      "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive",
+      "title name price sellingPrice discountedPrice discountPrice image mainImage countInStock stock totalStock isActive isDeleted status",
     )
     .lean();
   const productsById = new Map(
@@ -121,6 +121,13 @@ export async function prepareCheckout(
         ok: false,
         status: 400,
         message: `"${item.title}" is no longer available.`,
+      };
+    }
+    if (dbProduct.isDeleted || dbProduct.status === "archived") {
+      return {
+        ok: false,
+        status: 400,
+        message: `"${dbProduct.title || item.title}" has been removed and is no longer available for purchase.`,
       };
     }
     if (!dbProduct.isActive) {

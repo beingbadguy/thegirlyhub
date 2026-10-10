@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { databaseConnection } from "@/config/databseConnection";
 import Category from "@/models/category.model";
@@ -23,14 +24,14 @@ export async function generateMetadata({
   const categoryName = decodeURIComponent(name);
   const canonicalUrl = `${SITE_CONFIG.url}/category/${encodeURIComponent(name)}`;
 
-  // let categoryDesc = `Discover the cutest ${categoryName} collection online at GirlyHub. Explore trending hair accessories, jewellery, and essentials with COD and fast delivery across India.`;
   let categoryDesc = `Discover the cutest ${categoryName} collection online at GirlyHub. Explore trending hair accessories, jewellery, and essentials with fast delivery across India.`;
 
   try {
     await databaseConnection();
     const catDoc = await Category.findOne({
-      name: { $regex: new RegExp(`^${categoryName}$`, "i") },
+      name: { $regex: new RegExp(`^${categoryName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
       isActive: { $ne: false },
+      isDeleted: { $ne: true },
     })
       .select("description")
       .lean();
@@ -80,9 +81,23 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const categoryName = decodeURIComponent(name);
   const canonicalUrl = `${SITE_CONFIG.url}/category/${encodeURIComponent(name)}`;
 
-  const [ssrResult] = await Promise.all([
-    getSSRProducts({ category: categoryName, limit: 12, page: 1 }),
-  ]);
+  await databaseConnection();
+  const categoryDoc = await Category.findOne({
+    name: { $regex: new RegExp(`^${categoryName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    isActive: { $ne: false },
+    isDeleted: { $ne: true },
+  }).lean();
+
+  if (!categoryDoc) {
+    notFound();
+  }
+
+  const ssrResult = await getSSRProducts({ category: categoryName, limit: 12, page: 1 });
+
+  // Direct category URL must respect visibility rules: zero-product categories cannot be accessed
+  if (ssrResult.total === 0) {
+    notFound();
+  }
 
   const breadcrumbsSchema = generateBreadcrumbSchema([
     { name: "Home", url: "/" },
@@ -97,7 +112,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     ssrResult.products
   );
 
-
   return (
     <>
       <JsonLd data={breadcrumbsSchema} />
@@ -111,3 +125,4 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     </>
   );
 }
+

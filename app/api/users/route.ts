@@ -9,6 +9,7 @@ import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
 import { getPagination, paginationResult } from "@/lib/pagination";
 import { serializeCustomer } from "@/lib/customer-serializer";
 import bcrypt from "bcrypt";
+import { verifyAdmin } from "@/lib/adminAuth";
 
 export async function GET(request: NextRequest) {
   await databaseConnection();
@@ -20,8 +21,22 @@ export async function GET(request: NextRequest) {
     const verified = searchParams.get("verified") || "all";
     const role = searchParams.get("role") || "all";
     const sort = searchParams.get("sort") || "newest";
+    const isDeletedQuery = searchParams.get("deleted") === "true";
 
     const filter: Record<string, any> = {};
+
+    if (isDeletedQuery) {
+      const { isAdmin } = await verifyAdmin(request);
+      if (!isAdmin) {
+        return NextResponse.json(
+          { success: false, message: "Unauthorized. Admin access required." },
+          { status: 401 },
+        );
+      }
+      filter.isDeleted = true;
+    } else {
+      filter.isDeleted = { $ne: true };
+    }
 
     if (search.trim()) {
       filter.$or = [

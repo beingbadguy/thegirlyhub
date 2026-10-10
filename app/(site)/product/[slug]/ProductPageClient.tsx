@@ -42,6 +42,7 @@ import FloralAccent from "@/components/decorations/FloralAccent";
 import ProductDescriptionRenderer from "@/components/ProductDescriptionRenderer";
 import ShareModal, { getEnterpriseSharePayloads } from "@/components/product/ShareModal";
 import ImageCropperModal from "@/components/ImageCropperModal";
+import ProductCouponOffer from "@/components/product/ProductCouponOffer";
 
 type ReviewType = {
   _id?: string;
@@ -439,6 +440,7 @@ const ProductPageClient = ({
       };
       if (typeof window !== "undefined") {
         sessionStorage.setItem("girlyhub_buy_now", JSON.stringify(buyNowItem));
+        sessionStorage.setItem("girlyhub_applied_coupon", "NEWGIRLY");
       }
       router.push("/checkout?buyNow=1");
       return;
@@ -1597,6 +1599,15 @@ const ProductPageClient = ({
                 </div>
               )}
 
+              {/* Exclusive 15% Welcome Coupon with Real-Time Final Price */}
+              <ProductCouponOffer
+                sellingPrice={displayDiscountPrice}
+                originalPrice={displayPrice}
+                quantity={quantity}
+                couponCode="newgirly"
+                discountPercent={15}
+              />
+
               {/* Catchy & Professional WhatsApp DM / Stylist Support Card */}
               <div className="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/90 via-teal-50/40 to-emerald-50/60 p-4 sm:p-5 shadow-xs transition-all hover:border-emerald-300">
                 <div className="flex items-start justify-between gap-3">
@@ -2491,25 +2502,49 @@ const ProductPageClient = ({
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-md border-t border-neutral-200/80 px-4 py-3 shadow-2xl flex items-center gap-3"
+            className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-md border-t border-neutral-200/80 px-3.5 py-2.5 shadow-2xl flex items-center justify-between gap-3"
           >
-            <div className="flex flex-col min-w-[70px]">
-              <span className="text-[10px] uppercase font-bold text-neutral-400">Total</span>
-              <span className="text-base font-extrabold text-neutral-900 tracking-tight">
-                ₹{(displayDiscountPrice * quantity).toLocaleString()}
-              </span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 shrink-0">
+                <Image src={selectedImage} alt={product.title} fill className="object-contain p-0.5" />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <h4 className="text-xs font-bold text-neutral-800 truncate max-w-[110px] xs:max-w-[130px]">
+                  {product.title}
+                </h4>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-sm font-extrabold text-rose-600">
+                    ₹{(displayDiscountPrice * quantity).toLocaleString()}
+                  </span>
+                  {displayPrice > displayDiscountPrice && (
+                    <span className="text-[11px] text-neutral-400 line-through">
+                      ₹{(displayPrice * quantity).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <button
-              disabled={addingCart}
-              onClick={() => addToCart(false)}
-              className="relative flex-1 overflow-hidden rounded-xl bg-rose-600 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-rose-700 disabled:opacity-50 active:scale-[0.99]"
-            >
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent [animation:button-shine_1.8s_ease-in-out_infinite]"
-              />
-              {addingCart ? "Adding..." : "Add to Cart"}
-            </button>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                disabled={addingCart}
+                onClick={() => addToCart(false)}
+                className="px-3 py-2.5 rounded-xl border-2 border-[#db4d79] bg-white text-[#db4d79] font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 active:scale-95 hover:bg-pink-50 cursor-pointer"
+              >
+                + Bag
+              </button>
+              <button
+                disabled={addingCart}
+                onClick={() => addToCart(true)}
+                className="relative overflow-hidden px-4 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs uppercase tracking-wider transition-all hover:bg-rose-700 disabled:opacity-50 active:scale-95 shadow-sm cursor-pointer"
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent [animation:button-shine_1.8s_ease-in-out_infinite]"
+                />
+                Buy Now
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

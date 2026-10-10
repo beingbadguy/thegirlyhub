@@ -105,7 +105,7 @@ export async function POST(
     // Run DB queries in parallel with lean projection
     const [product, user, cart] = (await Promise.all([
       Product.findById(id)
-        .select("title countInStock stock totalStock isActive status")
+        .select("title countInStock stock totalStock isActive status isDeleted")
         .lean(),
       User.findById(decoded.userId).select("_id cart"),
       Cart.findOne({ userId: decoded.userId }),
@@ -118,9 +118,9 @@ export async function POST(
       );
     }
 
-    if (!product) {
+    if (!product || product.isDeleted) {
       return NextResponse.json(
-        { message: "Product not found", success: false },
+        { message: "Product not found or is no longer available.", success: false },
         { status: 404 },
       );
     }
@@ -204,7 +204,7 @@ export async function PUT(
     const [cart, dbProduct] = (await Promise.all([
       Cart.findOne({ userId: decoded.userId }),
       Product.findById(id)
-        .select("countInStock stock totalStock isActive status")
+        .select("countInStock stock totalStock isActive status isDeleted")
         .lean(),
     ])) as [any, any];
 
@@ -215,10 +215,10 @@ export async function PUT(
       );
     }
 
-    if (!dbProduct || !isProductInStock(dbProduct)) {
+    if (!dbProduct || dbProduct.isDeleted || !isProductInStock(dbProduct)) {
       return NextResponse.json(
         {
-          message: "This product is out of stock.",
+          message: "This product is unavailable or out of stock.",
           success: false,
         },
         { status: 400 },

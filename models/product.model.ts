@@ -126,6 +126,13 @@ const productSchema = new mongoose.Schema(
     ratings: { type: Number, min: 0, max: 5, default: 0 },
     numReviews: { type: Number, min: 0, default: 0 },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     length: { type: Number, min: 0 },
     breadth: { type: Number, min: 0 },
     height: { type: Number, min: 0 },
@@ -215,7 +222,9 @@ productSchema.pre("validate", function syncProductFields(next) {
 });
 
 productSchema.index({ slug: 1 }, { unique: true, sparse: true });
-productSchema.index({ category: 1, status: 1, createdAt: -1 });
+productSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+productSchema.index({ isDeleted: 1, deletedAt: -1 });
+productSchema.index({ category: 1, isDeleted: 1, status: 1, createdAt: -1 });
 productSchema.index({ isFeatured: 1, isNewArrival: 1, status: 1 });
 productSchema.index({ averageRating: -1, status: 1 });
 productSchema.index({ discountedPrice: 1, status: 1 });

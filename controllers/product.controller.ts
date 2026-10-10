@@ -3,6 +3,7 @@ import Product from "@/models/product.model";
 import ProductLog from "@/models/productLog.model";
 import { productCreateSchema, productUpdateSchema } from "@/lib/validations/product.schema";
 import { fetchTokenDetails } from "@/lib/fetchTokenDetails";
+import { verifyAdmin } from "@/lib/adminAuth";
 import { generateUniqueSlug, extractIdFromSlug, slugify, buildProductSlug } from "@/lib/slug";
 import { normalizeProductPayload, productInputFromFormData } from "@/lib/productPayload";
 import { cloudinaryConnection } from "@/config/cloudinaryConnection";
@@ -263,11 +264,25 @@ export class ProductController {
       const minPrice = searchParams.get("minPrice");
       const maxPrice = searchParams.get("maxPrice");
       const includeAll = searchParams.get("all") === "true"; // Admin dashboard requests all=true to see drafts
+      const isDeleted = searchParams.get("deleted") === "true";
 
       // Build filter query
       const filter: any = {};
 
-      if (!includeAll) {
+      if (isDeleted) {
+        const { isAdmin } = await verifyAdmin(request);
+        if (!isAdmin) {
+          return NextResponse.json(
+            { success: false, message: "Unauthorized. Admin privileges required." },
+            { status: 401 }
+          );
+        }
+        filter.isDeleted = true;
+      } else {
+        filter.isDeleted = { $ne: true };
+      }
+
+      if (!includeAll && !isDeleted) {
         filter.isActive = { $ne: false };
         if (status && status !== "all") {
           filter.status = status;
@@ -329,7 +344,7 @@ export class ProductController {
       const [products, total] = await Promise.all([
         Product.find(filter)
           .select(
-            "title name description shortDescription longDescription price costPrice sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category subCategory brand material sizes countInStock stock totalStock lowStockThreshold rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival tags metaTitle metaDescription createdAt updatedAt isActive slug"
+            "title name description shortDescription longDescription price costPrice sellingPrice discountedPrice discountPrice discountPercentage image mainImage images category subCategory brand material sizes countInStock stock totalStock lowStockThreshold rating ratings averageRating numReviews totalReviews status isFeatured isNewArrival tags metaTitle metaDescription createdAt updatedAt isActive isDeleted deletedAt deletedBy slug"
           )
           .sort(sortOptions)
           .skip(skip)
@@ -392,6 +407,9 @@ export class ProductController {
             p.isActive !== false &&
             p.status !== "draft" &&
             p.status !== "archived",
+          isDeleted: Boolean(p.isDeleted),
+          deletedAt: p.deletedAt ? new Date(p.deletedAt).toISOString() : null,
+          deletedBy: p.deletedBy ? String(p.deletedBy) : null,
         };
       });
 
@@ -442,6 +460,16 @@ export class ProductController {
           { success: false, message: "Product not found" },
           { status: 404 }
         );
+      }
+
+      if (product.isDeleted) {
+        const { isAdmin } = await verifyAdmin(request);
+        if (!isAdmin) {
+          return NextResponse.json(
+            { success: false, message: "Product not found" },
+            { status: 404 }
+          );
+        }
       }
 
       // Ensure slug exists on legacy records
@@ -580,20 +608,43 @@ export class ProductController {
         }
       }
 
+      if (input.isDeleted === false) {
+        product.isDeleted = false;
+        product.deletedAt = null;
+        product.deletedBy = null;
+        product.isActive = Number(product.totalStock ?? product.stock ?? 0) > 0;
+        product.status = product.isActive ? "active" : "draft";
+
+        const conflicting = await Product.findOne({
+          _id: { $ne: product._id },
+          slug: product.slug,
+          isDeleted: { $ne: true },
+        });
+        if (conflicting) {
+          product.slug = await generateUniqueSlug(Product, product.title, product._id.toString());
+        }
+      } else if (input.isDeleted === true) {
+        product.isDeleted = true;
+        product.deletedAt = new Date();
+        product.deletedBy = decoded?.userId || null;
+        product.isActive = false;
+        product.status = "archived";
+      }
+
       product.updatedAt = new Date();
       await product.save();
 
       // Track log in DB
       try {
         await ProductLog.create({
-          action: "update",
+          action: input.isDeleted === false ? "restore" : "update",
           productId: product._id,
           productTitle: product.title,
           productSlug: product.slug,
           performedBy: decoded?.userId || null,
           adminEmail: decoded?.email || null,
           changes: updateData,
-          details: `Product "${product.title}" updated by ${decoded?.email || "admin"}`,
+          details: `Product "${product.title}" ${input.isDeleted === false ? "restored" : "updated"} by ${decoded?.email || "admin"}`,
           timestamp: new Date(),
         });
       } catch (logErr) {
@@ -605,7 +656,10 @@ export class ProductController {
           success: true,
           data: product,
           product: product,
-          message: "Product updated successfully",
+          message:
+            input.isDeleted === false
+              ? "Product restored successfully"
+              : "Product updated successfully",
         },
         { status: 200 }
       );
@@ -618,11 +672,11 @@ export class ProductController {
     }
   }
 
-  // Delete Product (Admin Only)
+  // Delete Product (Admin Only) - Soft Delete only
   static async delete(request: NextRequest, identifier: string) {
     try {
-      const decoded = await fetchTokenDetails(request);
-      if (!decoded || decoded.role !== "admin") {
+      const { isAdmin, decoded } = await verifyAdmin(request);
+      if (!isAdmin) {
         return NextResponse.json(
           { success: false, message: "Unauthorized. Admin privileges required." },
           { status: 401 }
@@ -648,7 +702,14 @@ export class ProductController {
       const deletedTitle = product.title || product.name || "Product";
       const deletedSlug = product.slug || "";
 
-      await Product.findByIdAndDelete(deletedId);
+      // Permanent deletion is strictly prohibited.
+      // Soft deletion preserves all SKU, attributes, image references, and order histories.
+      product.isDeleted = true;
+      product.deletedAt = new Date();
+      product.deletedBy = decoded?.userId || null;
+      product.isActive = false;
+      product.status = "archived";
+      await product.save();
 
       // Track log in DB
       try {
@@ -659,7 +720,7 @@ export class ProductController {
           productSlug: deletedSlug,
           performedBy: decoded?.userId || null,
           adminEmail: decoded?.email || null,
-          details: `Product "${deletedTitle}" permanently deleted by ${decoded?.email || "admin"}`,
+          details: `Product "${deletedTitle}" moved to deleted items by ${decoded?.email || "admin"}`,
           timestamp: new Date(),
         });
       } catch (logErr) {
@@ -669,12 +730,96 @@ export class ProductController {
       return NextResponse.json(
         {
           success: true,
-          message: "Product deleted successfully",
+          message: "Product moved to deleted items successfully",
+          product,
         },
         { status: 200 }
       );
     } catch (error: any) {
       console.error("Error deleting product:", error);
+      return NextResponse.json(
+        { success: false, message: error.message || "Internal server error" },
+        { status: 500 }
+      );
+    }
+  }
+
+  // Restore Product (Admin Only)
+  static async restore(request: NextRequest, identifier: string) {
+    try {
+      const { isAdmin, decoded } = await verifyAdmin(request);
+      if (!isAdmin) {
+        return NextResponse.json(
+          { success: false, message: "Unauthorized. Admin privileges required." },
+          { status: 401 }
+        );
+      }
+
+      if (!identifier) {
+        return NextResponse.json(
+          { success: false, message: "Product identifier is required" },
+          { status: 400 }
+        );
+      }
+
+      const product = await findProductBySlugOrId(identifier);
+      if (!product) {
+        return NextResponse.json(
+          { success: false, message: "Product not found" },
+          { status: 404 }
+        );
+      }
+
+      // Check unique constraint: slug conflict with an active product
+      const conflicting = await Product.findOne({
+        _id: { $ne: product._id },
+        slug: product.slug,
+        isDeleted: { $ne: true },
+      });
+
+      if (conflicting) {
+        product.slug = await generateUniqueSlug(
+          Product,
+          product.title || product.name || "Product",
+          product._id.toString()
+        );
+      }
+
+      product.isDeleted = false;
+      product.deletedAt = null;
+      product.deletedBy = null;
+      product.isActive = Number(product.totalStock ?? product.stock ?? 0) > 0;
+      product.status = product.isActive ? "active" : "draft";
+      product.updatedAt = new Date();
+      await product.save();
+
+      // Track log in DB
+      try {
+        await ProductLog.create({
+          action: "restore",
+          productId: product._id,
+          productTitle: product.title,
+          productSlug: product.slug,
+          performedBy: decoded?.userId || null,
+          adminEmail: decoded?.email || null,
+          details: `Product "${product.title}" restored by ${decoded?.email || "admin"}`,
+          timestamp: new Date(),
+        });
+      } catch (logErr) {
+        console.error("Error creating product restoration log:", logErr);
+      }
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Product restored successfully",
+          product,
+          data: product,
+        },
+        { status: 200 }
+      );
+    } catch (error: any) {
+      console.error("Error restoring product:", error);
       return NextResponse.json(
         { success: false, message: error.message || "Internal server error" },
         { status: 500 }

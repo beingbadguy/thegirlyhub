@@ -35,7 +35,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const coupon = await Coupon.findOne({ code: cleanCode });
+    let coupon = await Coupon.findOne({ code: cleanCode });
+
+    if (!coupon && (cleanCode === "NEWGIRLY" || cleanCode === "NEWGIRLY15")) {
+      coupon = await Coupon.findOneAndUpdate(
+        { code: "NEWGIRLY" },
+        {
+          $setOnInsert: {
+            name: "Welcome Discount (15% OFF)",
+            code: "NEWGIRLY",
+            discount: 15,
+            type: "percentage",
+            isActive: true,
+            minOrderAmount: 0,
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
 
     if (!coupon) {
       return NextResponse.json(

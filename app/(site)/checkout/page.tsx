@@ -234,8 +234,16 @@ function CheckoutContent() {
   }, [user]);
 
   useEffect(() => {
-    if (eligibleForWelcomeCoupon && !couponApplied && !welcomeCouponRedeemed) {
-      setPromoCode(welcomeCouponCode);
+    if (!couponApplied && !welcomeCouponRedeemed) {
+      const storedCoupon =
+        typeof window !== "undefined"
+          ? sessionStorage.getItem("girlyhub_applied_coupon")
+          : null;
+      if (storedCoupon) {
+        setPromoCode(storedCoupon);
+      } else if (eligibleForWelcomeCoupon) {
+        setPromoCode(welcomeCouponCode);
+      }
     }
   }, [eligibleForWelcomeCoupon, couponApplied, welcomeCouponRedeemed]);
 

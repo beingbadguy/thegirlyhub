@@ -6,6 +6,7 @@ import Cart from "@/models/cart.model";
 import Order from "@/models/order.model";
 import Product from "@/models/product.model";
 import { serializeCustomer } from "@/lib/customer-serializer";
+import { verifyAdmin } from "@/lib/adminAuth";
 import mongoose from "mongoose";
 
 type RouteParams = {
@@ -86,6 +87,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    if (user.isDeleted) {
+      const { isAdmin } = await verifyAdmin(request);
+      if (!isAdmin) {
+        return NextResponse.json(
+          { success: false, message: "Customer not found" },
+          { status: 404 },
+        );
+      }
+    }
+
     const userId = user._id;
 
     // Concurrently fetch direct Cart, direct Wishlist, and user Orders
@@ -148,6 +159,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   await databaseConnection();
 
   try {
+    const { isAdmin, decoded } = await verifyAdmin(request);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized. Admin access required." },
+        { status: 401 },
+      );
+    }
+
     const { id } = await params;
     const user = await findUserByIdOrEmail(id);
 
@@ -248,12 +267,41 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       user.tags = tags;
     }
 
+    if (body.isDeleted === false) {
+      const targetEmail = (email ? email.trim().toLowerCase() : user.email);
+      const conflicting = await User.findOne({
+        _id: { $ne: user._id },
+        email: targetEmail,
+        isDeleted: { $ne: true },
+      });
+      if (conflicting) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `An active customer with email "${targetEmail}" already exists. Please resolve the email conflict before restoring.`,
+          },
+          { status: 409 },
+        );
+      }
+      user.isDeleted = false;
+      user.deletedAt = null;
+      user.deletedBy = null;
+      user.status = "active";
+      changes.push("Customer profile restored from deleted items.");
+    } else if (body.isDeleted === true) {
+      user.isDeleted = true;
+      user.deletedAt = new Date();
+      user.deletedBy = decoded?.userId || null;
+      user.status = "inactive";
+      changes.push("Customer profile moved to deleted items.");
+    }
+
     // Add activity log
     if (changes.length > 0) {
       user.activityLogs = user.activityLogs || [];
       user.activityLogs.unshift({
         id: `act_${Date.now()}`,
-        action: "Profile Updated",
+        action: body.isDeleted === false ? "Customer Restored" : "Profile Updated",
         description: changes.join(" "),
         timestamp: new Date(),
       });
@@ -273,7 +321,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(
       {
         success: true,
-        message: "Customer updated successfully",
+        message: body.isDeleted === false ? "Customer restored successfully" : "Customer updated successfully",
         user: serialized,
         data: serialized,
       },
@@ -292,6 +340,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   await databaseConnection();
 
   try {
+    const { isAdmin, decoded } = await verifyAdmin(request);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized. Admin privileges required." },
+        { status: 401 },
+      );
+    }
+
     const { id } = await params;
     const user = await findUserByIdOrEmail(id);
 
@@ -302,25 +358,32 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Clean up user's cart and wishlist documents
-    try {
-      await Cart.deleteMany({ userId: user._id });
-      await Wishlist.deleteMany({ userId: user._id });
-    } catch (e) {
-      console.error("Error cleaning related documents:", e);
-    }
-
-    await User.findByIdAndDelete(user._id);
+    // Permanent deletion is strictly prohibited across the application.
+    // Customers' orders must remain completely intact. Do not cascade-delete orders or related records.
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    user.deletedBy = decoded?.userId || null;
+    user.status = "inactive";
+    user.activityLogs = user.activityLogs || [];
+    user.activityLogs.unshift({
+      id: `act_${Date.now()}`,
+      action: "Customer Moved to Deleted",
+      description: `Customer account moved to deleted items by ${decoded?.email || "admin"}.`,
+      timestamp: new Date(),
+    });
+    user.updatedAt = new Date();
+    await user.save();
 
     return NextResponse.json(
       {
         success: true,
-        message: "Customer account deleted successfully",
+        message: "Customer account moved to deleted items successfully",
+        user,
       },
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Error deleting customer:", error);
+    console.error("Error soft-deleting customer:", error);
     return NextResponse.json(
       { success: false, message: error?.message || "Failed to delete customer" },
       { status: 500 },
