@@ -2,6 +2,27 @@ import { databaseConnection } from "@/config/databseConnection";
 import Banner from "@/models/banner.model";
 import Category from "@/models/category.model";
 import Product from "@/models/product.model";
+import Reel from "@/models/reel.model";
+
+export type SSRReel = {
+  _id: string;
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  duration?: number;
+  aspectRatio?: string;
+  productId?: string;
+  productTitle?: string;
+  productPrice?: number;
+  productImage?: string;
+  productSlug?: string;
+  productUrl?: string;
+  displayOrder?: number;
+  viewsCount?: number;
+  likesCount?: number;
+  createdAt?: string;
+};
 
 export type SSRBanner = {
   _id: string;
@@ -321,3 +342,43 @@ export async function getSSRProducts(options: {
     };
   }
 }
+
+/**
+ * Server-Side Fetch: Active Storefront Reels / Short Videos
+ */
+export async function getSSRHomeReels(limit = 10): Promise<SSRReel[]> {
+  try {
+    await databaseConnection();
+    const reels = await Reel.find({
+      isActive: { $ne: false },
+      isDeleted: { $ne: true },
+    })
+      .sort({ displayOrder: 1, createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return (reels || []).map((r: any) => ({
+      _id: r._id ? r._id.toString() : "",
+      title: r.title || "",
+      description: r.description || "",
+      videoUrl: r.videoUrl || "",
+      thumbnailUrl: r.thumbnailUrl || "",
+      duration: r.duration || 0,
+      aspectRatio: r.aspectRatio || "9:16",
+      productId: r.productId ? r.productId.toString() : undefined,
+      productTitle: r.productTitle || "",
+      productPrice: r.productPrice || 0,
+      productImage: r.productImage || "",
+      productSlug: r.productSlug || "",
+      productUrl: r.productUrl || "",
+      displayOrder: r.displayOrder || 0,
+      viewsCount: r.viewsCount || 0,
+      likesCount: r.likesCount || 0,
+      createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : undefined,
+    }));
+  } catch (error) {
+    console.error("Error fetching SSR reels:", error);
+    return [];
+  }
+}
+

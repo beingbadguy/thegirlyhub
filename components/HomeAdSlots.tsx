@@ -37,7 +37,7 @@ export default function HomeAdSlots() {
 
               <p className="mt-1 max-w-md text-sm text-rose-900/60">
                 Use code{" "}
-                <span className="font-semibold text-rose-700">NEWGIRLY15</span>{" "}
+                <span className="font-semibold text-rose-700">NEWGIRLY</span>{" "}
                 at checkout and save instantly.
               </p>
             </div>

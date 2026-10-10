@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Star } from "lucide-react";
+import { Heart, Star, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Reveal, Stagger } from "@/components/MotionEffects";
@@ -9,52 +9,75 @@ import FloralAccent from "@/components/decorations/FloralAccent";
 type HomeReview = {
   _id: string;
   username: string;
+  location?: string;
   rating: number;
   comment: string;
   image?: string;
   createdAt?: string;
   isFeatured?: boolean;
-  product: {
-    title: string;
-    image: string;
+  product?: {
+    title?: string;
+    image?: string;
   };
 };
+
+const CITY_CYCLE = ["Mumbai", "Chandigarh", "Patna", "Delhi", "Mumbai"];
+
+function getReviewLocation(review: HomeReview, idx: number): string {
+  if (review.location && review.location.trim() && review.location !== "Our lovely collection") {
+    return review.location;
+  }
+  const productTitle = review.product?.title?.trim();
+  if (
+    productTitle &&
+    productTitle !== "Our lovely collection" &&
+    !productTitle.toLowerCase().includes("collection")
+  ) {
+    return productTitle;
+  }
+  return CITY_CYCLE[idx % CITY_CYCLE.length];
+}
 
 const FALLBACK_REVIEWS: HomeReview[] = [
   {
     _id: "fb-1",
     username: "Ayesha",
+    location: "Mumbai",
     rating: 5,
     comment: "Obsessed with this 😻 The finish is really good and doesn't feel cheap at all. Definitely recommending!",
-    product: { title: "Our lovely collection", image: "" },
+    product: { title: "Mumbai", image: "" },
   },
   {
     _id: "fb-2",
     username: "Simran Kaur",
+    location: "Chandigarh",
     rating: 5,
     comment: "Good quality for the price. Color is exactly same as shown in pictures. Worth it 👍 ",
-    product: { title: "Our lovely collection", image: "" },
+    product: { title: "Chandigarh", image: "" },
   },
   {
     _id: "fb-3",
     username: "Sneha Gupta",
+    location: "Patna",
     rating: 5,
     comment: "Ordered this for my sister and she loved it! Looks aesthetic and very trendy. Will order more from GirlyHub 💖",
-    product: { title: "Our lovely collection", image: "" },
+    product: { title: "Patna", image: "" },
   },
   {
     _id: "fb-4",
     username: "Anjali Verma",
+    location: "Delhi",
     rating: 5,
     comment: "Packaging was nice and product is same as shown. Slight delay in delivery but overall happy with the purchase.",
-    product: { title: "Our lovely collection", image: "" },
+    product: { title: "Delhi", image: "" },
   },
   {
     _id: "fb-5",
     username: "Riya Sharma",
+    location: "Mumbai",
     rating: 5,
     comment: "Honestly didn't expect this quality at this price 😭✨. The earrings look super cute and lightweight. Perfect for daily wear!",
-    product: { title: "Our lovely collection", image: "" },
+    product: { title: "Mumbai", image: "" },
   },
 ];
 
@@ -194,8 +217,9 @@ export default function HomeReviews() {
                     <p className="truncate text-xs sm:text-sm font-bold text-neutral-900">
                       {review.username}
                     </p>
-                    <p className="truncate text-[11px] sm:text-xs text-neutral-400">
-                      {review.product?.title || "Our lovely collection"}
+                    <p className="truncate text-[11px] sm:text-xs text-neutral-500 font-medium flex items-center gap-1">
+                      <MapPin className="size-3 text-rose-500 shrink-0" />
+                      <span>{getReviewLocation(review, displayReviews.indexOf(review))}</span>
                     </p>
                   </div>
                 </div>

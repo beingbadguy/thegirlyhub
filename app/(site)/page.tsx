@@ -13,6 +13,7 @@ import {
   getSSRBanners,
   getSSRHomeCategories,
   getSSRProducts,
+  getSSRHomeReels,
 } from "@/lib/ssrData";
 import type { Metadata } from "next";
 import JsonLd from "@/components/seo/JsonLd";
@@ -62,13 +63,14 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // Parallel fetch server-side datasets with lean projections
-  const [banners, categories, newArrivalsRes, featuredRes, categoryProductsRes] =
+  const [banners, categories, newArrivalsRes, featuredRes, categoryProductsRes, reels] =
     await Promise.all([
       getSSRBanners(),
       getSSRHomeCategories(12),
       getSSRProducts({ limit: 12 }),
       getSSRProducts({ limit: 12, featured: true }),
       getSSRProducts({ limit: 24 }),
+      getSSRHomeReels(10),
     ]);
 
   return (
@@ -159,8 +161,8 @@ export default async function Home() {
         {/* Dynamic FAQs */}
         <Faqs />
 
-        {/* Server Component: Instagram Showcase */}
-        <InstagramShowcase />
+        {/* Server Component: Instagram Showcase with HD Reels */}
+        <InstagramShowcase initialReels={reels} />
 
         {/* Visitor Tracker */}
         <CountVisitor />

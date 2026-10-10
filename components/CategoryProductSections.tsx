@@ -46,9 +46,9 @@ export default function CategoryProductSections({
 
         return (
           <section key={category._id}>
-            <div className="mb-6 flex items-end justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500 ring-1 ring-rose-100">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-start sm:items-center gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500 ring-1 ring-rose-100 shadow-xs">
                   <Sparkles className="size-4" />
                 </span>
                 <div>
@@ -56,7 +56,7 @@ export default function CategoryProductSections({
                     Curated collection
                   </p>
                   <div className="flex items-center gap-2">
-                    <h2 className="mt-1 font-serif text-2xl capitalize text-rose-950 sm:text-3xl">
+                    <h2 className="mt-0.5 font-serif text-2xl capitalize text-rose-950 sm:text-3xl">
                       {category.name}
                     </h2>
                     <FloralAccent
@@ -66,20 +66,21 @@ export default function CategoryProductSections({
                       className="opacity-80"
                     />
                   </div>
-                  <p className="mt-1 text-sm text-rose-900/60">
+                  <p className="mt-0.5 text-xs sm:text-sm text-rose-900/60">
                     Discover pieces selected for your everyday style.
                   </p>
                 </div>
               </div>
               <Link
                 href={`/category/${encodeURIComponent(category.name)}`}
-                className="shrink-0 text-xs font-semibold text-rose-600 transition hover:text-rose-800"
+                className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 rounded-full border border-rose-200/80 bg-white px-4 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:border-rose-300 shadow-2xs"
               >
-                See collection →
+                <span>See collection</span>
+                <span aria-hidden="true">→</span>
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 items-stretch">
               {categoryProducts.slice(0, 4).map((product) => (
                 <ProductCard key={product._id} product={product} showActions />
               ))}

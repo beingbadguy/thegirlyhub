@@ -135,10 +135,10 @@ const StaggeringCategories = ({
           <Skeleton className="mx-auto mt-4 h-10 w-64" />
           <Skeleton className="mx-auto mt-3 h-5 w-80 max-w-full" />
         </div>
-        <div className="grid grid-cols-3 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-3 sm:gap-x-6 md:gap-x-8 gap-y-8 sm:gap-y-10 justify-items-center">
           {[...Array(Math.min(categoryLimit, 12))].map((_, index) => (
-            <div key={index} className="flex flex-col items-center gap-3">
-              <Skeleton className="size-20 rounded-full" />
+            <div key={index} className="flex flex-col items-center gap-3 w-full max-w-[125px]">
+              <Skeleton className="size-20 sm:size-24 rounded-full" />
               <Skeleton className="h-4 w-20" />
             </div>
           ))}
@@ -172,21 +172,21 @@ const StaggeringCategories = ({
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-3 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+        className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-3 sm:gap-x-6 md:gap-x-8 gap-y-8 sm:gap-y-10 justify-items-center"
       >
         {displayCategories.map((category) => (
-          <motion.li key={category._id} variants={itemVariants}>
+          <motion.li key={category._id} variants={itemVariants} className="w-full flex justify-center">
             <Link
               href={`/category/${encodeURIComponent(category.name)}`}
-              className="group flex cursor-pointer flex-col items-center"
+              className="group flex cursor-pointer flex-col items-center text-center w-full max-w-[125px] mx-auto"
               aria-label={`Shop ${category.name} collection`}
             >
-              <div className="relative size-20 overflow-hidden rounded-full transition-all duration-300 group-hover:ring-rose-200 group-hover:shadow-[0_12px_30px_-8px_rgba(190,24,93,0.2)]">
+              <div className="relative size-20 sm:size-24 overflow-hidden rounded-full transition-all duration-300 ring-2 ring-rose-100/80 group-hover:ring-rose-300 group-hover:shadow-[0_12px_30px_-8px_rgba(190,24,93,0.25)] shrink-0 bg-rose-50/50">
                 <CategoryImageSlider category={category} />
                 <div className="absolute inset-0 bg-rose-900/0 transition-colors duration-300 group-hover:bg-rose-900/10" />
               </div>
 
-              <span className="mt-4 text-sm font-medium text-rose-950 transition-colors group-hover:text-rose-600 font-instrument">
+              <span className="mt-3 text-xs sm:text-sm font-medium text-rose-950 transition-colors group-hover:text-rose-600 font-instrument text-center line-clamp-2 leading-snug w-full px-1 min-h-[2.5rem] flex items-center justify-center">
                 {category.name}
               </span>
             </Link>

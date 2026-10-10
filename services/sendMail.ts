@@ -339,12 +339,62 @@ export const OrderConfirmationMail = async (
   const paymentStatusColor =
     order.paymentStatus === "paid" || isOnline ? "#16a34a" : "#d97706";
 
+  const shortId = String(order._id).slice(-6).toUpperCase();
+  const invoiceFilename = `GirlyHub_Invoice_${shortId}.pdf`;
+
+  // Generate official PDF invoice attachment
+  let attachments: Array<{ filename: string; content: Buffer; contentType: string }> | undefined;
+  try {
+    const { generateInvoicePdfBuffer } = await import("./invoicePdf.service");
+    const pdfBuffer = generateInvoicePdfBuffer({
+      orderId: order._id,
+      recipientName: order.recipientName || name,
+      customerName: name,
+      email,
+      phone: order.phone,
+      address: order.address,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      subtotal,
+      discount: firstOrderDiscount + couponDiscount,
+      couponCode: order.couponCode,
+      shippingFee: shippingCharge,
+      totalAmount: totalPaid,
+      products: order.products.map((p) => ({
+        title: p.title,
+        price: p.price,
+        quantity: p.quantity,
+        size: p.size,
+      })),
+    });
+
+    attachments = [
+      {
+        filename: invoiceFilename,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ];
+  } catch (pdfErr) {
+    console.error("[OrderConfirmationMail] Could not generate invoice attachment:", pdfErr);
+  }
+
   const content = `
     <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #1f2937;">Order Confirmed 🛍️</h1>
     <p style="font-size: 15px; margin: 0 0 20px 0; color: #4b5563;">Hi <strong style="color: #111827;">${name}</strong>,</p>
     <p style="font-size: 15px; margin: 0 0 24px 0; color: #4b5563; line-height: 1.6;">
       Thank you for shopping with us! We have received your order <strong style="color: #111827;">#${order._id}</strong> and are preparing it with care. Here is your purchase details summary:
     </p>
+
+    <!-- Attached Invoice Notice Card -->
+    <div style="background: linear-gradient(180deg, #fff0f7 0%, #fdf2f8 100%); border: 1px solid #fbcfe8; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: #9d174d;">
+        📎 Official Retail Invoice Attached (<span style="color: #be185d;">${invoiceFilename}</span>)
+      </p>
+      <p style="margin: 0; font-size: 12px; color: #6b7280;">
+        Your formal retail invoice and bill of supply is attached to this email as a PDF. You can also view or download a fresh copy online anytime.
+      </p>
+    </div>
     
     <div style="border: 1px solid #fbcfe8; border-radius: 16px; padding: 22px; margin-bottom: 24px; background-color: #ffffff; box-shadow: 0 2px 8px rgba(190,24,93,0.03);">
       <h3 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #fce7f3; padding-bottom: 10px; color: #111827;">
@@ -447,6 +497,7 @@ export const OrderConfirmationMail = async (
     `Order Confirmed 🛍️ | ${BRAND_NAME}`,
     "",
     getEmailWrapper(content),
+    attachments,
   );
 };
 

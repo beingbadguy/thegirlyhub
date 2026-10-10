@@ -54,16 +54,6 @@ export async function POST(
       isAdmin = true;
     }
 
-    if (!isAdmin) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized: Admin privileges required to send invoice email",
-        },
-        { status: 403 }
-      );
-    }
-
     // Read optional override email from request body
     let body: any = {};
     try {
@@ -72,27 +62,107 @@ export async function POST(
       body = {};
     }
 
-    const filter: any = mongoose.Types.ObjectId.isValid(id)
-      ? { $or: [{ _id: id }, { orderId: id }] }
-      : { orderId: id };
+    const populateProductOptions = {
+      path: "products.productId",
+      select: "title name image mainImage price discountedPrice",
+    };
 
-    const order = await Order.findOne(filter)
-      .populate("userId", "name email phone")
-      .populate("products.productId", "title name price image")
-      .lean();
+    let order: any = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id)
+        .populate("userId", "name email phone")
+        .populate(populateProductOptions)
+        .lean();
+    }
+
+    if (!order) {
+      order = await Order.findOne({ orderId: id })
+        .populate("userId", "name email phone")
+        .populate(populateProductOptions)
+        .lean();
+    }
+
+    if (!order) {
+      order = await Order.findOne({ paymentId: id })
+        .populate("userId", "name email phone")
+        .populate(populateProductOptions)
+        .lean();
+    }
 
     if (!order) {
       return NextResponse.json(
-        { success: false, message: "Order not found" },
+        { success: false, message: `Order #${id} not found.` },
         { status: 404 }
       );
     }
 
     const orderDoc = order as any;
-    const customerEmail =
-      body?.email ||
-      orderDoc.email ||
-      (typeof orderDoc.userId === "object" ? orderDoc.userId?.email : undefined);
+
+    // Check authorization: Admin or Order Owner or local origin
+    const isOwner = Boolean(
+      (decoded?.userId &&
+        String(decoded.userId) ===
+          String(orderDoc.userId?._id || orderDoc.userId)) ||
+        (decoded?.email &&
+          decoded.email.toLowerCase() ===
+            String(orderDoc.email || "").toLowerCase())
+    );
+
+    if (!isAdmin && !isOwner && !isLocalOrigin) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized: You do not have permission to send this invoice.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const isValidEmail = (val?: any): boolean => {
+      if (!val || typeof val !== "string") return false;
+      const trimmed = val.trim().toLowerCase();
+      if (
+        !trimmed ||
+        trimmed === "no email" ||
+        trimmed === "null" ||
+        trimmed === "undefined" ||
+        trimmed === "guest customer"
+      ) {
+        return false;
+      }
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+    };
+
+    let customerEmail: string | undefined = undefined;
+    if (isValidEmail(body?.email)) {
+      customerEmail = body.email.trim();
+    } else if (isValidEmail(orderDoc.email)) {
+      customerEmail = orderDoc.email.trim();
+    } else if (isValidEmail(orderDoc.userId?.email)) {
+      customerEmail = orderDoc.userId.email.trim();
+    }
+
+    if (!customerEmail) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "No valid email address found for this order. Please enter the recipient email address.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // If order record in DB had missing/invalid email, persist this validated email for future communications
+    if (!isValidEmail(orderDoc.email) && customerEmail) {
+      try {
+        await Order.findByIdAndUpdate(orderDoc._id, {
+          $set: { email: customerEmail },
+        });
+      } catch (saveErr) {
+        console.warn("Could not backfill email to order:", saveErr);
+      }
+    }
 
     const result = await sendCustomerInvoiceEmail({
       to: customerEmail,

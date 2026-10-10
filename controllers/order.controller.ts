@@ -157,9 +157,20 @@ export class OrderController {
 
     await order.save();
 
+    // Resolve customer email with fallback to userId if needed
+    let customerEmail = order.email;
+    if (!customerEmail && order.userId) {
+      try {
+        const User = (await import("@/models/user.model")).default;
+        const userDoc = (await User.findById(order.userId).select("email").lean()) as any;
+        if (userDoc?.email) customerEmail = userDoc.email;
+      } catch (e) {
+        console.warn("[OrderController] Could not fetch user email:", e);
+      }
+    }
+
     // ── 7. Email Trigger for SHIPPED ──────────────────────────────────────
     if (newStatus === "shipped") {
-      const customerEmail = order.email;
       if (customerEmail) {
         // Fire-and-forget — don't block the response on email delivery
         sendOrderShippedEmail({
@@ -178,7 +189,6 @@ export class OrderController {
 
     // ── 8. Email Trigger for DELIVERED ──────────────────────────────────
     if (newStatus === "delivered") {
-      const customerEmail = order.email;
       if (customerEmail) {
         sendOrderDeliveredEmail({
           to: customerEmail,

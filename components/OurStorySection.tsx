@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";
 import { HiOutlineSparkles } from "react-icons/hi";
 import { Sparkles, Heart, ShieldCheck, Gift } from "lucide-react";
@@ -86,91 +85,47 @@ export default function OurStorySection({
           </div>
         </div>
 
-        {/* Narrative & Lifestyle Grid */}
-        <div
-          className={`grid items-center gap-8 lg:gap-12 ${
-            showImages ? "lg:grid-cols-12" : "max-w-3xl mx-auto text-center"
-          }`}
-        >
-          {/* Visual Vignette (Optional Image Duo) */}
-          {showImages && (
-            <div className="lg:col-span-5 relative flex justify-center items-center py-4">
-              <div className="relative w-full max-w-[340px] sm:max-w-[380px] h-[360px] sm:h-[400px]">
-                {/* Back Image (Jewellery / Lifestyle) */}
-                <div className="absolute top-2 right-2 w-[68%] aspect-[4/5] rounded-2xl overflow-hidden shadow-lg border-4 border-white rotate-3 hover:rotate-0 transition-transform duration-500 bg-rose-50">
-                  <Image
-                    src="/i2.png"
-                    alt="GirlyHub jewellery and accessories"
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
-                  <span className="absolute bottom-2.5 left-3 text-[10px] font-medium text-white tracking-wider uppercase drop-shadow-sm">
-                    Skin-Safe Luxe
-                  </span>
-                </div>
-
-                {/* Front Image (Hair Clips / Styling) */}
-                <div className="absolute bottom-2 left-2 w-[68%] aspect-[4/5] rounded-2xl overflow-hidden shadow-xl border-4 border-white -rotate-3 hover:rotate-0 transition-transform duration-500 z-10 bg-rose-100">
-                  <Image
-                    src="/i1.png"
-                    alt="GirlyHub Korean hair claw"
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
-                  <span className="absolute bottom-2.5 left-3 text-[10px] font-medium text-white tracking-wider uppercase drop-shadow-sm">
-                    Zero Snag Hold
-                  </span>
-                </div>
-
-                {/* Floating Heart Accent Badge */}
-                <div className="absolute -bottom-3 right-8 z-20 bg-white/95 backdrop-blur-xs border border-rose-200/80 rounded-full px-3.5 py-1.5 shadow-md flex items-center gap-1.5">
-                  <Heart className="size-3.5 fill-pink-500 text-pink-500" />
-                  <span className="text-[11px] font-semibold text-[#532431]">
-                    Curated with Love
-                  </span>
-                </div>
+        {/* Narrative Card */}
+        <div className="max-w-4xl mx-auto">
+          <div className="relative bg-white/70 backdrop-blur-xs border border-rose-100/80 rounded-3xl p-6 sm:p-10 md:p-12 shadow-[0_8px_30px_-8px_rgba(78,26,39,0.06)]">
+            <div className="flex items-center justify-between mb-6">
+              <FaQuoteLeft className="text-rose-200/80 text-4xl sm:text-5xl" />
+              <div className="inline-flex items-center gap-1.5 bg-white/95 border border-rose-200/80 rounded-full px-3.5 py-1.5 shadow-2xs">
+                <Heart className="size-3.5 fill-pink-500 text-pink-500" />
+                <span className="text-[11px] font-semibold text-[#532431]">
+                  Curated with Love
+                </span>
               </div>
             </div>
-          )}
 
-          {/* Narrative Paragraphs */}
-          <div className={`${showImages ? "lg:col-span-7" : "w-full"}`}>
-            <div className="relative bg-white/60 backdrop-blur-2xs border border-rose-100/70 rounded-3xl p-6 sm:p-9 shadow-2xs">
-              <FaQuoteLeft className="text-rose-200/60 text-4xl sm:text-5xl mb-4" />
+            <div className="font-cormorant font-normal text-[#4e1a27] text-[1.125rem] sm:text-[1.25rem] md:text-[1.325rem] leading-[1.85] sm:leading-[1.95] space-y-4 sm:space-y-6">
+              {paragraphs.map((p, idx) => (
+                <p key={idx} className="leading-relaxed">
+                  {p}
+                </p>
+              ))}
+            </div>
 
-              <div className="font-cormorant font-normal text-[#4e1a27] text-[1.125rem] sm:text-[1.25rem] md:text-[1.325rem] leading-[1.85] sm:leading-[1.95] space-y-4 sm:space-y-6">
-                {paragraphs.map((p, idx) => (
-                  <p key={idx} className="leading-relaxed">
-                    {p}
+            {/* Founder Signature Block */}
+            {signature && (
+              <div className="mt-8 pt-6 border-t border-rose-100/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p className="font-[family-name:var(--font-caveat)] text-3xl sm:text-4xl text-[#7a1c33] leading-none">
+                    {signature}
                   </p>
-                ))}
-              </div>
-
-              {/* Founder Signature Block */}
-              {signature && (
-                <div className="mt-8 pt-6 border-t border-rose-100/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <p className="font-[family-name:var(--font-caveat)] text-3xl sm:text-4xl text-[#7a1c33] leading-none">
-                      {signature}
+                  {signatureSubtitle && (
+                    <p className="mt-1 text-xs text-[#8a6b70] tracking-wide font-sans">
+                      {signatureSubtitle}
                     </p>
-                    {signatureSubtitle && (
-                      <p className="mt-1 text-xs text-[#8a6b70] tracking-wide font-sans">
-                        {signatureSubtitle}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="inline-flex items-center gap-1.5 text-xs text-rose-700/80 bg-rose-50/70 border border-rose-100 rounded-full px-3 py-1">
-                    <Sparkles className="size-3.5 text-rose-500" />
-                    <span>Always joyful & authentic</span>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
+
+                <div className="inline-flex items-center gap-1.5 text-xs text-rose-700/80 bg-rose-50/70 border border-rose-100 rounded-full px-3 py-1">
+                  <Sparkles className="size-3.5 text-rose-500" />
+                  <span>Always joyful & authentic</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -80,23 +80,40 @@ export async function GET() {
           new Date(first.createdAt || 0).getTime(),
       );
 
+    const DEFAULT_CITIES = ["Mumbai", "Patna", "Delhi", "Chandigarh", "Mumbai"];
+
     const reviews = [
-      ...featuredReviews.map((review) => ({
-        _id: review._id.toString(),
-        username: review.username,
-        rating: review.rating,
-        comment: review.comment,
-        photos: review.productImage ? [review.productImage] : [],
-        image: review.productImage || "",
-        createdAt: review.createdAt,
-        isFeatured: true,
-        product: {
-          _id: "",
-          title: review.productTitle || "Our lovely collection",
+      ...featuredReviews.map((review, idx) => {
+        const rawLoc = (review as any).location || review.productTitle;
+        const loc =
+          rawLoc && rawLoc !== "Our lovely collection"
+            ? rawLoc
+            : DEFAULT_CITIES[idx % DEFAULT_CITIES.length];
+
+        return {
+          _id: review._id.toString(),
+          username: review.username,
+          location: loc,
+          rating: review.rating,
+          comment: review.comment,
+          photos: review.productImage ? [review.productImage] : [],
           image: review.productImage || "",
-        },
-      })),
-      ...customerReviews,
+          createdAt: review.createdAt,
+          isFeatured: true,
+          product: {
+            _id: "",
+            title: loc,
+            image: review.productImage || "",
+          },
+        };
+      }),
+      ...customerReviews.map((review, idx) => {
+        const loc = DEFAULT_CITIES[(idx + 1) % DEFAULT_CITIES.length];
+        return {
+          ...review,
+          location: loc,
+        };
+      }),
     ].sort(
       (first, second) =>
         new Date(second.createdAt || 0).getTime() -
@@ -178,14 +195,24 @@ export async function POST(request: NextRequest) {
     }
 
     const productTitleValue = formData.get("productTitle");
+    const locationValue = formData.get("location");
+    const location =
+      typeof locationValue === "string" && locationValue.trim()
+        ? locationValue.trim()
+        : typeof productTitleValue === "string" && productTitleValue.trim() !== "Our lovely collection"
+          ? productTitleValue.trim()
+          : undefined;
+
     const review = await HomeReview.create({
       username,
       comment,
       rating,
+      location,
       productTitle:
-        typeof productTitleValue === "string"
+        location ||
+        (typeof productTitleValue === "string" && productTitleValue.trim() !== "Our lovely collection"
           ? productTitleValue.trim()
-          : undefined,
+          : undefined),
       productImage,
       isVisible: formData.get("isVisible") !== "false",
     });

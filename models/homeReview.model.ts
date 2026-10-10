@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const homeReviewSchema = new mongoose.Schema(
   {
     username: { type: String, required: true, trim: true, maxlength: 80 },
+    location: { type: String, trim: true, maxlength: 100, default: "" },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true, trim: true, maxlength: 500 },
     productTitle: { type: String, trim: true, maxlength: 160 },

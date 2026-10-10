@@ -160,8 +160,8 @@ export async function PUT(
               totalAmount: order.totalAmount || 0,
             });
           }
-        } else if (order.userId?.email) {
-          await OrderStatusMail(order.userId.email, order._id, status);
+        } else if (customerEmail) {
+          await OrderStatusMail(customerEmail, order._id, status);
         }
       } catch (mailErr) {
         console.error(`[PUT /api/orders/${id}] Failed to send order status mail:`, mailErr);

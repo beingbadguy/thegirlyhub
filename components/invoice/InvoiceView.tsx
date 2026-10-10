@@ -12,6 +12,7 @@ import {
   Clock,
   Loader2,
   Share2,
+  Mail,
 } from "lucide-react";
 import LogoMark from "@/components/LogoMark";
 
@@ -422,6 +423,50 @@ export default function InvoiceView({
     }
   };
 
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailSentMsg, setEmailSentMsg] = useState<string | null>(null);
+
+  const handleEmailInvoice = async () => {
+    if (sendingEmail) return;
+    const targetEmail = order.email;
+    let emailToSend = targetEmail;
+    if (!emailToSend || !emailToSend.includes("@")) {
+      const prompted = window.prompt(
+        "Please enter your email address to receive the official invoice PDF:"
+      );
+      if (!prompted || !prompted.trim()) return;
+      if (!prompted.includes("@")) {
+        alert("Please enter a valid email address.");
+        return;
+      }
+      emailToSend = prompted.trim();
+    }
+
+    setSendingEmail(true);
+    setEmailSentMsg(null);
+    try {
+      const res = await fetch(
+        `/api/orders/${order.orderId || order._id}/send-invoice`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: emailToSend }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEmailSentMsg(`Sent to ${emailToSend}!`);
+        setTimeout(() => setEmailSentMsg(null), 6000);
+      } else {
+        alert(data.message || "Failed to send invoice email.");
+      }
+    } catch (e: any) {
+      alert("Failed to send invoice email: " + (e.message || "Network error"));
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   return (
     <div className={`w-full max-w-4xl mx-auto py-6 px-3 sm:px-6 ${className}`}>
       {/* Top Action Bar (Matches Reference Preview Bar) */}
@@ -441,6 +486,22 @@ export default function InvoiceView({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              disabled={sendingEmail}
+              onClick={handleEmailInvoice}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100/90 text-xs font-medium text-rose-700 transition cursor-pointer disabled:opacity-60"
+            >
+              {sendingEmail ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : emailSentMsg ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <Mail className="w-3.5 h-3.5 text-rose-600" />
+              )}
+              {emailSentMsg || (sendingEmail ? "Sending..." : "Email Invoice")}
+            </button>
+
             <button
               type="button"
               onClick={handleCopyLink}
